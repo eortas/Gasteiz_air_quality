@@ -317,7 +317,18 @@
     h1 { font-size: 20px; }
   }
 </style>
+
+<style>
+  /* FIX MÓVIL: Evita el bucle infinito de encogimiento de Chart.js */
+  @media screen and (max-width: 768px) {
+      .chart-container, div[style*="position: relative"], canvas {
+          min-height: 350px !important;
+          width: 100% !important;
+      }
+  }
+</style>
 </head>
+
 <body>
 
 <div class="header">
