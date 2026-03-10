@@ -3,7 +3,7 @@
 **[Euskara](#euskara)** | **[English](#english)**
 
 <a id="euskara"></a>
-## Euskara
+
 
 Biltegi honek Gasteizko Emisio Baxuko Eremuaren (EBE) eragina ebaluatzeko datu-kanalizazioa (pipeline) eta eredu analitikoak ditu. Jarraipen operatibo iragarlerako eta inferentzia kausal akademiko zorrotzerako tresnak eskaintzen ditu.
 
@@ -54,7 +54,7 @@ GitHub Actions-eko lan-fluxu automatizatu batek (`.github/workflows/daily_pipeli
 ---
 
 <a id="english"></a>
-## English
+
 
 This repository contains the pipeline and analytical models to evaluate the impact of the Low Emission Zone (ZBE) in Vitoria-Gasteiz. It provides tools for both predictive operational monitoring and rigorous academic causal inference.
 
