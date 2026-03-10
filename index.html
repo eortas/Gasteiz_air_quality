@@ -443,8 +443,8 @@ function updateV9Images() {
   imgSc.style.display = 'block'; 
   imgEs.style.display = 'block'; 
   
-  imgSc.src = `synthetic_control_${contName}_${currentStationV9}.png`; 
-  imgEs.src = `event_study_${contName}.png`;
+  imgSc.src = `reports/plots/synthetic_control_${contName}_${currentStationV9}.png`; 
+  imgEs.src = `reports/plots/event_study_${contName}.png`;
 }
 
 function selectContV9(cont, btn) { currentContV9 = cont; document.querySelectorAll('#contTabsV9 .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderV9Cards(); updateV9Images(); }
