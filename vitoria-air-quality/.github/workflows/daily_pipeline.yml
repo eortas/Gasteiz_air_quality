@@ -1,0 +1,67 @@
+name: Pipeline diario + Dashboard
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 2:00 AM UTC (3:00 AM hora española en invierno)
+  workflow_dispatch:        # permite lanzarlo manualmente desde GitHub
+
+permissions:
+  contents: write           # necesario para hacer git push del index.html
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 2. Python ────────────────────────────────────────────────────────────
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      # ── 3. Dependencias ──────────────────────────────────────────────────────
+      - name: Instalar dependencias del pipeline
+        run: |
+          pip install --upgrade pip
+          pip install \
+            pandas>=2.0 numpy>=1.24 \
+            scikit-learn>=1.3 lightgbm>=4.0 scipy>=1.11 statsmodels>=0.14 \
+            requests>=2.31 playwright>=1.40 \
+            supabase>=2.0 python-dotenv>=1.0 \
+            loguru>=0.7 joblib>=1.3 python-dateutil>=2.8 tqdm>=4.66
+
+      - name: Instalar Playwright Chromium
+        run: playwright install chromium --with-deps
+
+      # ── 4. Pipeline completo ─────────────────────────────────────────────────
+      - name: Ejecutar pipeline (ingesta → features → modelo → predicción)
+        run: python run_pipeline.py
+
+      # ── 5. Generar dashboard HTML ────────────────────────────────────────────
+      - name: Generar index.html
+        run: python reports/html/build_v10.py
+
+      # ── 6. Copiar index.html a la raíz del repo ──────────────────────────────
+      - name: Copiar dashboard a raíz
+        run: cp reports/plots/index.html index.html
+
+      # ── 7. Commit y push ─────────────────────────────────────────────────────
+      - name: Publicar dashboard en GitHub Pages
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --staged --quiet || git commit -m "dashboard: actualización automática $(date -u '+%Y-%m-%d')"
+          git push
