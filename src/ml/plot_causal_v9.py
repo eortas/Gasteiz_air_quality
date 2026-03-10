@@ -10,10 +10,10 @@ sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
 plt.rcParams['font.family'] = 'serif'
 
 # Rutas
-MODELS_DIR = Path("../../models") # Ajusta esta ruta si es diferente
+MODELS_DIR = Path("models")
 ES_FILE = MODELS_DIR / "event_study_v9.json"
 SC_FILE = MODELS_DIR / "synthetic_control_v9.json"
-PLOTS_DIR = MODELS_DIR / "plots"
+PLOTS_DIR = Path("reports/plots")
 PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 def plot_event_study():
