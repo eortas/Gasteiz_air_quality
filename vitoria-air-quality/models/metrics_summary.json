@@ -1,0 +1,18 @@
+{
+  "NO2": {
+    "avg_cv_rmse": 4.5041,
+    "avg_cv_r2": 0.3321
+  },
+  "PM10": {
+    "avg_cv_rmse": 4.8738,
+    "avg_cv_r2": 0.2155
+  },
+  "PM2.5": {
+    "avg_cv_rmse": 3.4018,
+    "avg_cv_r2": 0.2928
+  },
+  "ICA": {
+    "avg_cv_rmse": 8.6212,
+    "avg_cv_r2": 0.2026
+  }
+}

@@ -1,0 +1,199 @@
+=================================================================
+  TRAIN MODEL — Vitoria Air Quality LightGBM
+  2026-03-09 01:39
+  Targets   : ['NO2', 'PM10', 'PM2.5', 'ICA']
+  Horizonte : 3 días
+  Tuning    : no (hiperparámetros base)
+=================================================================
+
+═════════════════════════════════════════════════════════════════
+  1. Cargando dataset
+═════════════════════════════════════════════════════════════════
+  Filas    : 722
+  Columnas : 281
+  Features : 256
+  Targets  : 24
+
+═════════════════════════════════════════════════════════════════
+  3. Entrenando modelos LightGBM
+═════════════════════════════════════════════════════════════════
+
+═════════════════════════════════════════════════════════════════
+  2. Split temporal 70 / 15 / 15
+═════════════════════════════════════════════════════════════════
+  Train : 505 días  (2024-03-15 → 2025-08-02)
+  Val   : 108 días  (2025-08-02 → 2025-11-18)
+  Test  : 109 días  (2025-11-18 → 2026-03-06)
+
+  ℹ️  Test incluye 109 días post-ZBE (desde sep-2025)
+     → Métrica clave: ¿capta el modelo la reducción de NO2 post-ZBE?
+  Entrenando target_NO2_zbe_d1...
+    Val  → RMSE=3.293  MAE=2.845  R²=-0.268
+    Test → RMSE=4.980  MAE=3.963  R²=0.208  MAPE=30.0%
+  Entrenando target_NO2_zbe_d2...
+    Val  → RMSE=3.156  MAE=2.645  R²=0.052
+    Test → RMSE=5.418  MAE=4.518  R²=0.063  MAPE=35.5%
+  Entrenando target_NO2_zbe_d3...
+    Val  → RMSE=3.273  MAE=2.728  R²=0.069
+    Test → RMSE=5.463  MAE=4.524  R²=0.055  MAPE=35.8%
+  Entrenando target_NO2_out_d1...
+    Val  → RMSE=3.295  MAE=2.670  R²=0.551
+    Test → RMSE=4.946  MAE=4.179  R²=0.143  MAPE=36.0%
+  Entrenando target_NO2_out_d2...
+    Val  → RMSE=3.709  MAE=3.042  R²=0.436
+    Test → RMSE=5.122  MAE=4.309  R²=0.087  MAPE=37.4%
+  Entrenando target_NO2_out_d3...
+    Val  → RMSE=3.796  MAE=3.081  R²=0.429
+    Test → RMSE=5.455  MAE=4.464  R²=-0.030  MAPE=40.2%
+  Entrenando target_PM10_zbe_d1...
+    Val  → RMSE=3.481  MAE=2.648  R²=0.545
+    Test → RMSE=6.654  MAE=4.655  R²=0.293  MAPE=37.7%
+  Entrenando target_PM10_zbe_d2...
+    Val  → RMSE=4.269  MAE=3.431  R²=0.314
+    Test → RMSE=7.520  MAE=5.181  R²=0.104  MAPE=37.7%
+  Entrenando target_PM10_zbe_d3...
+    Val  → RMSE=4.526  MAE=3.685  R²=0.232
+    Test → RMSE=7.681  MAE=5.188  R²=0.070  MAPE=37.9%
+  Entrenando target_PM10_out_d1...
+    Val  → RMSE=3.869  MAE=2.914  R²=0.622
+    Test → RMSE=3.929  MAE=2.850  R²=0.534  MAPE=47.2%
+  Entrenando target_PM10_out_d2...
+    Val  → RMSE=5.259  MAE=4.079  R²=0.304
+    Test → RMSE=4.962  MAE=3.902  R²=0.264  MAPE=66.3%
+  Entrenando target_PM10_out_d3...
+    Val  → RMSE=5.446  MAE=4.375  R²=0.264
+    Test → RMSE=5.017  MAE=3.623  R²=0.251  MAPE=54.1%
+  Entrenando target_PM2.5_zbe_d1...
+    Val  → RMSE=2.494  MAE=1.909  R²=0.566
+    Test → RMSE=3.563  MAE=2.368  R²=0.505  MAPE=49.6%
+  Entrenando target_PM2.5_zbe_d2...
+    Val  → RMSE=3.281  MAE=2.753  R²=0.248
+    Test → RMSE=3.617  MAE=2.486  R²=0.494  MAPE=48.3%
+  Entrenando target_PM2.5_zbe_d3...
+    Val  → RMSE=3.521  MAE=2.919  R²=0.140
+    Test → RMSE=3.765  MAE=2.519  R²=0.454  MAPE=48.7%
+  Entrenando target_PM2.5_out_d1...
+    Val  → RMSE=3.299  MAE=2.420  R²=0.594
+    Test → RMSE=2.732  MAE=1.874  R²=0.615  MAPE=45.4%
+  Entrenando target_PM2.5_out_d2...
+    Val  → RMSE=4.295  MAE=3.343  R²=0.313
+    Test → RMSE=3.317  MAE=2.416  R²=0.438  MAPE=59.5%
+  Entrenando target_PM2.5_out_d3...
+    Val  → RMSE=4.743  MAE=3.826  R²=0.170
+    Test → RMSE=3.804  MAE=2.528  R²=0.264  MAPE=56.3%
+  Entrenando target_ICA_zbe_d1...
+    Val  → RMSE=6.638  MAE=5.027  R²=0.490
+    Test → RMSE=9.990  MAE=6.645  R²=0.320  MAPE=29.4%
+  Entrenando target_ICA_zbe_d2...
+    Val  → RMSE=8.139  MAE=6.798  R²=0.232
+    Test → RMSE=10.061  MAE=6.557  R²=0.316  MAPE=28.2%
+  Entrenando target_ICA_zbe_d3...
+    Val  → RMSE=9.248  MAE=7.681  R²=0.009
+    Test → RMSE=10.818  MAE=6.916  R²=0.213  MAPE=28.7%
+  Entrenando target_ICA_out_d1...
+    Val  → RMSE=8.381  MAE=5.925  R²=0.587
+    Test → RMSE=6.827  MAE=4.659  R²=0.469  MAPE=30.8%
+  Entrenando target_ICA_out_d2...
+    Val  → RMSE=11.230  MAE=8.614  R²=0.259
+    Test → RMSE=7.664  MAE=5.457  R²=0.337  MAPE=34.3%
+  Entrenando target_ICA_out_d3...
+    Val  → RMSE=11.592  MAE=9.018  R²=0.213
+    Test → RMSE=8.183  MAE=5.476  R²=0.249  MAPE=33.5%
+
+  ✅ 24 modelos entrenados y guardados en C:\Users\ortas\OneDrive\Documentos\Vitoria\vitoria-air-quality\models
+
+═════════════════════════════════════════════════════════════════
+  4. Resumen de métricas
+═════════════════════════════════════════════════════════════════
+  Target                 Val RMSE   Val R²  Test RMSE  Test R²   MAPE%
+  -------------------- ---------- -------- ---------- -------- -------
+
+  ── NO2 ──
+  d1                        3.295    0.551      4.946    0.143    36.0
+  d2                        3.709    0.436      5.122    0.087    37.4
+  d3                        3.796    0.429      5.455   -0.030    40.2
+  d1                        3.293   -0.268      4.980    0.208    30.0
+  d2                        3.156    0.052      5.418    0.063    35.5
+  d3                        3.273    0.069      5.463    0.055    35.8
+
+  ── PM10 ──
+  d1                        3.869    0.622      3.929    0.534    47.2
+  d2                        5.259    0.304      4.962    0.264    66.3
+  d3                        5.446    0.264      5.017    0.251    54.1
+  d1                        3.481    0.545      6.654    0.293    37.7
+  d2                        4.269    0.314      7.520    0.104    37.7
+  d3                        4.526    0.232      7.681    0.070    37.9
+
+  ── PM2.5 ──
+  d1                        3.299    0.594      2.732    0.615    45.4
+  d2                        4.295    0.313      3.317    0.438    59.5
+  d3                        4.743    0.170      3.804    0.264    56.3
+  d1                        2.494    0.566      3.563    0.505    49.6
+  d2                        3.281    0.248      3.617    0.494    48.3
+  d3                        3.521    0.140      3.765    0.454    48.7
+
+  ── ICA ──
+  d1                        8.381    0.587      6.827    0.469    30.8
+  d2                       11.230    0.259      7.664    0.337    34.3
+  d3                       11.592    0.213      8.183    0.249    33.5
+  d1                        6.638    0.490      9.990    0.320    29.4
+  d2                        8.139    0.232     10.061    0.316    28.2
+  d3                        9.248    0.009     10.818    0.213    28.7
+
+  ── Media por horizonte (test RMSE) ──
+  d1: RMSE medio = 5.452  (esperado: peor a medida que h↑)
+  d2: RMSE medio = 5.960  (esperado: peor a medida que h↑)
+  d3: RMSE medio = 6.273  (esperado: peor a medida que h↑)
+
+═════════════════════════════════════════════════════════════════
+  5. Feature importance global
+═════════════════════════════════════════════════════════════════
+  Feature                                             Importancia
+  -------------------------------------------------- ------------
+  fc_relative_humidity_2m_d2                                226.6
+  fc_relative_humidity_2m_d1                                218.6
+  fc_boundary_layer_height_d3                               190.4
+  relative_humidity_2m                                      189.6
+  fc_cloud_cover_d3                                         171.6
+  PM10_zbe_diff_30d                                         171.5
+  traffic_volume_lag_1d                                     166.1
+  NO2_out                                                   161.8
+  fc_wind_u_d2                                              161.7
+  exp_traffic_volume_d3                                     153.3
+  NO2_zbe_diff_7d                                           153.0
+  fc_wind_u_d3                                              151.9
+  fc_boundary_layer_height_d1                               150.2
+  fc_wind_u_d1                                              148.3
+  PM2.5_zbe_diff_30d                                        147.4
+  fc_wind_direction_10m_d1                                  143.7
+  cloud_cover                                               142.8
+  presion_zbe                                               139.0
+  NO2_out_lag_1d                                            137.7
+  fc_boundary_layer_height_d2                               134.8
+
+  ✅ Feature importance completo: C:\Users\ortas\OneDrive\Documentos\Vitoria\vitoria-air-quality\models\feature_importance.csv
+
+  ── Importancia por grupo ──
+  Lags aire                :  18.5%  (48 features)
+  Rolling aire             :  33.0%  (112 features)
+  Tráfico actual           :   5.7%  (12 features)
+  Tráfico esperado         :   3.8%  (6 features)
+  Meteorología             :  26.2%  (42 features)
+  Temporales               :  30.3%  (99 features)
+  Pronóstico meteo         :  22.0%  (33 features)
+
+═════════════════════════════════════════════════════════════════
+  6. Análisis efecto ZBE (sep-2025)
+═════════════════════════════════════════════════════════════════
+  Días pre-ZBE  : 535
+  Días post-ZBE : 187
+
+
+  ℹ️  Si NO2 y PM10 bajan significativamente post-ZBE,
+     el modelo habrá aprendido el efecto de la zona de bajas emisiones.
+
+═════════════════════════════════════════════════════════════════
+  7. Guardando métricas y reporte
+═════════════════════════════════════════════════════════════════
+  ✅ C:\Users\ortas\OneDrive\Documentos\Vitoria\vitoria-air-quality\models\metrics.json
+  ✅ C:\Users\ortas\OneDrive\Documentos\Vitoria\vitoria-air-quality\models\metrics_summary.json

@@ -1,0 +1,122 @@
+=================================================================
+  TRAIN MODEL — Vitoria Air Quality (TimeSeries Cross-Validation)
+  2026-03-09 01:55
+  Tuning    : no (hiperparámetros base)
+=================================================================
+
+═════════════════════════════════════════════════════════════════
+  1. Cargando dataset
+═════════════════════════════════════════════════════════════════
+  Filas    : 722
+  Columnas : 281
+  Features : 256
+  Targets  : 24
+
+═════════════════════════════════════════════════════════════════
+  2. Entrenamiento LightGBM con TimeSeriesSplit (5 Folds)
+═════════════════════════════════════════════════════════════════
+  target_NO2_zbe_d1  → CV RMSE=4.579  R²=0.172  MAPE=68.9%
+  target_NO2_zbe_d2  → CV RMSE=4.351  R²=0.287  MAPE=101.1%
+  target_NO2_zbe_d3  → CV RMSE=5.284  R²=-0.132  MAPE=67.5%
+  target_NO2_out_d1  → CV RMSE=5.208  R²=0.248  MAPE=51.9%
+  target_NO2_out_d2  → CV RMSE=5.333  R²=0.201  MAPE=54.8%
+  target_NO2_out_d3  → CV RMSE=5.426  R²=0.141  MAPE=53.4%
+  target_PM10_zbe_d1 → CV RMSE=4.577  R²=0.278  MAPE=40.6%
+  target_PM10_zbe_d2 → CV RMSE=5.181  R²=0.077  MAPE=46.2%
+  target_PM10_zbe_d3 → CV RMSE=5.176  R²=0.082  MAPE=46.5%
+  target_PM10_out_d1 → CV RMSE=4.684  R²=0.295  MAPE=35.5%
+  target_PM10_out_d2 → CV RMSE=5.920  R²=-0.119  MAPE=43.7%
+  target_PM10_out_d3 → CV RMSE=6.030  R²=-0.136  MAPE=44.5%
+  target_PM2.5_zbe_d1 → CV RMSE=2.858  R²=0.412  MAPE=45.2%
+  target_PM2.5_zbe_d2 → CV RMSE=3.392  R²=0.162  MAPE=54.3%
+  target_PM2.5_zbe_d3 → CV RMSE=3.287  R²=0.224  MAPE=52.1%
+  target_PM2.5_out_d1 → CV RMSE=3.476  R²=0.360  MAPE=38.0%
+  target_PM2.5_out_d2 → CV RMSE=4.377  R²=-0.013  MAPE=47.4%
+  target_PM2.5_out_d3 → CV RMSE=4.747  R²=-0.165  MAPE=52.4%
+  target_ICA_zbe_d1  → CV RMSE=7.509  R²=0.257  MAPE=35.7%
+  target_ICA_zbe_d2  → CV RMSE=8.676  R²=0.009  MAPE=41.2%
+  target_ICA_zbe_d3  → CV RMSE=8.629  R²=0.037  MAPE=41.3%
+  target_ICA_out_d1  → CV RMSE=8.580  R²=0.330  MAPE=29.2%
+  target_ICA_out_d2  → CV RMSE=10.910  R²=-0.086  MAPE=36.2%
+  target_ICA_out_d3  → CV RMSE=11.545  R²=-0.177  MAPE=39.7%
+
+  ✅ 24 modelos entrenados y guardados.
+
+═════════════════════════════════════════════════════════════════
+  3. Resumen de métricas (Media Cross-Validation)
+═════════════════════════════════════════════════════════════════
+  Target                  CV RMSE    CV R²  CV MAPE%
+  -------------------- ---------- -------- ---------
+
+  ── NO2 ──
+  NO2_out_d1                5.208    0.248      51.9
+  NO2_out_d2                5.333    0.201      54.8
+  NO2_out_d3                5.426    0.141      53.4
+  NO2_zbe_d1                4.579    0.172      68.9
+  NO2_zbe_d2                4.351    0.287     101.1
+  NO2_zbe_d3                5.284   -0.132      67.5
+
+  ── PM10 ──
+  PM10_out_d1               4.684    0.295      35.5
+  PM10_out_d2               5.920   -0.119      43.7
+  PM10_out_d3               6.030   -0.136      44.5
+  PM10_zbe_d1               4.577    0.278      40.6
+  PM10_zbe_d2               5.181    0.077      46.2
+  PM10_zbe_d3               5.176    0.082      46.5
+
+  ── PM2.5 ──
+  PM2.5_out_d1              3.476    0.360      38.0
+  PM2.5_out_d2              4.377   -0.013      47.4
+  PM2.5_out_d3              4.747   -0.165      52.4
+  PM2.5_zbe_d1              2.858    0.412      45.2
+  PM2.5_zbe_d2              3.392    0.162      54.3
+  PM2.5_zbe_d3              3.287    0.224      52.1
+
+  ── ICA ──
+  ICA_out_d1                8.580    0.330      29.2
+  ICA_out_d2               10.910   -0.086      36.2
+  ICA_out_d3               11.545   -0.177      39.7
+  ICA_zbe_d1                7.509    0.257      35.7
+  ICA_zbe_d2                8.676    0.009      41.2
+  ICA_zbe_d3                8.629    0.037      41.3
+
+═════════════════════════════════════════════════════════════════
+  4. Feature importance global (Último Fold)
+═════════════════════════════════════════════════════════════════
+  Feature                                             Importancia
+  -------------------------------------------------- ------------
+  fc_relative_humidity_2m_d2                                289.9
+  fc_relative_humidity_2m_d1                                254.8
+  fc_boundary_layer_height_d3                               248.1
+  relative_humidity_2m                                      208.5
+  NO2_out                                                   207.2
+  traffic_volume_lag_1d                                     202.8
+  fc_cloud_cover_d3                                         193.0
+  fc_wind_u_d3                                              191.8
+  traffic_volume_lag_2d                                     188.2
+  presion_zbe                                               187.3
+  NO2_out_diff_7d                                           184.0
+  fc_boundary_layer_height_d2                               179.9
+  fc_boundary_layer_height_d1                               176.8
+  fc_wind_u_d2                                              168.9
+  fc_wind_u_d1                                              167.4
+
+═════════════════════════════════════════════════════════════════
+  5. Análisis efecto ZBE en Datos Reales (sep-2025)
+═════════════════════════════════════════════════════════════════
+  Días pre-ZBE  : 535
+  Días post-ZBE : 187
+
+  NO2_zbe   : pre=11.28  post=12.17  cambio=+7.9% ↑
+  NO2_out   : pre=12.56  post=13.28  cambio=+5.7% ↑
+  PM10_zbe  : pre=11.12  post=11.43  cambio=+2.8% ↑
+  PM10_out  : pre=11.01  post=9.52  cambio=-13.6% ↓
+  PM2.5_zbe : pre=6.95  post=5.94  cambio=-14.6% ↓
+  PM2.5_out : pre=7.63  post=6.21  cambio=-18.6% ↓
+  ICA_zbe   : pre=19.30  post=18.64  cambio=-3.4% ↓
+  ICA_out   : pre=21.21  post=18.05  cambio=-14.9% ↓
+
+═════════════════════════════════════════════════════════════════
+  6. Guardando métricas y reporte
+═════════════════════════════════════════════════════════════════
+  ✅ C:\Users\ortas\OneDrive\Documentos\Vitoria\vitoria-air-quality\models\metrics.json

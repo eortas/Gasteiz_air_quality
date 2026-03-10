@@ -1,0 +1,29 @@
+{
+  "NO2": {
+    "beta3": 0.2094,
+    "pvalue": 0.691,
+    "ci_low": -0.8233,
+    "ci_high": 1.2422,
+    "r2": 0.54,
+    "n_obs": 1413,
+    "significant": false
+  },
+  "PM10": {
+    "beta3": 1.9103,
+    "pvalue": 0.0048,
+    "ci_low": 0.5814,
+    "ci_high": 3.2392,
+    "r2": 0.1837,
+    "n_obs": 1416,
+    "significant": true
+  },
+  "PM2.5": {
+    "beta3": 0.4687,
+    "pvalue": 0.3031,
+    "ci_low": -0.4233,
+    "ci_high": 1.3608,
+    "r2": 0.2554,
+    "n_obs": 1416,
+    "significant": false
+  }
+}
