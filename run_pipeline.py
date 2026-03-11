@@ -100,6 +100,14 @@ def main():
     logger.info(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     logger.info("=" * 60)
 
+    # ── 0. RESTORE DESDE STORAGE ──────────────────────────────────────────────
+    if not local_only:
+        logger.info("\n── FASE 0: Restore desde Supabase Storage")
+        if not run_script("Download CSVs historicos", "src/ingestion/download_csv_storage.py", []):
+            logger.warning("⚠️  Fallo la descarga desde Storage. Puede faltar historico.")
+    else:
+        logger.info("\n── FASE 0: Restore — OMITIDO (--local-only)")
+
     # ── 1. INGESTA (paralela) ─────────────────────────────────────────────────
     logger.info("\n── FASE 1: Ingesta")
     ok = run_parallel([
@@ -129,6 +137,14 @@ def main():
         ROOT_DIR / "data" / "raw" / "air",
         ROOT_DIR / "data" / "raw" / "weather",
     ])
+
+    # ── 3c. UPLOAD A STORAGE ──────────────────────────────────────────────────
+    if not local_only:
+        logger.info("\n── FASE 3c: Upload de CSVs actualizados a Storage")
+        if not run_script("Upload CSVs a Storage", "src/ingestion/upload_csv_storage.py", ["--force"]):
+            logger.warning("⚠️  Fallo la subida a Storage.")
+    else:
+        logger.info("\n── FASE 3c: Upload a Storage — OMITIDO (--local-only)")
 
     # ── 4. CARGA A SUPABASE ───────────────────────────────────────────────────
     if not local_only:
