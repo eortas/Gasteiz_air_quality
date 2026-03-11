@@ -511,9 +511,22 @@ function renderDashboard3() {
       // Color del porcentaje: rojo si la contaminación fue MAYOR a la prevista, verde si fue MENOR o igual.
       const errorColor = error > 0 ? "var(--red)" : "var(--green)";
       
-      // Color del texto y el texto: verde si el error absoluto <= 25%, amarillo si > 25%
-      const interpretColor = Math.abs(error) <= 25 ? "var(--green)" : "var(--yellow)";
-      interpret = Math.abs(error) <= 25 ? "✓ Precisión aceptable" : "ℹ Revisar modelo (desv >25%)";
+      // Nueva valoración del modelo según el error absoluto
+      const absError = Math.abs(error);
+      
+      if (absError <= 10) {
+          interpretColor = "var(--green)";
+          interpret = "✨ Precisión excelente";
+      } else if (absError <= 20) {
+          interpretColor = "var(--green)";
+          interpret = "✓ Precisión buena";
+      } else if (absError <= 30) {
+          interpretColor = "var(--yellow)";
+          interpret = "⚠ Precisión aceptable";
+      } else {
+          interpretColor = "var(--red)";
+          interpret = "🔴 Revisión modelo";
+      }
 
       document.getElementById('backtestTable').innerHTML = `
         <tr>
