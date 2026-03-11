@@ -52,7 +52,7 @@ def get_supabase_client():
     try:
         from supabase import create_client
         from dotenv import load_dotenv
-        load_dotenv(ENV_FILE)
+        load_dotenv(ENV_FILE, override=False)
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_KEY")
         if not url or not key:
