@@ -336,7 +336,7 @@ def main(local_only: bool = False):
         # Se aplica ANTES de dividir en CSV y Supabase para que ambos se beneficien.
         num_cols = df_filtered.select_dtypes(include="number").columns
         df_filtered[num_cols] = df_filtered[num_cols].interpolate(method="linear", limit=6)
-        df_filtered[num_cols] = df_filtered[num_cols].fillna(method="bfill").fillna(method="ffill")
+        df_filtered[num_cols] = df_filtered[num_cols].bfill().ffill()
 
         # 1. CSV local — guardar timestamp como string legible
         df_csv = df_filtered.copy()
@@ -427,7 +427,7 @@ def backfill_from_csv(days: int = SUPABASE_DAYS):
     # Interpolar huecos residuales antes de subir a Supabase
     num_cols = combined.select_dtypes(include="number").columns
     combined[num_cols] = combined[num_cols].interpolate(method="linear", limit=6)
-    combined[num_cols] = combined[num_cols].fillna(method="bfill").fillna(method="ffill")
+    combined[num_cols] = combined[num_cols].bfill().ffill()
     combined["timestamp"] = combined["timestamp"].dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     records = combined.to_dict(orient="records")
     total   = len(records)
