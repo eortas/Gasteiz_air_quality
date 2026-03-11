@@ -471,8 +471,10 @@ def backfill_from_csv(days: int = SUPABASE_DAYS):
 
     combined = pd.concat(all_frames, ignore_index=True)
     combined["timestamp"] = combined["timestamp"].dt.strftime("%Y-%m-%dT%H:%M:%S+00:00")
-    combined = combined.replace([float("inf"), float("-inf")], None)
-    combined = combined.where(pd.notna(combined), other=None)
+    # Limpiar flotantes inf y nan (JSON compliance)
+    import numpy as np
+    combined = combined.replace([np.inf, -np.inf], np.nan)
+    combined = combined.fillna(np.nan).replace({np.nan: None})
     records = combined.to_dict(orient="records")
     total   = len(records)
 
