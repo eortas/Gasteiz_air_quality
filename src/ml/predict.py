@@ -222,7 +222,7 @@ def fetch_forecast_d1() -> dict:
     df["timestamp"] = pd.to_datetime(df["time"], utc=True)
     df["date"]      = df["timestamp"].dt.floor("D")
 
-    tomorrow = pd.Timestamp.now(tz="UTC").floor("D") + pd.Timedelta(days=1)
+    tomorrow = pd.to_datetime(pd.Timestamp.now(tz="Europe/Madrid").date()).tz_localize("UTC") + pd.Timedelta(days=1)
     df_tomorrow = df[df["date"] == tomorrow]
 
     if df_tomorrow.empty:
