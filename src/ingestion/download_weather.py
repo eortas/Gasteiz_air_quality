@@ -429,6 +429,9 @@ def backfill_from_csv(days: int = SUPABASE_DAYS):
     combined[num_cols] = combined[num_cols].interpolate(method="linear", limit=6)
     combined[num_cols] = combined[num_cols].bfill().ffill()
     combined["timestamp"] = combined["timestamp"].dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    import numpy as np
+    combined = combined.replace([np.inf, -np.inf], np.nan)
+    combined = combined.fillna(np.nan).replace({np.nan: None})
     records = combined.to_dict(orient="records")
     total   = len(records)
 
