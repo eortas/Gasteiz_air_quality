@@ -35,13 +35,16 @@ from datetime import datetime
 ROOT_DIR    = Path(__file__).parent.parent.parent
 TRAFFIC_DIR = ROOT_DIR / "data" / "raw" / "traffic"
 AIR_DIR     = ROOT_DIR / "data" / "raw" / "air"
+WEATHER_DIR = ROOT_DIR / "data" / "raw" / "weather"
 ENV_FILE    = ROOT_DIR / ".env"
 
 BUCKET_TRAFFIC = "csv-traffic"
 BUCKET_AIR     = "csv-air"
+BUCKET_WEATHER = "csv-weather"
 
 TRAFFIC_DIR.mkdir(parents=True, exist_ok=True)
 AIR_DIR.mkdir(parents=True, exist_ok=True)
+WEATHER_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ─── SUPABASE ─────────────────────────────────────────────────────────────────
@@ -152,12 +155,28 @@ def print_local_summary(traffic_dir: Path, air_dir: Path):
         print(f"  {f.name:<35} {size_mb:6.1f} MB")
     print(f"  {'TOTAL':<35} {total:6.1f} MB")
 
+    print(f"\nMeteorología ({WEATHER_DIR}):")
+    total = 0
+    for f in sorted(WEATHER_DIR.glob("weather_[0-9]*.csv")):
+        size_mb = f.stat().st_size / 1024 / 1024
+        total  += size_mb
+        print(f"  {f.name:<35} {size_mb:6.1f} MB")
+    print(f"  {'TOTAL':<35} {total:6.1f} MB")
+
 
 # ─── MAIN ─────────────────────────────────────────────────────────────────────
 def main():
     force        = "--force"        in sys.argv
     traffic_only = "--traffic-only" in sys.argv
     air_only     = "--air-only"     in sys.argv
+    weather_only = "--weather-only" in sys.argv
+
+    if traffic_only:
+        air_only = weather_only = False
+    elif air_only:
+        traffic_only = weather_only = False
+    elif weather_only:
+        traffic_only = air_only = False
 
     print("=" * 60)
     print("DESCARGA DE CSVs HISTORICOS DESDE SUPABASE STORAGE")
@@ -171,15 +190,21 @@ def main():
 
     success = True
 
-    if not air_only:
+    if not air_only and not weather_only:
         print(f"── TRAFICO → {TRAFFIC_DIR} ──────────────────────────────")
         ok = download_and_decompress(client, BUCKET_TRAFFIC, TRAFFIC_DIR, force=force)
         success = success and ok
         print()
 
-    if not traffic_only:
+    if not traffic_only and not weather_only:
         print(f"── CALIDAD DEL AIRE → {AIR_DIR} ──────────────────────")
         ok = download_and_decompress(client, BUCKET_AIR, AIR_DIR, force=force)
+        success = success and ok
+        print()
+        
+    if not traffic_only and not air_only:
+        print(f"── METEOROLOGIA → {WEATHER_DIR} ────────────────────────")
+        ok = download_and_decompress(client, BUCKET_WEATHER, WEATHER_DIR, force=force)
         success = success and ok
         print()
 
