@@ -390,7 +390,7 @@ def fetch_forecast() -> pd.DataFrame:
         daily_fc["wind_u"] = -daily_fc["wind_speed_10m"] * np.sin(rad)
         daily_fc["wind_v"] = -daily_fc["wind_speed_10m"] * np.cos(rad)
 
-    today = pd.Timestamp.now(tz="UTC").floor("D")
+    today = pd.to_datetime(pd.Timestamp.now(tz="Europe/Madrid").date()).tz_localize("UTC")
     fc_flat = {}
     days_found = 0
     for h in range(1, HORIZON_DAYS + 1):
@@ -425,7 +425,7 @@ def merge_daily(air, traffic, weather) -> pd.DataFrame:
 
     # === REPARTO FINAL: PREVENCIÓN DE CORTES POR LAGS DE KUNAK ===
     # Añadimos fila de hoy explícita si falta (outer join puede no traerla si nadie la tiene)
-    today_dt = pd.Timestamp.today(tz="UTC").normalize()
+    today_dt = pd.to_datetime(pd.Timestamp.now(tz="Europe/Madrid").date()).tz_localize("UTC")
     if not (df["date"] == today_dt).any():
         log(f"  Añadiendo fila de hoy {today_dt.strftime('%Y-%m-%d')} para predicciones...")
         today_df = pd.DataFrame({"date": [today_dt]})
