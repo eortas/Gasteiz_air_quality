@@ -164,6 +164,24 @@ except Exception:
     metrics_raw = {}
 metrics_json_str = json.dumps(metrics_raw)
 
+# Cargar métricas v9 (Control Sintético)
+try:
+    with open(MODELS_DIR / "synthetic_control_v9.json", "r", encoding="utf-8") as f:
+        sc_data = json.load(f)
+        v9_stats = {}
+        for cont, stations in sc_data.items():
+            for st, st_data in stations.items():
+                v9_stats[f"{cont}_{st}"] = {
+                    "preR2": st_data.get("preR2", "N/A"),
+                    "gap": st_data.get("gap", "N/A"),
+                    "desc": st_data.get("desc", "Sin datos")
+                }
+        v9_json_str = json.dumps(v9_stats)
+except Exception as e:
+    print(f"  ⚠️ No se encontró synthetic_control_v9.json: {e}")
+    v9_json_str = "{}"
+
+
 # ==============================================================================
 # 5. DATOS MAPA DE ESTACIONES (station_daily.csv + predictions_latest.json)
 # ==============================================================================
@@ -434,7 +452,8 @@ html_template = """<!DOCTYPE html>
     <span class="controls-label">Estación IntraZBE</span>
     <div class="tab-group" id="stationTabsV9">
       <button class="tab active" onclick="selectStationV9('PAUL', this)">PAUL</button>
-      <button class="tab" onclick="selectStationV9('LANDAZURI', this)">LANDAZURI</button>
+      <button class="tab" onclick="selectStationV9('BEATO', this)">BEATO</button>
+      <button class="tab" onclick="selectStationV9('FUEROS', this)">FUEROS</button>
     </div>
   </div>
   <div class="summary-grid" id="summaryCardsV9"></div>
@@ -546,6 +565,7 @@ let perfStats = __PERF_DATA_PLACEHOLDER__;
 let manana = __MANANA_DATA_PLACEHOLDER__;
 let metricsData = __METRICS_DATA_PLACEHOLDER__;
 let stationsData = __STATIONS_DATA_PLACEHOLDER__;
+const v9Stats = __V9_DATA_PLACEHOLDER__;
 
 const DID_RESULTS = {
   NO2:  { beta3: 0.215,  pvalue: 0.5986, ci_low: -0.586, ci_high: 1.017,  r2: 0.646, n: 4245, pre_mean: 11.72 },
@@ -627,12 +647,6 @@ function selectZone(zone, btn) { currentZone = zone; document.querySelectorAll('
 // ===========================================================================
 // LÓGICA V9 (CÓDIGO ORIGINAL RESTAURADO)
 // ===========================================================================
-const v9Stats = {
-  'NO2_PAUL': { preR2: '0.64', gap: '-17.4%', desc: '✓ Reducción robusta (-2.42 µg/m³)' }, 'NO2_LANDAZURI': { preR2: '0.61', gap: '-10.5%', desc: '✓ Reducción atribuible' },
-  'PM10_PAUL': { preR2: '0.28', gap: '+11.9%', desc: '⚠ Aumento (fuente local)' }, 'PM10_LANDAZURI': { preR2: '0.25', gap: '+11.1%', desc: '⚠ Aumento estructural' },
-  'PM25_PAUL': { preR2: '0.33', gap: '-7.0%', desc: '✓ Reducción (Menos diésel)' }, 'PM25_LANDAZURI': { preR2: '0.31', gap: '-4.6%', desc: '✓ Leve mejora atribuible' },
-  'ICA_PAUL': { preR2: '0.38', gap: '-2.9%', desc: '≈ Mejora moderada' }, 'ICA_LANDAZURI': { preR2: '0.36', gap: '+0.4%', desc: '≈ Efecto neto incierto' }
-};
 let currentContV9 = 'NO2', currentStationV9 = 'PAUL';
 
 function renderV9Cards() {
@@ -901,6 +915,7 @@ content = content.replace('__PERF_DATA_PLACEHOLDER__', perf_json_str)
 content = content.replace('__MANANA_DATA_PLACEHOLDER__', manana_json_str)
 content = content.replace('__METRICS_DATA_PLACEHOLDER__', metrics_json_str)
 content = content.replace('__STATIONS_DATA_PLACEHOLDER__', stations_json_str)
+content = content.replace('__V9_DATA_PLACEHOLDER__', v9_json_str)
 content = content.replace('__PRED_DATE_PLACEHOLDER__', prediction_date_str)
 
 with open(output_html, 'w', encoding='utf-8') as f:
