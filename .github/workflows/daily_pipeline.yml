@@ -54,9 +54,12 @@ jobs:
       - name: Generar index.html
         run: python reports/html/build_v10.py
 
-      # ── 6. Copiar index.html a la raíz del repo ──────────────────────────────
+      # ── 6. Copiar dashboard generado a la raíz del repo ──────────────────────
       - name: Copiar dashboard a raíz
-        run: cp reports/plots/index.html index.html
+        run: |
+          LATEST_HTML=$(ls -t reports/html/dashboard_*.html | head -n 1)
+          echo "Copiando $LATEST_HTML a index.html"
+          cp "$LATEST_HTML" index.html
 
       # ── 7. Commit y push ─────────────────────────────────────────────────────
       - name: Publicar dashboard en GitHub Pages
