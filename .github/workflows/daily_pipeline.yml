@@ -48,7 +48,7 @@ jobs:
 
       # ── 4. Pipeline completo ─────────────────────────────────────────────────
       - name: Ejecutar pipeline (ingesta → features → modelo → predicción)
-        run: python run_pipeline.py
+        run: python run_pipeline.py --local-only
 
       # ── 5. Generar dashboard HTML ────────────────────────────────────────────
       - name: Generar index.html

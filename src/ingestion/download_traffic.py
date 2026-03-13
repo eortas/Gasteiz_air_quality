@@ -55,7 +55,7 @@ START_DATE    = datetime(2024, 3, 1)
 END_DATE      = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 DELAY_SECONDS = 1.0
 BATCH_SIZE    = 500
-SUPABASE_DAYS = 90
+SUPABASE_DAYS = 30
 SUPABASE_FROM = END_DATE - timedelta(days=SUPABASE_DAYS)
 
 
