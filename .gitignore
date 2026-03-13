@@ -8,6 +8,7 @@ __pycache__/
 
 # Datos (permitir solo comprimidos .gz para persistencia sin Supabase)
 data/raw/**
+!data/raw/**/
 !data/raw/**/*.csv.gz
 !data/raw/**/.gitkeep
 data/processed/
