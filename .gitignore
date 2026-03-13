@@ -6,8 +6,10 @@ __pycache__/
 *.pyo
 .pytest_cache/
 
-# Datos (no subir al repo, solo estructura)
-data/raw/
+# Datos (permitir solo comprimidos .gz para persistencia sin Supabase)
+data/raw/**
+!data/raw/**/*.csv.gz
+!data/raw/**/.gitkeep
 data/processed/
 data/analytical/
 

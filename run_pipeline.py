@@ -91,7 +91,8 @@ def find_station_daily_csv() -> Path | None:
 
 def main():
     skip_training = "--skip-training" in sys.argv
-    local_only    = "--local-only"    in sys.argv
+    # Ahora el modo por defecto es local-only para evitar dependencia de Supabase
+    local_only    = "--with-supabase" not in sys.argv
 
     ingestion_args = ["--local-only"] if local_only else []
 
