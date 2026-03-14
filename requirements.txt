@@ -26,13 +26,13 @@ uvicorn>=0.24
 # Dashboard
 streamlit>=1.28
 
-# Base de datos
-supabase>=2.0
-psycopg2-binary>=2.9
-sqlalchemy>=2.0
+# Base de datos (legacy - supabase disabled)
+# supabase>=2.0
+# psycopg2-binary>=2.9
+# sqlalchemy>=2.0
 
 # Utilidades
-python-dotenv>=1.0
+# python-dotenv>=1.0
 python-dateutil>=2.8
 loguru>=0.7
 tqdm>=4.66
