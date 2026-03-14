@@ -2,6 +2,9 @@
 
 **[Euskara](#euskara)** | **[English](#english)**
 
+> Note: Supabase integration is deprecated. The pipeline runs local-only by default.
+> Legacy Supabase code is kept in the repo but is not used.
+
 <a id="euskara"></a>
 
 
@@ -42,10 +45,8 @@ python run_pipeline.py
   ```bash
   python run_pipeline.py --skip-training
   ```
-- Tokiko hurbileko datuekin soilik exekutatu (Supabase integrazioa desgaituz):
-  ```bash
-  python run_pipeline.py --local-only
-  ```
+
+> Supabase aukera zaharra zen; ez da erabiltzen.
 
 ### Integrazio Etengabea
 
@@ -93,10 +94,8 @@ python run_pipeline.py
   ```bash
   python run_pipeline.py --skip-training
   ```
-- Run exclusively with local fallback data (disables Supabase integration):
-  ```bash
-  python run_pipeline.py --local-only
-  ```
+
+> Supabase was a legacy option; it is no longer used.
 
 ### Continuous Integration
 
