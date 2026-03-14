@@ -2,9 +2,6 @@
 
 **[Euskara](#euskara)** | **[English](#english)**
 
-> Note: Supabase integration is deprecated. The pipeline runs local-only by default.
-> Legacy Supabase code is kept in the repo but is not used.
-
 <a id="euskara"></a>
 
 
