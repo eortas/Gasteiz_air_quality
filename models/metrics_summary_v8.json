@@ -1,52 +1,52 @@
 {
   "NO2": {
-    "avg_cv_rmse": 3.9249,
-    "avg_cv_r2": 0.473
+    "avg_cv_rmse": 3.9018,
+    "avg_cv_r2": 0.4588
   },
   "PM10": {
-    "avg_cv_rmse": 4.1961,
-    "avg_cv_r2": 0.4424
+    "avg_cv_rmse": 4.1696,
+    "avg_cv_r2": 0.4558
   },
   "PM2.5": {
-    "avg_cv_rmse": 2.9704,
-    "avg_cv_r2": 0.5012
+    "avg_cv_rmse": 2.9582,
+    "avg_cv_r2": 0.5118
   },
   "ICA": {
-    "avg_cv_rmse": 7.5725,
-    "avg_cv_r2": 0.4322
+    "avg_cv_rmse": 7.5658,
+    "avg_cv_r2": 0.4428
   },
   "did_v8": {
     "NO2": {
-      "beta3": -0.1273,
-      "pvalue": 0.6096,
-      "ci_low": -0.616,
-      "ci_high": 0.3614,
-      "r2": 0.712,
-      "n_obs": 1452,
+      "beta3": -0.1281,
+      "pvalue": 0.6035,
+      "ci_low": -0.6115,
+      "ci_high": 0.3553,
+      "r2": 0.7133,
+      "n_obs": 1460,
       "significant": false,
       "fe_dummies": 25,
       "se_type": "clustered_by_date",
       "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
     },
     "PM10": {
-      "beta3": 3.1556,
+      "beta3": 3.1494,
       "pvalue": 0.0,
-      "ci_low": 2.7106,
-      "ci_high": 3.6007,
-      "r2": 0.3175,
-      "n_obs": 1452,
+      "ci_low": 2.7089,
+      "ci_high": 3.5898,
+      "r2": 0.3201,
+      "n_obs": 1460,
       "significant": true,
       "fe_dummies": 25,
       "se_type": "clustered_by_date",
       "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
     },
     "PM2.5": {
-      "beta3": 1.0983,
+      "beta3": 1.0967,
       "pvalue": 0.0,
-      "ci_low": 0.8718,
-      "ci_high": 1.3249,
-      "r2": 0.3637,
-      "n_obs": 1452,
+      "ci_low": 0.871,
+      "ci_high": 1.3224,
+      "r2": 0.3723,
+      "n_obs": 1460,
       "significant": true,
       "fe_dummies": 25,
       "se_type": "clustered_by_date",
