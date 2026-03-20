@@ -186,7 +186,7 @@ def main():
     if station_csv:
         if not run_script(
             "Event Study DiD + Synthetic Control",
-            "src/ml/plot_causal_v9.py",
+            "src/ml/train_model_v9.py",
             ["--station-data", str(station_csv)],
         ):
             logger.warning("⚠️  El análisis causal v9 falló — continuando.")

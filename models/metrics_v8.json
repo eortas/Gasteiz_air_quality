@@ -1,58 +1,58 @@
 {
   "target_NO2_zbe_d1": {
-    "cv_rmse": 3.5863,
-    "cv_mae": 2.8499,
-    "cv_r2": 0.4507,
-    "cv_mape": 22.93,
-    "n_features": 90
+    "cv_rmse": 3.6269,
+    "cv_mae": 2.8635,
+    "cv_r2": 0.4406,
+    "cv_mape": 23.79,
+    "n_features": 91
   },
   "target_NO2_out_d1": {
-    "cv_rmse": 4.2172,
-    "cv_mae": 3.3155,
-    "cv_r2": 0.4669,
-    "cv_mape": 25.96,
-    "n_features": 88
+    "cv_rmse": 4.1539,
+    "cv_mae": 3.3406,
+    "cv_r2": 0.4772,
+    "cv_mape": 26.38,
+    "n_features": 89
   },
   "target_PM10_zbe_d1": {
-    "cv_rmse": 3.7403,
-    "cv_mae": 2.7975,
-    "cv_r2": 0.4724,
-    "cv_mape": 23.83,
-    "n_features": 90
+    "cv_rmse": 3.7318,
+    "cv_mae": 2.762,
+    "cv_r2": 0.4692,
+    "cv_mape": 23.53,
+    "n_features": 92
   },
   "target_PM10_out_d1": {
-    "cv_rmse": 4.599,
-    "cv_mae": 3.4349,
-    "cv_r2": 0.4391,
-    "cv_mape": 27.02,
+    "cv_rmse": 4.511,
+    "cv_mae": 3.3774,
+    "cv_r2": 0.4645,
+    "cv_mape": 26.46,
     "n_features": 92
   },
   "target_PM2.5_zbe_d1": {
-    "cv_rmse": 2.5591,
-    "cv_mae": 1.9116,
-    "cv_r2": 0.5388,
-    "cv_mape": 22.21,
-    "n_features": 92
+    "cv_rmse": 2.5157,
+    "cv_mae": 1.8829,
+    "cv_r2": 0.5586,
+    "cv_mape": 22.34,
+    "n_features": 91
   },
   "target_PM2.5_out_d1": {
-    "cv_rmse": 3.3572,
-    "cv_mae": 2.4864,
-    "cv_r2": 0.4848,
-    "cv_mape": 25.46,
-    "n_features": 92
+    "cv_rmse": 3.3207,
+    "cv_mae": 2.4459,
+    "cv_r2": 0.4996,
+    "cv_mape": 25.12,
+    "n_features": 91
   },
   "target_ICA_zbe_d1": {
-    "cv_rmse": 6.4847,
-    "cv_mae": 4.6848,
-    "cv_r2": 0.477,
-    "cv_mape": 25.57,
-    "n_features": 92
+    "cv_rmse": 6.4612,
+    "cv_mae": 4.6596,
+    "cv_r2": 0.4793,
+    "cv_mape": 25.51,
+    "n_features": 91
   },
   "target_ICA_out_d1": {
-    "cv_rmse": 8.6469,
-    "cv_mae": 6.1149,
-    "cv_r2": 0.4086,
-    "cv_mape": 29.11,
+    "cv_rmse": 8.5125,
+    "cv_mae": 6.1172,
+    "cv_r2": 0.4274,
+    "cv_mape": 29.83,
     "n_features": 92
   }
 }

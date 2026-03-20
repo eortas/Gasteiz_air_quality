@@ -54,7 +54,7 @@ def run_synthetic_control(df: pd.DataFrame):
     para predecir la estación interior (Treated) en el periodo pre-ZBE.
     Aplica esos pesos al periodo post-ZBE para sacar el "Control Sintético".
     """
-    print("\n── 1. Entrenando Control Sintético (Ridge Regression) ────────")
+    print("\n-- 1. Entrenando Control Sintetico (Ridge Regression) ----------")
     from sklearn.linear_model import Ridge
     from sklearn.metrics import r2_score
 
@@ -147,21 +147,21 @@ def run_synthetic_control(df: pd.DataFrame):
                 }
             }
             
-            print(f"    [{cont}] {tr_station}: R²={pre_r2:.2f} | Gap={gap_pct:+.1f}%")
+            print(f"    [{cont}] {tr_station}: R2={pre_r2:.2f} | Gap={gap_pct:+.1f}%")
 
     with open(OUT_SC_FILE, "w", encoding="utf-8") as f:
         json.dump(sc_results, f, ensure_ascii=False)
-    print(f"  ✅ Guardado: {OUT_SC_FILE.name}")
+    print(f"  OK Guardado: {OUT_SC_FILE.name}")
 
 
-# ─── EVENT STUDY (DiD) ────────────────────────────────────────────────────────
+# --- EVENT STUDY (DiD) --------------------------------------------------------
 def run_event_study(df: pd.DataFrame):
     """
     Calcula un Event Study puro simplificado.
     Compara la media mensual de Treatment (IntraZBE) vs Control (ExtraZBE)
     relativo al mes 0 (implementación).
     """
-    print("\n── 2. Entrenando Event Study DiD ─────────────────────────────")
+    print("\n-- 2. Entrenando Event Study DiD -----------------------------")
     
     es_results = {cont: {} for cont in CONTAMINANTS}
     zbe_date = pd.Timestamp(ZBE_DATE_STR)
@@ -171,7 +171,7 @@ def run_event_study(df: pd.DataFrame):
     
     # Necesitamos al menos el mes -1 (agosto) como referencia
     if -1 not in df["month_idx"].values:
-        print("  ⚠️ No se encontró datos de referencia (mes -1) para el Event Study.")
+        print("  WARN No se encontro datos de referencia (mes -1) para el Event Study.")
         return
 
     for cont in CONTAMINANTS:
@@ -238,21 +238,21 @@ def run_event_study(df: pd.DataFrame):
 
     with open(OUT_ES_FILE, "w", encoding="utf-8") as f:
         json.dump(es_results, f, ensure_ascii=False)
-    print(f"  ✅ Guardado: {OUT_ES_FILE.name}")
+    print(f"  OK Guardado: {OUT_ES_FILE.name}")
 
 
-# ─── GRAFICAR ─────────────────────────────────────────────────────────────────
+# --- GRAFICAR -----------------------------------------------------------------
 def trigger_plots():
-    print("\n── 3. Generando Gráficos con plot_causal_v9.py ───────────────")
+    print("\n-- 3. Generando Graficos con plot_causal_v9.py -----------------")
     from subprocess import call
     
     script_path = str(ROOT_DIR / "src" / "ml" / "plot_causal_v9.py")
     ret = call([sys.executable, script_path])
     if ret != 0:
-        print("  ⚠️ Hubo un error al generar los gráficos (plot_causal_v9.py)")
+        print("  WARN Hubo un error al generar los graficos (plot_causal_v9.py)")
 
 
-# ─── MAIN ─────────────────────────────────────────────────────────────────────
+# --- MAIN ---------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--station-data", required=True, help="Ruta al station_daily.csv")
@@ -260,7 +260,7 @@ def main():
 
     data_path = Path(args.station_data)
     if not data_path.exists():
-        print(f"❌ No se encontró el dataset: {data_path}")
+        print(f"ERR No se encontro el dataset: {data_path}")
         sys.exit(1)
 
     df = load_data(data_path)
@@ -270,7 +270,7 @@ def main():
     
     trigger_plots()
     
-    print("\n✅ train_model_v9.py finalizado correctamente.")
+    print("\nOK train_model_v9.py finalizado correctamente.")
 
 
 if __name__ == "__main__":
