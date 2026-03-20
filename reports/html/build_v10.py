@@ -16,6 +16,19 @@ csv_file = MODELS_DIR / "counterfactual_gap_v8.csv"
 _out_idx = sys.argv.index("--output") if "--output" in sys.argv else None
 output_html = sys.argv[_out_idx + 1] if _out_idx is not None else str(ROOT_DIR / "reports" / "plots" / "index.html")
 
+# Calcular ruta relativa a la carpeta de plots para las imágenes
+try:
+    out_path = Path(output_html).resolve()
+    plots_dir = (ROOT_DIR / "reports" / "plots").resolve()
+    # Relativo desde el directorio del HTML hasta el directorio de plots
+    rel_path_to_plots = os.path.relpath(plots_dir, out_path.parent).replace("\\", "/")
+    if rel_path_to_plots == ".":
+        img_base_path = ""
+    else:
+        img_base_path = rel_path_to_plots + "/"
+except Exception:
+    img_base_path = "reports/plots/" # fallback
+
 # ==============================================================================
 # 2. DATOS PESTAÑAS 1 Y 2 (Causal v8)
 # ==============================================================================
@@ -39,18 +52,18 @@ try:
                             "gap": sub['gap'].tolist(),
                             "gap_pct": sub['gap_pct'].tolist() 
                         }
-        print("  ✅ Datos causales cargados.")
+        print("  OK Datos causales cargados.")
     else:
-        print(f"  ⚠️ El archivo {csv_file} no existe. Se omiten datos causales.")
+        print(f"  WARN El archivo {csv_file} no existe. Se omiten datos causales.")
 except Exception as e:
-    print(f"  ⚠️ Error procesando {csv_file}: {e}")
+    print(f"  WARN Error procesando {csv_file}: {e}")
 
 cf_json_str = json.dumps(cf_data)
 
 # ==============================================================================
 # 3. PREDICCIONES DE MAÑANA
 # ==============================================================================
-print("Leyendo predicciones de mañana desde predictions_latest.json...")
+print("Leyendo predicciones de manana desde predictions_latest.json...")
 pred_json_path = PROCESSED_DIR / "predictions_latest.json"
 manana_data = {'zbe': {}, 'out': {}}
 prediction_date_str = (datetime.now() + timedelta(days=1)).strftime("%d/%m/%Y")
@@ -72,10 +85,10 @@ try:
             else:
                 manana_data[zone][cont] = 0
 
-    print(f"  ✅ Predicciones para {prediction_date_str} cargadas.")
+    print(f"  OK Predicciones para {prediction_date_str} cargadas.")
 
 except Exception as e:
-    print(f"  ⚠️ No se pudo leer predictions_latest.json: {e}")
+    print(f"  WARN No se pudo leer predictions_latest.json: {e}")
     for z in ['zbe', 'out']:
         for c in ['NO2', 'PM10', 'PM2.5', 'ICA']:
             manana_data[z][c] = 0
@@ -139,12 +152,12 @@ try:
                 except Exception as e:
                     perf_data[zone][cont] = {"real": [None]*7, "pred": [0]*7}
 
-        print("  ✅ Predicciones y Backtest listos.")
+        print("  OK Predicciones y Backtest listos.")
     else:
         raise ValueError("El DataFrame de features está vacío.")
 
 except Exception as e:
-    print(f"  ⚠️ No se encontró parquet o error general en backtesting: {e}")
+    print(f"  WARN No se encontro parquet o error general en backtesting: {e}")
     for z in ['zbe', 'out']:
         perf_data[z] = {"labels": ["1", "2", "3", "4", "5", "6", "Ayer"]}
         for c in ['NO2', 'PM10', 'PM2.5']:
@@ -174,7 +187,7 @@ try:
                 }
         v9_json_str = json.dumps(v9_stats)
 except Exception as e:
-    print(f"  ⚠️ No se encontró synthetic_control_v9.json: {e}")
+    print(f"  WARN No se encontro synthetic_control_v9.json: {e}")
     v9_json_str = "{}"
 
 # ==============================================================================
@@ -218,7 +231,7 @@ try:
         raise ValueError("station_daily.csv está vacío.")
         
 except Exception as e:
-    print(f"  ⚠️ Error cargando station_daily para el mapa: {e}")
+    print(f"  WARN Error cargando station_daily para el mapa: {e}")
     for stn, meta in STATION_COORDS.items():
         stations_data[stn] = {**meta, "NO2": None, "PM10": None, "PM25": None, "ICA": None,
                               "pred_NO2": 0, "pred_PM10": 0, "pred_PM25": 0}
@@ -744,8 +757,8 @@ function updateV9Images() {
   imgSc.nextElementSibling.style.display = 'none';
   imgEs.nextElementSibling.style.display = 'none';
   imgSc.style.display = 'block'; imgEs.style.display = 'block'; 
-  imgSc.src = `reports/plots/synthetic_control_${contName}_${currentStationV9}.png`; 
-  imgEs.src = `reports/plots/event_study_${contName}.png`;
+  imgSc.src = `__IMG_BASE_PATH__synthetic_control_${contName}_${currentStationV9}.png`; 
+  imgEs.src = `__IMG_BASE_PATH__event_study_${contName}.png`;
 }
 
 function selectContV9(cont, btn) { currentContV9 = cont; document.querySelectorAll('#contTabsV9 .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderV9Cards(); updateV9Images(); }
@@ -944,9 +957,10 @@ content = content.replace('__MANANA_DATA_PLACEHOLDER__', manana_json_str)
 content = content.replace('__METRICS_DATA_PLACEHOLDER__', metrics_json_str)
 content = content.replace('__STATIONS_DATA_PLACEHOLDER__', stations_json_str)
 content = content.replace('__V9_DATA_PLACEHOLDER__', v9_json_str)
+content = content.replace('__IMG_BASE_PATH__', img_base_path)
 content = content.replace('__PRED_DATE_PLACEHOLDER__', prediction_date_str)
 
 with open(output_html, 'w', encoding='utf-8') as f:
     f.write(content)
 
-print(f"¡Listo! Archivo {output_html} generado correctamente.")
+print(f"Listo! Archivo {output_html} generado correctamente.")
