@@ -408,6 +408,10 @@ html_template = """<!DOCTYPE html>
   .leaflet-control-attribution { background: var(--surface) !important; color: var(--muted) !important; }
   .leaflet-control-attribution a { color: var(--accent) !important; }
   .leaflet-control-zoom a { background: var(--surface2) !important; color: var(--text) !important; border-color: var(--border) !important; }
+  
+  /* Estilos para el iframe de tráfico */
+  .traffic-iframe-container { width: 100%; height: calc(100vh - 120px); border: none; }
+  #trafficIframe { width: 100%; height: 100%; border: none; }
 </style>
 </head>
 <body>
@@ -426,6 +430,7 @@ html_template = """<!DOCTYPE html>
     <button class="top-nav-btn" onclick="switchMainView('v8', this)">2. Monitor Interactivo Diario</button>
     <button class="top-nav-btn" onclick="switchMainView('v9', this)">3. Validación Causal</button>
     <button class="top-nav-btn" onclick="switchMainView('map', this)">4. Mapa de Estaciones</button>
+    <button class="top-nav-btn" onclick="switchMainView('traffic', this)">5. Mapa de Tráfico</button>
   </div>
 </div>
 
@@ -604,6 +609,12 @@ html_template = """<!DOCTYPE html>
   </div>
   <div class="map-wrap">
     <div id="stationMap"></div>
+  </div>
+</div>
+
+<div id="view-traffic" class="view-container">
+  <div class="traffic-iframe-container">
+    <iframe id="trafficIframe" src="traffic_map.html" title="Mapa de Tráfico"></iframe>
   </div>
 </div>
 
