@@ -30,12 +30,32 @@ def build_traffic_dashboard():
     
     def get_daily_stats(date):
         day_df = traffic_df[traffic_df["date"] == date]
+        if day_df.empty:
+            return pd.DataFrame()
+            
         stats = day_df.groupby("code").agg({
             "volume": "sum",
             "occupancy": "mean",
             "load": "mean"
         }).reset_index()
-        return stats
+        
+        # Encontrar el tramo con carga máxima para cada sensor
+        peak_info = []
+        for code, group in day_df.groupby("code"):
+            if group["load"].isna().all():
+                peak_info.append({"code": code, "peak_h": None, "peak_l": None, "peak_v": None})
+                continue
+                
+            peak_row = group.loc[group["load"].idxmax()]
+            peak_info.append({
+                "code": code,
+                "peak_h": peak_row["start_date"].strftime("%H:%M"),
+                "peak_l": round(float(peak_row["load"]), 1),
+                "peak_v": int(peak_row["volume"])
+            })
+            
+        peak_df = pd.DataFrame(peak_info)
+        return pd.merge(stats, peak_df, on="code", how="left")
 
     stats_today = get_daily_stats(today_date)
     stats_yesterday = get_daily_stats(yesterday_date)
@@ -57,6 +77,17 @@ def build_traffic_dashboard():
 
         v_t, o_t, l_t = get_val(s_today, "volume"), get_val(s_today, "occupancy"), get_val(s_today, "load")
         v_y, o_y, l_y = get_val(s_yesterday, "volume"), get_val(s_yesterday, "occupancy"), get_val(s_yesterday, "load")
+        
+        peak_t = {
+            "h": s_today["peak_h"].iloc[0] if not s_today.empty else None,
+            "l": s_today["peak_l"].iloc[0] if not s_today.empty else None,
+            "v": int(s_today["peak_v"].iloc[0]) if not s_today.empty and not pd.isna(s_today["peak_v"].iloc[0]) else None
+        }
+        peak_y = {
+            "h": s_yesterday["peak_h"].iloc[0] if not s_yesterday.empty else None,
+            "l": s_yesterday["peak_l"].iloc[0] if not s_yesterday.empty else None,
+            "v": int(s_yesterday["peak_v"].iloc[0]) if not s_yesterday.empty and not pd.isna(s_yesterday["peak_v"].iloc[0]) else None
+        }
 
         # Filtrar si todos los valores son 0 en ambos días
         if (v_t == 0 or v_t is None) and (o_t == 0 or o_t is None) and (l_t == 0 or l_t is None) and \
@@ -68,8 +99,8 @@ def build_traffic_dashboard():
             "name": sensor["name"],
             "lat": sensor["lat"],
             "lon": sensor["lon"],
-            "today": {"v": v_t, "o": o_t, "l": l_t},
-            "yesterday": {"v": v_y, "o": o_y, "l": l_y}
+            "today": {"v": v_t, "o": o_t, "l": l_t, "peak": peak_t},
+            "yesterday": {"v": v_y, "o": o_y, "l": l_y, "peak": peak_y}
         })
 
     # HTML Template
@@ -157,7 +188,14 @@ def build_traffic_dashboard():
                     <div class="popup-title">${s.name} (${s.code})</div>
                     <div class="popup-row"><span>Carga:</span> <b>${data.l !== null ? data.l + '%' : 'N/A'}</b></div>
                     <div class="popup-row"><span>Ocupación:</span> <b>${data.o !== null ? data.o + '%' : 'N/A'}</b></div>
-                    <div class="popup-row"><span>Volumen:</span> <b>${data.v !== null ? data.v : 'N/A'}</b></div>
+                    <div class="popup-row"><span>Volumen total:</span> <b>${data.v !== null ? data.v : 'N/A'}</b></div>
+                    
+                    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border);">
+                        <div style="font-size: 10px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Pico de Carga (Tramo Máx)</div>
+                        <div class="popup-row"><span>Hora:</span> <b>${data.peak.h || 'N/A'}</b></div>
+                        <div class="popup-row"><span>Carga pico:</span> <b>${data.peak.l !== null ? data.peak.l + '%' : 'N/A'}</b></div>
+                        <div class="popup-row"><span>Volumen pico:</span> <b>${data.peak.v || 'N/A'}</b></div>
+                    </div>
                 `;
                 
                 marker.bindPopup(popupContent);
