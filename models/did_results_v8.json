@@ -1,9 +1,9 @@
 {
   "NO2": {
-    "beta3": -0.1445,
-    "pvalue": 0.553,
-    "ci_low": -0.6219,
-    "ci_high": 0.3328,
+    "beta3": -0.145,
+    "pvalue": 0.5515,
+    "ci_low": -0.6224,
+    "ci_high": 0.3323,
     "r2": 0.7099,
     "n_obs": 1472,
     "significant": false,

@@ -1,10 +1,10 @@
 """
-build_features.py  — v6
+build_features.py  - v6
 ==================
 Construye el dataset de entrenamiento para el modelo ML multioutput.
 
 CAMBIOS v6 (hipótesis calderas / ZBE):
-  - Nueva variable HDD (Heating Degree Days, base 15°C): captura demanda de
+  - Nueva variable HDD (Heating Degree Days, base 15C): captura demanda de
     calefacción residencial, principal hipótesis para explicar el aumento de
     NO2 dentro de la ZBE pese a reducción de tráfico.
   - Variables derivadas: temp_range (amplitud térmica), dias_frio (HDD > 10),
@@ -15,13 +15,13 @@ CAMBIOS v6 (hipótesis calderas / ZBE):
     como raw target).
 
 Targets (predicción diaria, separados por grupo ZBE):
-  - NO2_zbe, PM10_zbe, PM2.5_zbe, ICA_zbe  → estación PAUL (dentro ZBE)
-  - NO2_out, PM10_out, PM2.5_out, ICA_out  → media resto estaciones (fuera ZBE)
-  → targets: target_NO2_zbe_d1 ... target_ICA_out_d3
+  - NO2_zbe, PM10_zbe, PM2.5_zbe, ICA_zbe  -> estación PAUL (dentro ZBE)
+  - NO2_out, PM10_out, PM2.5_out, ICA_out  -> media resto estaciones (fuera ZBE)
+  -> targets: target_NO2_zbe_d1 ... target_ICA_out_d3
 
 Estaciones:
-  - PAUL, LANDAZURI  → grupo ZBE (dentro de la Zona de Bajas Emisiones)
-  - BEATO, FUEROS, HUETOS, ZUMABIDE → grupo OUT (fuera ZBE)
+  - PAUL, LANDAZURI  -> grupo ZBE (dentro de la Zona de Bajas Emisiones)
+  - BEATO, FUEROS, HUETOS, ZUMABIDE -> grupo OUT (fuera ZBE)
 
 Uso:
     python build_features.py
@@ -40,7 +40,7 @@ import numpy as np
 
 warnings.filterwarnings("ignore")
 
-# ─── RUTAS ────────────────────────────────────────────────────────────────────
+# -- RUTAS ----------------------------------
 ROOT_DIR      = Path(__file__).parent.parent.parent
 AIR_DIR       = ROOT_DIR / "data" / "raw" / "air"
 TRAFFIC_DIR   = ROOT_DIR / "data" / "raw" / "traffic"
@@ -48,7 +48,7 @@ WEATHER_DIR   = ROOT_DIR / "data" / "raw" / "weather"
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-# ─── CONFIG ───────────────────────────────────────────────────────────────────
+# -- CONFIG ----------------------------------
 ZBE_STATIONS  = ["PAUL", "BEATO", "FUEROS"]
 OUT_STATIONS  = ["LANDAZURI", "HUETOS", "ZUMABIDE"]
 CONTAMINANTS  = ["NO2", "PM10", "PM2.5", "ICA"]
@@ -60,7 +60,7 @@ ZBE_DATE      = pd.Timestamp("2025-09-01", tz="UTC")
 LATITUDE      = 42.8467
 LONGITUDE     = -2.6716
 
-# Base para HDD — temperatura de encendido estándar España
+# Base para HDD - temperatura de encendido estándar España
 HDD_BASE_TEMP = 15.0
 
 FORECAST_VARS = [
@@ -70,15 +70,15 @@ FORECAST_VARS = [
     "weather_code", "sunshine_duration",
 ]
 
-# ─── HELPERS ──────────────────────────────────────────────────────────────────
+# -- HELPERS ---------------------------------
 def log(msg=""):
     print(msg)
 
 def section(title):
-    log(); log("═" * 65); log(f"  {title}"); log("═" * 65)
+    log(); log("=" * 65); log(f"  {title}"); log("=" * 65)
 
 def subsection(title):
-    log(); log(f"── {title} " + "─" * max(0, 58 - len(title)))
+    log(); log(f"- {title} " + "-" * max(0, 58 - len(title)))
 
 def load_csvs(directory: Path, pattern: str, ts_col: str) -> pd.DataFrame:
     files = sorted(directory.glob(pattern))
@@ -93,9 +93,9 @@ def load_csvs(directory: Path, pattern: str, ts_col: str) -> pd.DataFrame:
     return df.dropna(subset=[ts_col]).sort_values(ts_col).reset_index(drop=True)
 
 
-# ─── 1. AIRE ──────────────────────────────────────────────────────────────────
+# -- 1. AIRE ---------------------------------
 def load_air_daily() -> pd.DataFrame:
-    section("1. Calidad del aire → media diaria por grupo ZBE / OUT")
+    section("1. Calidad del aire -> media diaria por grupo ZBE / OUT")
 
     df = load_csvs(AIR_DIR, "kunak_[0-9]*.csv", "timestamp")
     log(f"  Filas brutas    : {len(df):,}")
@@ -122,7 +122,7 @@ def load_air_daily() -> pd.DataFrame:
 
     for t in TARGETS:
         if t not in daily.columns:
-            log(f"  ⚠️  Target '{t}' no encontrado — rellenando con NaN")
+            log(f"  [WARN]  Target '{t}' no encontrado - rellenando con NaN")
             daily[t] = np.nan
 
     daily["date"] = pd.to_datetime(daily["date"], utc=True)
@@ -140,15 +140,15 @@ def load_air_daily() -> pd.DataFrame:
                 pre_m  = pre[col].mean()
                 post_m = post[col].mean()
                 chg    = (post_m - pre_m) / pre_m * 100 if pre_m > 0 else 0
-                arrow  = "↓" if chg < 0 else "↑"
+                arrow  = "v" if chg < 0 else "^"
                 log(f"  {col:<15} {pre_m:>10.2f} {post_m:>10.2f} {chg:>+7.1f}% {arrow}")
 
     return daily.sort_values("date").reset_index(drop=True)
 
 
-# ─── 2. TRÁFICO ───────────────────────────────────────────────────────────────
+# -- 2. TRÁFICO --------------------------------
 def load_traffic_daily() -> pd.DataFrame:
-    section("2. Tráfico → agregado diario + proxy futuro")
+    section("2. Tráfico -> agregado diario + proxy futuro")
 
     df = load_csvs(TRAFFIC_DIR, "trafico_[0-9]*.csv", "start_date")
     df["date"] = df["start_date"].dt.floor("D")
@@ -223,9 +223,9 @@ def load_traffic_daily() -> pd.DataFrame:
     return daily.sort_values("date").reset_index(drop=True)
 
 
-# ─── 3. METEOROLOGÍA ─────────────────────────────────────────────────────────
+# -- 3. METEOROLOGÍA -----------------------------
 def load_weather_daily() -> pd.DataFrame:
-    section("3. Meteorología → agregado diario + variables de demanda térmica")
+    section("3. Meteorología -> agregado diario + variables de demanda térmica")
 
     df = load_csvs(WEATHER_DIR, "weather_[0-9]*.csv", "timestamp")
     df["date"] = df["timestamp"].dt.floor("D")
@@ -252,10 +252,10 @@ def load_weather_daily() -> pd.DataFrame:
 
     weather = df.groupby("date").agg(agg_dict).reset_index()
 
-    # ── VARIABLES DE DEMANDA TÉRMICA (hipótesis calderas) ─────────────────
+    # - VARIABLES DE DEMANDA TÉRMICA (hipótesis calderas) ---------
     # Si no vienen precalculadas las columnas daily_*, las calculamos nosotros
     if "daily_temperature_2m_max" in df.columns:
-        # Los CSV ya traen columnas daily_ precalculadas — usarlas directamente
+        # Los CSV ya traen columnas daily_ precalculadas - usarlas directamente
         daily_agg = (df.groupby("date")[
             ["daily_temperature_2m_mean",
              "daily_temperature_2m_max",
@@ -280,14 +280,14 @@ def load_weather_daily() -> pd.DataFrame:
         weather = weather.merge(temp_agg, on="date", how="left")
         temp_col = "temp_media_dia"
 
-    # HDD: Heating Degree Days base 15°C
-    # Cuanto más alto, más frío el día → más calderas encendidas
+    # HDD: Heating Degree Days base 15C
+    # Cuanto más alto, más frío el día -> más calderas encendidas
     weather["HDD"] = (HDD_BASE_TEMP - weather[temp_col]).clip(lower=0)
 
-    # Amplitud térmica diaria (alta amplitud → irradiación nocturna fuerte → más frío)
+    # Amplitud térmica diaria (alta amplitud -> irradiación nocturna fuerte -> más frío)
     weather["temp_range"] = weather["temp_max_dia"] - weather["temp_min_dia"]
 
-    # Flag día muy frío (HDD > 10 equivale a temp media < 5°C)
+    # Flag día muy frío (HDD > 10 equivale a temp media < 5C)
     weather["dia_muy_frio"] = (weather["HDD"] > 10).astype(int)
 
     # Demanda acumulada 7 días (representa carga térmica reciente del edificio)
@@ -311,7 +311,7 @@ def load_weather_daily() -> pd.DataFrame:
     log(f"  HDD medio invierno : {weather[weather['date'].dt.month.isin([11,12,1,2])]['HDD'].mean():.2f}")
     log(f"  Días muy fríos (HDD>10): {weather['dia_muy_frio'].sum()}")
 
-    # ── DIAGNÓSTICO HDD PRE vs POST ZBE ───────────────────────────────────
+    # - DIAGNÓSTICO HDD PRE vs POST ZBE ------------------
     subsection("Diagnóstico HDD: ¿fue el invierno post-ZBE más frío?")
     pre_hdd  = weather[weather["date"] <  ZBE_DATE]["HDD"]
     post_hdd = weather[weather["date"] >= ZBE_DATE]["HDD"]
@@ -319,22 +319,22 @@ def load_weather_daily() -> pd.DataFrame:
     log(f"  HDD medio POST-ZBE : {post_hdd.mean():.2f}")
     delta = post_hdd.mean() - pre_hdd.mean()
     if delta > 0.5:
-        log(f"  ⚠️  Invierno post-ZBE MÁS FRÍO (+{delta:.2f} HDD) — puede enmascarar mejora NO2")
+        log(f"  [WARN]  Invierno post-ZBE MÁS FRÍO (+{delta:.2f} HDD) - puede enmascarar mejora NO2")
     elif delta < -0.5:
-        log(f"  ✅ Invierno post-ZBE MÁS CÁLIDO ({delta:.2f} HDD) — si NO2 sube, es efecto estructural")
+        log(f"  [OK] Invierno post-ZBE MÁS CÁLIDO ({delta:.2f} HDD) - si NO2 sube, es efecto estructural")
     else:
-        log(f"  ≈  Inviernos comparables (Δ={delta:+.2f} HDD) — comparación directa válida")
+        log(f"  ~  Inviernos comparables (Delta={delta:+.2f} HDD) - comparación directa válida")
 
     return weather.sort_values("date").reset_index(drop=True)
 
 
-# ─── 4. PRONÓSTICO OPEN-METEO ────────────────────────────────────────────────
+# -- 4. PRONÓSTICO OPEN-METEO ------------------------
 def fetch_forecast() -> pd.DataFrame:
     section("4. Descargando pronóstico Open-Meteo (7 días)")
     try:
         import requests
     except ImportError:
-        log("  ⚠️  pip install requests — saltando pronóstico")
+        log("  [WARN]  pip install requests - saltando pronóstico")
         return pd.DataFrame()
 
     url = "https://api.open-meteo.com/v1/forecast"
@@ -357,7 +357,7 @@ def fetch_forecast() -> pd.DataFrame:
         r.raise_for_status()
         data = r.json()
     except Exception as e:
-        log(f"  ⚠️  Error en Open-Meteo: {e}")
+        log(f"  [WARN]  Error en Open-Meteo: {e}")
         return pd.DataFrame()
 
     df = pd.DataFrame(data.get("hourly", {}))
@@ -403,18 +403,18 @@ def fetch_forecast() -> pd.DataFrame:
                 fc_flat[f"fc_{col}_d{h}"] = row_fc[col].iloc[0]
         days_found += 1
 
-    log(f"  Pronóstico descargado: {days_found} días — {len(fc_flat)} features")
+    log(f"  Pronóstico descargado: {days_found} días - {len(fc_flat)} features")
     return pd.DataFrame([fc_flat]) if fc_flat else pd.DataFrame()
 
 
-# ─── 5. MERGE ─────────────────────────────────────────────────────────────────
+# -- 5. MERGE ---------------------------------
 def merge_daily(air, traffic, weather) -> pd.DataFrame:
     section("5. Merge diario de las 3 fuentes")
 
     for df_input in [air, traffic, weather]:
         df_input["date"] = pd.to_datetime(df_input["date"], utc=True)
 
-    # ─── 4. MERGE FINAL ───────────────────────────────────────────────────────────
+    # -- 4. MERGE FINAL ------------------------------
     section("4. Unificando datasets (outer join)")
     df = (air
           .merge(traffic, on="date", how="outer")
@@ -432,11 +432,11 @@ def merge_daily(air, traffic, weather) -> pd.DataFrame:
         df = pd.concat([df, today_df], ignore_index=True)
 
     log(f"  Días tras merge: {len(df):,}")
-    log(f"  Rango: {df['date'].min().date()} → {df['date'].max().date()}")
+    log(f"  Rango: {df['date'].min().date()} -> {df['date'].max().date()}")
     return df.sort_values("date").reset_index(drop=True)
 
 
-# ─── 6. FEATURES TEMPORALES ───────────────────────────────────────────────────
+# -- 6. FEATURES TEMPORALES --------------------------
 def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     section("6. Features temporales")
 
@@ -462,17 +462,17 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     df["is_post_zbe"]    = (df["date"] >= ZBE_DATE).astype(int)
     df["days_since_zbe"] = (df["date"] - ZBE_DATE).dt.days.clip(lower=0)
 
-    # ── NUEVAS: variables para análisis de calderas ────────────────────────
+    # - NUEVAS: variables para análisis de calderas ------------
     # Invierno estricto (nov-feb): máxima demanda de calefacción residencial
     df["es_invierno_estricto"] = df["month"].isin([11, 12, 1, 2]).astype(int)
 
-    # Verano (jun-sep): calderas apagadas → aísla efecto tráfico puro
+    # Verano (jun-sep): calderas apagadas -> aísla efecto tráfico puro
     # (útil cuando haya datos post-ZBE de verano, a partir de jun-2026)
     df["es_verano"] = df["month"].isin([6, 7, 8, 9]).astype(int)
 
     # Domingo: tráfico mínimo pero calderas encendidas igual
     # Prueba del Domingo: si NO2 no baja los domingos post-ZBE en invierno
-    # → el problema es estructural (calderas), no de tráfico puntual
+    # -> el problema es estructural (calderas), no de tráfico puntual
     df["es_domingo"] = (df["day_of_week"] == 6).astype(int)
 
     # Interacción clave: domingo de invierno (tráfico mínimo + calderas máximo)
@@ -485,7 +485,7 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ─── 7. LAGS Y ROLLING ────────────────────────────────────────────────────────
+# -- 7. LAGS Y ROLLING ----------------------------
 def add_lags_and_rolling(df: pd.DataFrame) -> pd.DataFrame:
     section("7. Lags y rolling stats diarios")
 
@@ -517,8 +517,8 @@ def add_lags_and_rolling(df: pd.DataFrame) -> pd.DataFrame:
         df[f"traffic_volume_lag_{lag}d"]    = df["traffic_volume"].shift(lag)
         df[f"traffic_occupancy_lag_{lag}d"] = df["traffic_occupancy"].shift(lag)
 
-    # ── ROLLING DE HDD (demanda acumulada de calefacción) ─────────────────
-    # Suma HDD últimos 7 y 14 días → representa la carga térmica acumulada
+    # - ROLLING DE HDD (demanda acumulada de calefacción) ---------
+    # Suma HDD últimos 7 y 14 días -> representa la carga térmica acumulada
     # del edificio: si llevas 7 días fríos, las calderas llevan 7 días a tope
     if "HDD" in df.columns:
         df["HDD_acum_7d"]  = df["HDD"].shift(1).rolling(7,  min_periods=2).sum()
@@ -530,7 +530,7 @@ def add_lags_and_rolling(df: pd.DataFrame) -> pd.DataFrame:
     return df.reset_index()
 
 
-# ─── 8. TARGETS FUTUROS ───────────────────────────────────────────────────────
+# -- 8. TARGETS FUTUROS ----------------------------
 def add_targets(df: pd.DataFrame) -> pd.DataFrame:
     section("8. Construyendo targets futuros")
 
@@ -549,10 +549,10 @@ def add_targets(df: pd.DataFrame) -> pd.DataFrame:
     return df.reset_index()
 
 
-# ─── 9. PRONÓSTICO COMO FEATURES ─────────────────────────────────────────────
+# -- 9. PRONÓSTICO COMO FEATURES -----------------------
 def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
     if fc.empty:
-        log("  Sin pronóstico — usando proxy histórico en training")
+        log("  Sin pronóstico - usando proxy histórico en training")
         weather_base_cols = [c for c in df.columns if any(x in c for x in
             ["temperature", "precipitation", "wind", "cloud",
              "humidity", "boundary", "sunshine", "HDD"])
@@ -586,16 +586,16 @@ def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
     return df.reset_index()
 
 
-# ─── 10. ANÁLISIS PRUEBA DEL DOMINGO ─────────────────────────────────────────
+# -- 10. ANÁLISIS PRUEBA DEL DOMINGO ---------------------
 def prueba_del_domingo(df: pd.DataFrame) -> None:
     """
     Diagnóstico inline: compara NO2_zbe los domingos de invierno
     pre vs post ZBE. Si NO2 no baja, el problema son las calderas.
     """
-    section("10b. DIAGNÓSTICO — Prueba del Domingo (calderas vs tráfico)")
+    section("10b. DIAGNÓSTICO - Prueba del Domingo (calderas vs tráfico)")
 
     if "NO2_zbe" not in df.columns:
-        log("  ⚠️  NO2_zbe no disponible")
+        log("  [WARN]  NO2_zbe no disponible")
         return
 
     df["date_ts"] = pd.to_datetime(df["date"], utc=True)
@@ -606,27 +606,27 @@ def prueba_del_domingo(df: pd.DataFrame) -> None:
     post_dom = inv_dom[inv_dom["date_ts"] >= ZBE_DATE]["NO2_zbe"]
 
     if pre_dom.empty or post_dom.empty:
-        log("  ⚠️  Datos insuficientes para la Prueba del Domingo")
+        log("  [WARN]  Datos insuficientes para la Prueba del Domingo")
         return
 
     delta = post_dom.mean() - pre_dom.mean()
     pct   = delta / pre_dom.mean() * 100
 
-    log(f"  Domingos de invierno PRE-ZBE  (n={len(pre_dom)}): NO2_zbe = {pre_dom.mean():.2f} µg/m³")
-    log(f"  Domingos de invierno POST-ZBE (n={len(post_dom)}): NO2_zbe = {post_dom.mean():.2f} µg/m³")
-    log(f"  Δ = {delta:+.2f} µg/m³  ({pct:+.1f}%)")
+    log(f"  Domingos de invierno PRE-ZBE  (n={len(pre_dom)}): NO2_zbe = {pre_dom.mean():.2f} ug/m3")
+    log(f"  Domingos de invierno POST-ZBE (n={len(post_dom)}): NO2_zbe = {post_dom.mean():.2f} ug/m3")
+    log(f"  Delta = {delta:+.2f} ug/m3  ({pct:+.1f}%)")
 
     if pct > 5:
-        log(f"  🏠 RESULTADO: NO2 SUBE los domingos de invierno post-ZBE.")
-        log(f"     → Evidencia de que las CALDERAS son la fuente dominante.")
-        log(f"     → La ZBE puede estar funcionando contra el tráfico, pero")
+        log(f"  [HOME] RESULTADO: NO2 SUBE los domingos de invierno post-ZBE.")
+        log(f"     -> Evidencia de que las CALDERAS son la fuente dominante.")
+        log(f"     -> La ZBE puede estar funcionando contra el tráfico, pero")
         log(f"       el efecto queda enmascarado por la combustión residencial.")
     elif pct < -5:
-        log(f"  🚗 RESULTADO: NO2 BAJA los domingos de invierno post-ZBE.")
-        log(f"     → La ZBE tiene efecto incluso en días de tráfico mínimo.")
-        log(f"     → Posible mejora en calderas o cambio de combustible.")
+        log(f"  [CAR] RESULTADO: NO2 BAJA los domingos de invierno post-ZBE.")
+        log(f"     -> La ZBE tiene efecto incluso en días de tráfico mínimo.")
+        log(f"     -> Posible mejora en calderas o cambio de combustible.")
     else:
-        log(f"  ≈  RESULTADO: Sin cambio significativo — datos insuficientes")
+        log(f"  ~  RESULTADO: Sin cambio significativo - datos insuficientes")
         log(f"     o efectos contrapuestos que se anulan.")
 
     # También: días muy fríos (HDD > 10)
@@ -639,12 +639,12 @@ def prueba_del_domingo(df: pd.DataFrame) -> None:
         if not pre_frio.empty and not post_frio.empty:
             delta_f = post_frio.mean() - pre_frio.mean()
             pct_f   = delta_f / pre_frio.mean() * 100
-            log(f"  Días muy fríos (HDD>10) PRE-ZBE  (n={len(pre_frio)}): {pre_frio.mean():.2f} µg/m³")
-            log(f"  Días muy fríos (HDD>10) POST-ZBE (n={len(post_frio)}): {post_frio.mean():.2f} µg/m³")
-            log(f"  Δ días fríos = {delta_f:+.2f} µg/m³  ({pct_f:+.1f}%)")
+            log(f"  Días muy fríos (HDD>10) PRE-ZBE  (n={len(pre_frio)}): {pre_frio.mean():.2f} ug/m3")
+            log(f"  Días muy fríos (HDD>10) POST-ZBE (n={len(post_frio)}): {post_frio.mean():.2f} ug/m3")
+            log(f"  Delta días fríos = {delta_f:+.2f} ug/m3  ({pct_f:+.1f}%)")
 
 
-# ─── 11. LIMPIAR Y GUARDAR ───────────────────────────────────────────────────
+# -- 11. LIMPIAR Y GUARDAR --------------------------
 def clean_and_save(df: pd.DataFrame, save_csv: bool = False) -> pd.DataFrame:
     section("11. Limpieza final y guardado")
 
@@ -668,10 +668,10 @@ def clean_and_save(df: pd.DataFrame, save_csv: bool = False) -> pd.DataFrame:
         df = df.dropna(subset=lag_cols[:4], how="any")
     log(f"  Filas eliminadas (sin lags)   : {before - len(df):,}")
 
-    log(f"\n  ✅ Días finales     : {len(df):,}")
+    log(f"\n  [OK] Días finales     : {len(df):,}")
     log(f"  Features entrada   : {len(feature_cols)}")
     log(f"  Targets salida     : {len(target_cols)}")
-    log(f"  Rango              : {df['date'].min().date()} → {df['date'].max().date()}")
+    log(f"  Rango              : {df['date'].min().date()} -> {df['date'].max().date()}")
 
     # Verificar que HDD está en features
     hdd_feats = [c for c in feature_cols if "HDD" in c or "hdd" in c.lower()]
@@ -679,24 +679,24 @@ def clean_and_save(df: pd.DataFrame, save_csv: bool = False) -> pd.DataFrame:
 
     out = PROCESSED_DIR / "features_daily.parquet"
     df.to_parquet(out, index=False)
-    log(f"\n  ✅ {out}  ({out.stat().st_size/1024/1024:.1f} MB)")
+    log(f"\n  [OK] {out}  ({out.stat().st_size/1024/1024:.1f} MB)")
 
     if save_csv:
         out_csv = PROCESSED_DIR / "features_daily.csv"
         df.to_csv(out_csv, index=False)
-        log(f"  ✅ {out_csv}")
+        log(f"  [OK] {out_csv}")
 
     # Split temporal
     n = len(df)
     t_end = int(n * 0.70)
     v_end = int(n * 0.85)
-    log(f"\n── SPLIT TEMPORAL SUGERIDO ──────────────────────────────")
-    log(f"  Train (70%): {df['date'].iloc[0].date()} → {df['date'].iloc[t_end].date()}  ({t_end} días)")
-    log(f"  Val   (15%): {df['date'].iloc[t_end].date()} → {df['date'].iloc[v_end].date()}  ({v_end-t_end} días)")
-    log(f"  Test  (15%): {df['date'].iloc[v_end].date()} → {df['date'].iloc[-1].date()}  ({n-v_end} días)")
+    log(f"\n- SPLIT TEMPORAL SUGERIDO ---------------")
+    log(f"  Train (70%): {df['date'].iloc[0].date()} -> {df['date'].iloc[t_end].date()}  ({t_end} días)")
+    log(f"  Val   (15%): {df['date'].iloc[t_end].date()} -> {df['date'].iloc[v_end].date()}  ({v_end-t_end} días)")
+    log(f"  Test  (15%): {df['date'].iloc[v_end].date()} -> {df['date'].iloc[-1].date()}  ({n-v_end} días)")
 
     # Stats targets d1
-    log(f"\n── ESTADÍSTICAS TARGETS (d1) ─────────────────────────────")
+    log(f"\n- ESTADÍSTICAS TARGETS (d1) ---------------")
     for t in TARGETS:
         col = f"target_{t}_d1"
         if col in df.columns:
@@ -704,22 +704,22 @@ def clean_and_save(df: pd.DataFrame, save_csv: bool = False) -> pd.DataFrame:
             log(f"  {t:<12}: mean={s['mean']:.2f}  std={s['std']:.2f}  "
                 f"min={s['min']:.2f}  max={s['max']:.2f}")
 
-    log(f"\n── SIGUIENTE PASO ────────────────────────────────────────")
+    log(f"\n- SIGUIENTE PASO --------------------")
     log(f"  python train_model.py")
-    log(f"  HDD y variables de calderas incluidas — espera ver HDD en Top 10")
+    log(f"  HDD y variables de calderas incluidas - espera ver HDD en Top 10")
     log(f"  Feature Importance para NO2_zbe_d1")
 
     return df
 
 
-# ─── MAIN ─────────────────────────────────────────────────────────────────────
+# -- MAIN -----------------------------------
 def main():
     save_csv      = "--csv"           in sys.argv
     with_forecast = "--with-forecast" in sys.argv
     days_arg      = next((a for a in sys.argv if "--days" in a), None)
 
     log("=" * 65)
-    log("  BUILD FEATURES v6 — Vitoria Air Quality (ZBE + Calderas)")
+    log("  BUILD FEATURES v6 - Vitoria Air Quality (ZBE + Calderas)")
     log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     log(f"  Grupo ZBE : {ZBE_STATIONS}")
     log(f"  Grupo OUT : {OUT_STATIONS}")
@@ -751,22 +751,22 @@ def main():
     # Diagnóstico inline antes de guardar
     prueba_del_domingo(df)
 
-    # ── Guardar dataframe completo para predicción y dashboard (ANTES del target-drop) ──────
+    # - Guardar dataframe completo para predicción y dashboard (ANTES del target-drop) ---
     # Contiene todas las filas hasta HOY completas, incluso si sus targets de mañana/pasado
     # son NaN (y por tanto serán borradas del set de entrenamiento).
     pred_feature_cols = [c for c in df.columns if not c.startswith("target_")]
     df_latest = df[pred_feature_cols].copy()
     pred_full_path = PROCESSED_DIR / "features_latest.parquet"
     df_latest.to_parquet(pred_full_path, index=False)
-    log(f"  → features_latest.parquet: {len(df_latest)} filas (para predecir mañana y backtest)")
+    log(f"  -> features_latest.parquet: {len(df_latest)} filas (para predecir mañana y backtest)")
 
     df = clean_and_save(df, save_csv=save_csv)
 
     log()
     log("=" * 65)
-    log("  ✅ DATASET v6 LISTO — siguiente paso: python train_model.py")
-    log("  📊 Comprueba Feature Importance de HDD en NO2_zbe_d1")
-    log("  🏠 Si HDD entra en Top 5 → hipótesis calderas confirmada")
+    log("  [OK] DATASET v6 LISTO - siguiente paso: python train_model.py")
+    log("  [CHART] Comprueba Feature Importance de HDD en NO2_zbe_d1")
+    log("  [HOME] Si HDD entra en Top 5 -> hipótesis calderas confirmada")
     log("=" * 65)
 
 

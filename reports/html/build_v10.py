@@ -4,6 +4,7 @@ import json
 import joblib
 from pathlib import Path
 from datetime import datetime, timedelta
+import shutil
 
 ROOT_DIR      = Path(__file__).parent.parent.parent
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
@@ -16,18 +17,17 @@ csv_file = MODELS_DIR / "counterfactual_gap_v8.csv"
 _out_idx = sys.argv.index("--output") if "--output" in sys.argv else None
 output_html = sys.argv[_out_idx + 1] if _out_idx is not None else str(ROOT_DIR / "reports" / "plots" / "index.html")
 
-# Calcular ruta relativa a la carpeta de plots para las imágenes
-try:
-    out_path = Path(output_html).resolve()
-    plots_dir = (ROOT_DIR / "reports" / "plots").resolve()
-    # Relativo desde el directorio del HTML hasta el directorio de plots
-    rel_path_to_plots = os.path.relpath(plots_dir, out_path.parent).replace("\\", "/")
-    if rel_path_to_plots == ".":
-        img_base_path = ""
-    else:
-        img_base_path = rel_path_to_plots + "/"
-except Exception:
-    img_base_path = "reports/plots/" # fallback
+# Forzamos ruta local (misma carpeta que el HTML) y copiamos los archivos
+img_base_path = ""
+plots_source = MODELS_DIR / "plots"
+plots_dest   = Path(output_html).parent
+
+if plots_source.exists():
+    for f in plots_source.glob("*.png"):
+        shutil.copy(f, plots_dest / f.name)
+    print(f"  OK Copiados {len(list(plots_source.glob('*.png')))} plots a {plots_dest}")
+
+traffic_path = "../html/traffic_map.html"
 
 # ==============================================================================
 # 2. DATOS PESTAÑAS 1 Y 2 (Causal v8)
@@ -61,7 +61,27 @@ except Exception as e:
 cf_json_str = json.dumps(cf_data)
 
 # ==============================================================================
-# 3. PREDICCIONES DE MAÑANA
+# 3. DATOS PESTAÑAS 2 (Causal v8 Summary & DiD)
+# ==============================================================================
+summary_stats = {}
+for cont in df_cv['contaminant'].unique():
+    for zone in df_cv['zone'].unique():
+        key = f"{cont}_{zone}"
+        mask = (df_cv['contaminant'] == cont) & (df_cv['zone'] == zone) & (df_cv['version'] == 'METEO-PURO')
+        sub = df_cv[mask]
+        if not sub.empty:
+            summary_stats[key] = { "pure": round(sub['gap_pct'].mean(), 2) }
+sum_json_str = json.dumps(summary_stats)
+
+try:
+    with open(MODELS_DIR / "did_results_v8.json", "r", encoding="utf-8") as f:
+        did_data = json.load(f)
+    did_json_str = json.dumps(did_data)
+except Exception:
+    did_json_str = "{}"
+
+# ==============================================================================
+# 4. PREDICCIONES DE MAÑANA
 # ==============================================================================
 print("Leyendo predicciones de manana desde predictions_latest.json...")
 pred_json_path = PROCESSED_DIR / "predictions_latest.json"
@@ -248,6 +268,7 @@ html_template = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZBE Vitoria-Gasteiz — Dashboard Integral</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -352,7 +373,7 @@ html_template = """<!DOCTYPE html>
   .fig-title strong { color: var(--text); font-size: 13px; }
   .fig-note { font-size: 11px; color: var(--muted); font-style: italic; }
 
-  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; position: relative; }
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; position: relative; height: 320px; }
   canvas { display: block; }
   
   .img-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; display: flex; justify-content: center; align-items: center; }
@@ -386,8 +407,8 @@ html_template = """<!DOCTYPE html>
   .v10-risk-item .val { font-size: 28px; font-weight: 700; color: var(--text); font-family: 'IBM Plex Mono', monospace;}
   .v10-risk-item .lab { font-size: 12px; color: var(--muted); text-transform: uppercase; margin-top: 8px; font-family: 'IBM Plex Mono', monospace;}
   
-  .perf-chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; height: 350px; position: relative; }
-  .perf-chart-wrap canvas { display: block; width: 100% !important; height: 100% !important; }
+  .perf-chart-wrap, .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; height: 350px; position: relative; }
+  .perf-chart-wrap canvas, .chart-wrap canvas { display: block; width: 100% !important; height: 100% !important; }
 
   @media (max-width: 900px) {
     .header, .controls, .charts-section, .did-section, .top-nav { padding-left: 20px; padding-right: 20px; }
@@ -486,31 +507,33 @@ html_template = """<!DOCTYPE html>
   <div class="summary-grid" id="summaryCards"></div>
 
   <div class="charts-section">
-    <div class="fig-block">
-      <div class="fig-header"><div class="fig-title" data-i18n="v8Fig1"><strong>Figura 1</strong> — Observado vs Counterfactual</div></div>
-      <div class="chart-wrap"><canvas id="fig1" height="100"></canvas></div>
+    <div class="chart-container">
+      <div class="card-label" style="margin-bottom:12px" data-i18n="v8Fig1">Figura 1 — Observado vs Counterfactual</div>
+      <div class="chart-wrap"><canvas id="fig1"></canvas></div>
     </div>
-    <div class="fig-block">
-      <div class="fig-header"><div class="fig-title" data-i18n="v8Fig2"><strong>Figura 2</strong> — Banda de incertidumbre del efecto ZBE</div></div>
-      <div class="chart-wrap"><canvas id="fig2" height="80"></canvas></div>
+
+    <div class="chart-container">
+      <div class="card-label" style="margin-bottom:12px" data-i18n="v8Fig2">Figura 2 — Banda de incertidumbre del efecto ZBE</div>
+      <div class="chart-wrap"><canvas id="fig2"></canvas></div>
     </div>
-    <div class="fig-block">
-      <div class="fig-header"><div class="fig-title" data-i18n="v8Fig3"><strong>Figura 3</strong> — Gap medio por contaminante y zona</div></div>
-      <div class="chart-wrap"><canvas id="fig3" height="60"></canvas></div>
+
+    <div class="chart-container">
+      <div class="card-label" style="margin-bottom:12px" data-i18n="v8Fig3">Figura 3 — Gap medio por contaminante y zona</div>
+      <div class="chart-wrap"><canvas id="fig3"></canvas></div>
     </div>
   </div>
 
   <div class="did-section">
-    <div class="did-title"><strong>Tabla 1</strong> — Difference-in-Differences v8</div>
-    <table><thead><tr><th>Contaminante</th><th>β₃</th><th>p-valor</th><th>IC 95%</th><th>Efecto relativo</th><th>R²</th><th>n obs</th><th>Significativo</th></tr></thead><tbody id="didTable"></tbody></table>
+    <div class="did-title" data-i18n="didTitle"><strong>Tabla 1</strong> — Difference-in-Differences v8</div>
+    <table><thead><tr><th data-i18n="didCont">Contaminante</th><th>β₃</th><th data-i18n="didPVal">p-valor</th><th>IC 95%</th><th data-i18n="didRel">Efecto relativo</th><th>R²</th><th>n obs</th><th data-i18n="didSig">Significativo</th></tr></thead><tbody id="didTable"></tbody></table>
   </div>
 </div>
 
 <div id="view-v9" class="view-container">
   <div class="header">
     <div class="header-left">
-      <div class="label-tag" data-i18n="v9Tag">Métodos econométricos — Evaluación del impacto</div>
-      <h1 data-i18n="v9Title">Evaluación Causal ZBE<br><span>Event Study & Synthetic Control</span></h1>
+      <div class="label-tag" data-i18n="v9Tag">Métodos Econométricos — Evaluación de Impacto</div>
+      <h1 data-i18n="v9Title">Evaluación Causal de la ZBE<br><span>Event Study & Synthetic Control</span></h1>
     </div>
   </div>
   <div class="controls">
@@ -525,8 +548,7 @@ html_template = """<!DOCTYPE html>
     <span class="controls-label" data-i18n="v9Station">Estación IntraZBE</span>
     <div class="tab-group" id="stationTabsV9">
       <button class="tab active" onclick="selectStationV9('PAUL', this)">PAUL</button>
-      <button class="tab" onclick="selectStationV9('BEATO', this)">BEATO</button>
-      <button class="tab" onclick="selectStationV9('FUEROS', this)">FUEROS</button>
+      <button class="tab" onclick="selectStationV9('LANDAZURI', this)">LANDAZURI</button>
     </div>
   </div>
   <div class="summary-grid" id="summaryCardsV9"></div>
@@ -552,7 +574,7 @@ html_template = """<!DOCTYPE html>
 <div id="view-v10" class="view-container active">
   <div class="v10-risk-container">
     <div class="label-tag" data-i18n="v10Tag">EEA Standards — Air Quality Risk</div>
-    <h2 style="margin-bottom: 10px; color: var(--muted); font-weight: 400; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;"><span data-i18n="v10Title">Calidad del aire prevista para</span> <span style="color:var(--text);font-weight:700;"><span data-i18n="v10Tomorrow">mañana</span> __PRED_DATE_PLACEHOLDER__</span></h2>
+    <h2 style="margin-bottom: 10px; color: var(--muted); font-weight: 400; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;"><span data-i18n="v10Title">Calidad del aire prevista para</span> <span style="color:var(--text);font-weight:700;" id="riskDateSpan"></span></h2>
     <div id="riskBadge" class="v10-risk-badge" data-i18n="v10Calculating">CALCULANDO...</div>
     <div class="v10-risk-grid">
       <div class="v10-risk-item"><div class="val" id="val-no2">--</div><div class="lab">NO₂ µg/m³</div></div>
@@ -599,7 +621,7 @@ html_template = """<!DOCTYPE html>
     <div class="did-title" style="padding: 0 48px 16px;" data-i18n="perfTitle"><strong>Rendimiento del Modelo v8</strong> — Métricas Cross-Validation (5 Folds)</div>
     <div style="padding: 0 48px; overflow-x: auto;">
       <table id="metricsTable">
-        <thead><tr><th data-i18n="colContZone">Contaminante + Zona</th><th>RMSE (µg/m³)</th><th>MAE (µg/m³)</th><th data-i18n="colR2">R²</th><th>MAPE %</th><th data-i18n="colNFeatures">N. Features</th></tr></thead>
+        <thead><tr><th data-i18n="colContZone">Contaminante + Zona</th><th data-i18n="colRMSE">RMSE (µg/m³)</th><th data-i18n="colMAE">MAE (µg/m³)</th><th data-i18n="colR2">R²</th><th data-i18n="colMAPE">MAPE %</th><th data-i18n="colNFeatures">N. Features</th></tr></thead>
         <tbody id="metricsBody"></tbody>
       </table>
     </div>
@@ -616,6 +638,23 @@ html_template = """<!DOCTYPE html>
       <h1 data-i18n="mapTitle">Mapa de <span>Estaciones</span></h1>
       <p class="subtitle" data-i18n="mapSubtitle">Media diaria de ayer por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.</p>
     </div>
+    <div class="metrics-card">
+      <div class="card-label" style="margin-bottom:12px" data-i18n="didTitle">Tabla 1 — Difference-in-Differences v8</div>
+      <table class="metrics-table">
+        <thead>
+          <tr>
+            <th data-i18n="didCont">Contaminante</th>
+            <th>β₃</th>
+            <th data-i18n="didPVal">P-Valor</th>
+            <th>IC 95%</th>
+            <th>R²</th>
+            <th>N Obs</th>
+            <th data-i18n="didSig">Significativo</th>
+          </tr>
+        </thead>
+        <tbody id="didTableMap"></tbody>
+      </table>
+    </div>
     <div class="map-legend">
       <div class="card-label" style="margin-bottom:4px" data-i18n="mapLegendTitle">Semáforo ICA</div>
       <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green)"></div><span data-i18n="icaGood">Buena (≤25)</span></div>
@@ -631,7 +670,7 @@ html_template = """<!DOCTYPE html>
 
 <div id="view-traffic" class="view-container">
   <div class="traffic-iframe-container">
-    <iframe id="trafficIframe" src="traffic_map.html" title="Mapa de Tráfico"></iframe>
+    <iframe id="trafficIframe" src="../html/traffic_map.html" title="Mapa de Tráfico"></iframe>
   </div>
 </div>
 
@@ -651,10 +690,25 @@ let mapInstance = null;
 let mapTileLayer = null;
 let _mapInitialized = false;
 
-let currentLang = localStorage.getItem('vitoria_lang') || 'es';
-if (currentLang !== 'es' && currentLang !== 'eu') currentLang = 'es';
+let currentLang = localStorage.getItem('vitoria_lang') || 'eu';
+if (currentLang !== 'es' && currentLang !== 'eu') currentLang = 'eu';
+const predDate = "__PRED_DATE_PLACEHOLDER__";
 
 const getCssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+const SUMMARY_STATS = __SUMMARY_DATA_PLACEHOLDER__;
+const DID_RESULTS = __DID_DATA_PLACEHOLDER__;
+
+function movingAvg(arr, windowSize) {
+  return arr.map((_, i, a) => {
+    let start = Math.max(0, i - Math.floor(windowSize/2));
+    let end = Math.min(a.length, i + Math.floor(windowSize/2) + 1);
+    let sub = a.slice(start, end).filter(v => v !== null && !isNaN(v));
+    return sub.length ? sub.reduce((s, v) => s + v, 0) / sub.length : null;
+  });
+}
+
+function fmt(v) { return (v === null || v === undefined) ? 'N/D' : v.toFixed(1); }
 
 const translations = {
   es: {
@@ -667,62 +721,45 @@ const translations = {
     themeDark: "Modo Oscuro",
     themeLight: "Modo Claro",
     v8Tag: "Análisis Causal — ZBE Vitoria-Gasteiz",
-    v8Title: "Counterfactual Meteorológico<br><span>ZBE Sep·2025 → Actual</span>",
-    v8Subtitle: "Comparación entre contaminación observada y el escenario contrafactual.",
+    v8Title: "Counterfactual Meteorológico<br><span>ZBE Sep 2025 → Actualidad</span>",
+    v8Subtitle: "Comparativa entre la contaminación observada y el escenario contrafactual (qué habría pasado sin ZBE).",
     legendTitle: "Leyenda",
     legendObs: "Observado (real)",
     legendCFPure: "CF Meteo-Puro",
     legendCFLags: "CF Con-Lags",
-    legendBand: "Banda de efecto",
+    legendBand: "Banda de incertidumbre",
     contaminant: "Contaminante",
     zone: "Zona",
-    zoneIn: "ZBE (dentro)",
+    zoneIn: "ZBE (interior)",
     zoneOut: "FUERA DE ZBE (control)",
-    v9Tag: "Métodos econométricos — Evaluación del impacto",
-    v9Title: "Evaluación Causal ZBE<br><span>Event Study & Synthetic Control</span>",
-    v9Station: "Estación IntraZBE",
-    imgNotFound: "Imagen no encontrada. Verifica el nombre del archivo.",
+    v9Tag: "Métodos Econométricos — Evaluación de Impacto",
+    v9Title: "Evaluación Causal de la ZBE<br><span>Event Study & Synthetic Control</span>",
+    v9Station: "Estación interior ZBE",
+    imgNotFound: "Imagen no encontrada. Verifique la generación del plot.",
     v10Tag: "EEA Standards — Air Quality Risk",
     v10Title: "Calidad del aire prevista para",
     v10Calculating: "CALCULANDO...",
     auditTitle: "<strong>Auditoría del Modelo:</strong> Predicción vs Real (Últimos 7 días)",
-    backtestTitle: "<strong>Validación de Ayer</strong> — Backtesting de precisión",
-    colParam: "Parámetro",
+    backtestTitle: "<strong>Validación de Ayer</strong> — Backtesting de Precisión",
+    colParam: "Parametro",
     colPred: "Predicción Ayer (v8)",
     colReal: "Medición Real",
     colDev: "Desviación",
     colStatus: "Estado",
-    perfTitle: "<strong>Rendimiento del Modelo v8</strong> — Métricas Cross-Validation (5 Folds)",
+    perfTitle: "<strong>Rendimiento Modelo v8</strong> — Métricas de Validación Cruzada (5 Fold)",
     colContZone: "Contaminante + Zona",
     colR2: "R²",
     colNFeatures: "N. Features",
     mapeNote: "MAPE calculado solo sobre filas con valor observado > 1 µg/m³.",
-    mapeThreshold: "Umbral aceptación: MAPE < 25%, R² > 0.35.",
+    mapeThreshold: "Umbral de aceptación: MAPE < 25%, R² > 0.35.",
     mapTag: "Vitoria-Gasteiz — Red Kunak",
     mapTitle: "Mapa de <span>Estaciones</span>",
-    mapSubtitle: "Media diaria de ayer por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.",
-    v9Adj: "Métrica de Ajuste (Pre-ZBE)",
-    v9Impact: "Impacto Post-ZBE Estimado",
-    v9Diag: "Diagnóstico Causal",
-    v9Trend: "Pre-Trend Test",
-    v9ParallelOK: "✓ OK Parallel Trends",
-    v10Good: "🟢 BUENO",
-    v10Mod: "🟡 MODERADO",
-    v10Bad: "🔴 MALO",
-    backReal: "Medición Real",
-    backPred: "Predicción",
-    backWait: "⏳ Esperando sensores Kunak",
-    backExcel: "✓ Precisión excelente",
-    backGood: "✓ Precisión buena",
-    backAccept: "✓ Precisión aceptable",
-    backReview: "🔴 Revisión modelo",
-    mapDailyAyer: "Media diaria (ayer)",
-    mapPredManana: "▶ Predicción mañana",
-    mapZone: "Zona",
-    mapNote: "⚠ Los valores son medias diarias, no lecturas horarias",
-    colRMSE: "RMSE (µg/m³)",
-    colMAE: "MAE (µg/m³)",
-    colMAPE: "MAPE %",
+    mapSubtitle: "Medias diarias de ayer y predicción para mañana. Haga clic en un punto para ver detalles.",
+    mapLegendTitle: "Semáforo ICA",
+    icaGood: "Buena (≤25)",
+    icaMod: "Moderada (25-50)",
+    icaBad: "Mala (50-75)",
+    icaVeryBad: "Muy Mala (>75)",
     trafficTitle: "Mapa de Tráfico",
     sumObs: "Observado (media)",
     sumCF: "Contrafactual (meteo-puro)",
@@ -739,10 +776,41 @@ const translations = {
     v8Fig3: "<strong>Figura 3</strong> — Gap medio por contaminante y zona",
     v9Fig1: "<strong>Figura 1</strong> — Control Sintético (Serie Suavizada)",
     v9Fig2: "<strong>Figura 2</strong> — Event Study DiD",
-    v10Tomorrow: "mañana"
+    v10Tomorrow: "mañana",
+    sumSinZBE: "sin ZBE",
+    sumAbsoluto: "absoluto",
+    fig1Obs: "Observado",
+    fig1CFPure: "CF Meteo-Puro",
+    fig1CFLags: "CF Con-Lags",
+    fig2NoEffect: "Sin efecto (0%)",
+    fig2GapPure: "Gap Meteo-Puro",
+    fig2GapLags: "Gap Con-Lags",
+    fig3Label: "Gap % (METEO-PURO)",
+    v9Adj: "Métrica de Ajuste (Pre-ZBE)",
+    v9Impact: "Impacto Post-ZBE Estimado",
+    v9Diag: "Diagnóstico Causal",
+    v9Trend: "Pre-Trend Test",
+    v9ParallelOK: "✓ OK Parallel Trends",
+    v10Good: "🟢 BUENA",
+    v10Mod: "🟡 MODERADA",
+    v10Bad: "🔴 MALA",
+    backReal: "Medición Real",
+    backPred: "Predicción",
+    backWait: "⏳ Esperando sensores Kunak",
+    backExcel: "✓ Precisión Excelente",
+    backGood: "✓ Precisión Buena",
+    backAccept: "✓ Precisión Aceptable",
+    backReview: "🔴 Revisar Modelo",
+    mapDailyAyer: "Medias diarias de ayer",
+    mapPredManana: "▶ Predicción mañana",
+    mapZone: "Zona",
+    mapNote: "⚠ Los valores son medias diarias, no lecturas horarias",
+    colRMSE: "RMSE (µg/m³)",
+    colMAE: "MAE (µg/m³)",
+    colMAPE: "MAPE %",
   },
   eu: {
-    mainTitle: "Vitoria-Gasteiz — Airearen Kalitatearen eta EBEaren Analisia",
+    mainTitle: "Vitoria-Gasteiz — Airearen Kalitatearen eta EGEaren Analisia",
     nav1: "1. Iragarpen Operatiboa",
     nav2: "2. Eguneroko Monitore Interaktiboa",
     nav3: "3. Baliozkotze Kausala",
@@ -750,21 +818,21 @@ const translations = {
     nav5: "5. Trafikoaren Mapa",
     themeDark: "Modu Iluna",
     themeLight: "Modu Argia",
-    v8Tag: "Analisi Kausala — Gasteizko EBE",
-    v8Title: "Kontrafaktual Meteorologikoa<br><span>EBE 2025eko Iraila → Gaur egun</span>",
+    v8Tag: "Analisi Kausala — Gasteizko EGE",
+    v8Title: "Kontrafaktual Meteorologikoa<br><span>EGE 2025eko Iraila → Gaur egun</span>",
     v8Subtitle: "Behatutako kutsaduraren eta agertoki kontrafaktualaren arteko alderaketa.",
     legendTitle: "Legenda",
     legendObs: "Behatua (reala)",
     legendCFPure: "KM Meteo-Purua",
     legendCFLags: "KM Lag-ekin",
-    legendBand: "Efektu-banda",
+    legendBand: "Ziurgabetasun-banda",
     contaminant: "Kutsatzailea",
     zone: "Eremua",
-    zoneIn: "EBE (barruan)",
-    zoneOut: "EBEn KANPO (kontrola)",
+    zoneIn: "EGE (barruan)",
+    zoneOut: "EGEtik KANPO (kontrola)",
     v9Tag: "Metodo ekonometrikoak — Eraginaren ebaluazioa",
-    v9Title: "EBEren Ebaluazio Kausala<br><span>Event Study & Synthetic Control</span>",
-    v9Station: "EBE barneko estazioa",
+    v9Title: "EGEren Ebaluazio Kausala<br><span>Event Study & Synthetic Control</span>",
+    v9Station: "EGE barneko estazioa",
     imgNotFound: "Irudia ez da aurkitu. Egiaztatu fitxategiaren izena.",
     v10Tag: "EEA Arauak — Airearen Kalitatearen Arriskua",
     v10Title: "Biharko aurreikusitako aire-kalitatea",
@@ -793,16 +861,16 @@ const translations = {
     trafficTitle: "Trafikoaren Mapa",
     sumObs: "Behatua (batez bestekoa)",
     sumCF: "Kontrafaktuala (meteo-purua)",
-    sumEffect: "EBEaren efektua (meteo-purua)",
-    sumRange: "EBE efektuaren heina",
+    sumEffect: "EGEaren efektua (meteo-purua)",
+    sumRange: "EGE efektuaren heina",
     sumPeriod: "2025 Ira → 2026 Mar",
     sumBound: "Muga kontserbadorea",
     sumMeteoLag: "Meteo-purua vs Lag-ekin",
     sumRobRed: "✓ Murrizketa sendoa",
     sumUncertain: "⚠ Ziurgabea",
     sumIncrease: "✕ Gehikuntza garbia",
-    v9Adj: "Egokitze Metrika (EBE aurretik)",
-    v9Impact: "EBE osteko eragin estimatua",
+    v9Adj: "Egokitze Metrika (EGE aurretik)",
+    v9Impact: "EGE osteko eragin estimatua",
     v9Diag: "Diagnostiko Kausala",
     v9Trend: "Pre-Trend Test-a",
     v9ParallelOK: "✓ OK Parallel Trends",
@@ -824,19 +892,41 @@ const translations = {
     colMAE: "MAE (µg/m³)",
     colMAPE: "MAPE %",
     v8Fig1: "<strong>1. Irudia</strong> — Behatua vs Kontrafaktuala",
-    v8Fig2: "<strong>2. Irudia</strong> — EBE efektuaren ziurgabetasun-banda",
+    v8Fig2: "<strong>2. Irudia</strong> — EGE efektuaren ziurgabetasun-banda",
     v8Fig3: "<strong>3. Irudia</strong> — Gap-a batez beste, kutsatzaile eta eremuka",
     v9Fig1: "<strong>1. Irudia</strong> — Kontrol Sintetikoa (Serie Leundua)",
     v9Fig2: "<strong>2. Irudia</strong> — Event Study DiD",
-    v10Tomorrow: "bihar"
+    v10Tomorrow: "bihar",
+    sumSinZBE: "EGE barik",
+    sumAbsoluto: "absolutua",
+    fig1Obs: "Behatua",
+    fig1CFPure: "KM Meteo-Purua",
+    fig1CFLags: "KM Lag-ekin",
+    fig2NoEffect: "Eraginik gabe (%0)",
+    fig2GapPure: "Meteo-Puro Gap-a",
+    fig2GapLags: "Lag-ekin Gap-a",
+    fig3Label: "Gap-a % (METEO-PURUA)",
+    didTitle: "1. Taula — Difference-in-Differences v8",
+    didCont: "Kutsatzailea",
+    didPVal: "P-Balioa",
+    didRel: "Eragin Erlatiboa",
+    didSig: "Signifikatiboa",
+    didYes: "Bai (p<0.05)",
+    didNo: "Ez"
   }
 };
 
 function updateI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    if (translations[currentLang][key]) {
-      el.innerHTML = translations[currentLang][key];
+    const t = translations[currentLang];
+    if (t && t[key]) {
+      // Usamos innerHTML si la traducción tiene HTML (como <strong>) o si el elemento lo permite
+      if (t[key].includes('<') || el.classList.contains('card-label') || el.classList.contains('did-title') || el.classList.contains('fig-title')) {
+          el.innerHTML = t[key];
+      } else {
+          el.innerText = t[key];
+      }
     }
   });
   
@@ -859,18 +949,27 @@ function updateI18n() {
       : translations[currentLang].themeDark;
   }
   
-  // Sincronizar el iframe de tráfico
+  // Actualizar el iframe de tráfico
   const iframe = document.getElementById('trafficIframe');
   if (iframe) {
     const baseUrl = iframe.src.split('?')[0];
-    iframe.src = `${baseUrl}?lang=${currentLang}`;
+    iframe.src = `../html/traffic_map.html?lang=${currentLang}`;
   }
+}
+
+function updateRiskDate() {
+    const el = document.getElementById('riskDateSpan');
+    if (el) {
+        const t = translations[currentLang];
+        el.innerHTML = `<span style="text-transform: uppercase;">${t.v10Tomorrow}</span> ${predDate}`;
+    }
 }
 
 function toggleLang() {
   currentLang = currentLang === 'es' ? 'eu' : 'es';
   localStorage.setItem('vitoria_lang', currentLang);
   updateI18n();
+  updateRiskDate();
   
   // Re-renderizar componentes que dependen de traducciones
   renderSummaryCards();
@@ -879,34 +978,31 @@ function toggleLang() {
   renderFig3();
   renderDidTable();
   renderV9Cards();
+  renderMetricsTable();
   if (document.getElementById('view-v10').classList.contains('active')) renderDashboard3();
 }
-
-const DID_RESULTS = {
-  NO2:  { beta3: 0.215,  pvalue: 0.5986, ci_low: -0.586, ci_high: 1.017,  r2: 0.646, n: 4245, pre_mean: 11.72 },
-  PM10: { beta3: 1.910,  pvalue: 0.0000, ci_low:  1.115, ci_high: 2.706,  r2: 0.285, n: 4245, pre_mean: 11.03 },
-  'PM2.5': { beta3: 0.469, pvalue: 0.0160, ci_low: 0.087, ci_high: 0.850, r2: 0.334, n: 4245, pre_mean: 6.91 },
-};
-
-const SUMMARY_STATS = {
-  NO2_zbe:   { pure: -19.1, lags: -13.7, obs: 12.26, cf_pure: 14.84, unit: 'µg/m³' },
-  NO2_out:   { pure: -12.9, lags: -11.1, obs: 13.35, cf_pure: 15.59, unit: 'µg/m³' },
-  PM10_zbe:  { pure:  11.1, lags:  11.4, obs: 11.41, cf_pure: 10.27, unit: 'µg/m³' },
-  PM10_out:  { pure:  -3.8, lags:  -4.2, obs:  9.47, cf_pure:  9.83, unit: 'µg/m³' },
-  'PM2.5_zbe': { pure: -10.4, lags: -7.7, obs: 5.92, cf_pure: 6.37, unit: 'µg/m³' },
-  'PM2.5_out': { pure:  -8.8, lags: -9.5, obs: 6.19, cf_pure: 6.76, unit: 'µg/m³' },
-  ICA_zbe:   { pure:  -0.9, lags:   0.1, obs: 18.62, cf_pure: 18.55, unit: 'pts' },
-  ICA_out:   { pure:  -6.8, lags:  -7.9, obs: 18.01, cf_pure: 19.26, unit: 'pts' },
-};
-
 // ── NAVEGACIÓN Y THEME ──
 function switchMainView(view, btn) {
   document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.top-nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
   btn.classList.add('active');
-  if (view === 'v10') renderDashboard3();
-  if (view === 'map') { initMap(); }
+  if (view === 'v8') { 
+    setTimeout(() => {
+        renderSummaryCards(); 
+        renderFig1(); 
+        renderFig2(); 
+        renderFig3(); 
+        renderDidTable(); 
+        window.dispatchEvent(new Event('resize'));
+    }, 400);
+  }
+  if (view === 'v10') {
+    setTimeout(() => {
+        renderDashboard3();
+    }, 100);
+  }
+  if (view === 'map') { setTimeout(() => initMap(), 100); }
 }
 
 function toggleTheme() {
@@ -941,18 +1037,24 @@ function toggleTheme() {
 // ===========================================================================
 let currentCont = 'NO2'; let currentZone = 'zbe'; let fig1Chart = null, fig2Chart = null, fig3Chart = null;
 
-function movingAvg(arr, w) { return arr.map((_, i) => { const start = Math.max(0, i - Math.floor(w/2)); const end = Math.min(arr.length, i + Math.ceil(w/2)); const slice = arr.slice(start, end); return slice.reduce((a,b)=>a+b,0)/slice.length; }); }
-function formatDate(d) { return new Date(d).toLocaleDateString('es-ES', { day:'numeric', month:'short' }); }
+const monthsEU = ['urt.', 'ots.', 'mar.', 'api.', 'mai.', 'eka.', 'uzt.', 'abu.', 'ira.', 'urr.', 'aza.', 'abe.'];
+function formatDate(d) {
+  const date = new Date(d);
+  if (currentLang === 'eu') {
+    return `${date.getDate()} ${monthsEU[date.getMonth()]}`;
+  }
+  return date.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+}
 function getClass(val) { if (val < -5)  return 'neg'; if (val > 5)   return 'pos'; return 'neutral'; }
 
 function renderSummaryCards() {
-  const key = `${currentCont}_${currentZone}`; const s = SUMMARY_STATS[key]; if (!s) return;
+  const s = SUMMARY_STATS[`${currentCont}_${currentZone}`]; if (!s) return;
   const t = translations[currentLang];
   const low = Math.min(s.pure, s.lags), high = Math.max(s.pure, s.lags), gap_abs = ((s.obs - s.cf_pure)).toFixed(2);
   const cards = [ 
       { label: t.sumObs, value: s.obs.toFixed(2), sub: s.unit, cls: 'neutral', range: t.sumPeriod }, 
-      { label: t.sumCF, value: s.cf_pure.toFixed(2), sub: `${s.unit} sin ZBE`, cls: 'neutral', range: t.sumBound }, 
-      { label: t.sumEffect, value: `${s.pure > 0 ? '+' : ''}${s.pure.toFixed(1)}%`, sub: `${gap_abs} ${s.unit} absoluto`, cls: getClass(s.pure), range: t.sumBound }, 
+      { label: t.sumCF, value: s.cf_pure.toFixed(2), sub: `${s.unit} ${t.sumSinZBE}`, cls: 'neutral', range: t.sumBound }, 
+      { label: t.sumEffect, value: `${s.pure > 0 ? '+' : ''}${s.pure.toFixed(1)}%`, sub: `${gap_abs} ${s.unit} ${t.sumAbsoluto}`, cls: getClass(s.pure), range: t.sumBound }, 
       { label: t.sumRange, value: `[${low.toFixed(1)}%, ${high.toFixed(1)}%]`, sub: t.sumMeteoLag, cls: low < 0 && high < 0 ? 'neg' : (low > 0 && high > 0 ? 'pos' : 'neutral'), range: low < 0 && high < 0 ? t.sumRobRed : (low < 0 ? t.sumUncertain : t.sumIncrease) } 
   ];
   document.getElementById('summaryCards').innerHTML = cards.map(c => `<div class="summary-card"><div class="card-label">${c.label}</div><div class="card-value ${c.cls}">${c.value}</div><div class="card-sub">${c.sub}</div><div class="card-range">${c.range}</div></div>`).join('');
@@ -961,44 +1063,84 @@ function renderSummaryCards() {
 function renderFig1() {
   const key = `${currentCont}_${currentZone}`; if (!cfData || !cfData[key]) return;
   const pure = cfData[key]['METEO-PURO'], lags = cfData[key]['CON-LAGS'], dates = pure.dates.map(formatDate); const obsSmooth = movingAvg(pure.observed, 7);
-  const ctx = document.getElementById('fig1').getContext('2d'); if (fig1Chart) fig1Chart.destroy();
+  const t = translations[currentLang];
+  const ctx = document.getElementById('fig1').getContext('2d');
+  if (fig1Chart) fig1Chart.destroy();
   
   const text = getCssVar('--muted'); const grid = getCssVar('--border'); const bg = getCssVar('--surface2'); const title = getCssVar('--text');
   
-  fig1Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_fillUpper', data: pure.counterfactual, borderColor: 'transparent', backgroundColor: getCssVar('--observed') + '20', fill: '+1', pointRadius: 0, tension: 0.3 }, { label: 'Observado', data: obsSmooth, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, order: 1 }, { label: 'CF Meteo-Puro', data: movingAvg(pure.counterfactual, 7), borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, tension: 0.3, fill: false, order: 2 }, { label: 'CF Con-Lags', data: movingAvg(lags.counterfactual, 7), borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, tension: 0.3, fill: false, order: 3 } ] }, options: { responsive: true, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)} µg/m³`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(1) + ' µg/m³' }, grid: { color: grid }, title: { display: true, text: `${currentCont} (µg/m³)`, color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
+  fig1Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_fillUpper', data: pure.counterfactual, borderColor: 'transparent', backgroundColor: getCssVar('--observed') + '20', fill: '+1', pointRadius: 0, tension: 0.3 }, { label: t.fig1Obs, data: obsSmooth, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, order: 1 }, { label: t.fig1CFPure, data: movingAvg(pure.counterfactual, 7), borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, tension: 0.3, fill: false, order: 2 }, { label: t.fig1CFLags, data: movingAvg(lags.counterfactual, 7), borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, tension: 0.3, fill: false, order: 3 } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)} µg/m³`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(1) + ' µg/m³' }, grid: { color: grid }, title: { display: true, text: `µg/m³`, color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
 }
 
 function renderFig2() {
   const key = `${currentCont}_${currentZone}`; if (!cfData || !cfData[key]) return;
   const pure = cfData[key]['METEO-PURO'], lags = cfData[key]['CON-LAGS'], dates = pure.dates.map(formatDate); const gapPureSmooth = movingAvg(pure.gap_pct, 14), gapLagsSmooth = movingAvg(lags.gap_pct, 14), zero = dates.map(() => 0);
-  const ctx = document.getElementById('fig2').getContext('2d'); if (fig2Chart) fig2Chart.destroy();
+  const t = translations[currentLang];
+  const ctx = document.getElementById('fig2').getContext('2d');
+  if (fig2Chart) fig2Chart.destroy();
   
   const text = getCssVar('--muted'); const grid = getCssVar('--border'); const bg = getCssVar('--surface2'); const title = getCssVar('--text');
 
-  fig2Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_bandUpper', data: gapPureSmooth.map((p, i) => Math.max(p, gapLagsSmooth[i])), borderColor: 'transparent', backgroundColor: getCssVar('--accent') + '26', fill: '+1', pointRadius: 0, tension: 0.4 }, { label: '_bandLower', data: gapPureSmooth.map((p, i) => Math.min(p, gapLagsSmooth[i])), borderColor: 'transparent', backgroundColor: 'transparent', fill: false, pointRadius: 0, tension: 0.4 }, { label: 'Sin efecto (0%)', data: zero, borderColor: text, borderWidth: 1, borderDash: [2,4], pointRadius: 0, fill: false, order: 10 }, { label: 'Gap Meteo-Puro', data: gapPureSmooth, borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false, order: 1 }, { label: 'Gap Con-Lags', data: gapLagsSmooth, borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 2, borderDash: [5,3], pointRadius: 0, tension: 0.4, fill: false, order: 2 } ] }, options: { responsive: true, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1)}%`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(0) + '%' }, grid: { color: grid }, title: { display: true, text: 'Gap % (observado − predicho) / predicho', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
+  fig2Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_bandUpper', data: gapPureSmooth.map((p, i) => Math.max(p, gapLagsSmooth[i])), borderColor: 'transparent', backgroundColor: getCssVar('--accent') + '26', fill: '+1', pointRadius: 0, tension: 0.4 }, { label: '_bandLower', data: gapPureSmooth.map((p, i) => Math.min(p, gapLagsSmooth[i])), borderColor: 'transparent', backgroundColor: 'transparent', fill: false, pointRadius: 0, tension: 0.4 }, { label: t.fig2NoEffect, data: zero, borderColor: text, borderWidth: 1, borderDash: [2,4], pointRadius: 0, fill: false, order: 10 }, { label: t.fig2GapPure, data: gapPureSmooth, borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false, order: 1 }, { label: t.fig2GapLags, data: gapLagsSmooth, borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 2, borderDash: [5,3], pointRadius: 0, tension: 0.4, fill: false, order: 2 } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1)}%`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(0) + '%' }, grid: { color: grid }, title: { display: true, text: 'Gap %', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
 }
 
 function renderFig3() {
   const keys = Object.keys(SUMMARY_STATS); const vals = keys.map(k => SUMMARY_STATS[k].pure);
+  const labels = keys.map(k => k.replace('PM2.5','PM₂.₅').replace('_',' '));
   const colors = vals.map(v => v < -5 ? getCssVar('--green')+'CC' : v > 5 ? getCssVar('--red')+'CC' : getCssVar('--yellow')+'CC');
   const borders = vals.map(v => v < -5 ? getCssVar('--green') : v > 5 ? getCssVar('--red') : getCssVar('--yellow'));
-  const ctx = document.getElementById('fig3').getContext('2d'); if (fig3Chart) fig3Chart.destroy();
+  const t = translations[currentLang];
+  const ctx = document.getElementById('fig3').getContext('2d');
+  if (fig3Chart) fig3Chart.destroy();
   
   const text = getCssVar('--muted'); const grid = getCssVar('--border'); const bg = getCssVar('--surface2'); const title = getCssVar('--text');
 
-  fig3Chart = new Chart(ctx, { type: 'bar', data: { labels: keys.map(k => k.replace('PM2.5','PM₂.₅').replace('_',' ')), datasets: [{ label: 'Gap % (METEO-PURO)', data: vals, backgroundColor: colors, borderColor: borders, borderWidth: 1, borderRadius: 3 }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => ` Efecto: ${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 11 } }, grid: { display: false } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v + '%' }, grid: { color: grid }, title: { display: true, text: 'Gap % (observado − CF meteo-puro) / CF', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
+  fig3Chart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: t.fig3Label, data: vals, backgroundColor: colors, borderColor: borders, borderWidth: 1, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => ` Efecto: ${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 11 } }, grid: { display: false } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v + '%' }, grid: { color: grid }, title: { display: true, text: 'Gap %', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
+}
 }
 
 function renderDidTable() {
+  const t = translations[currentLang];
   const rows = Object.entries(DID_RESULTS).map(([cont, d]) => {
-    const sig = d.pvalue < 0.05, pct = (d.beta3 / d.pre_mean * 100).toFixed(1), bCls = d.beta3 < -0.1 ? 'beta-neg' : d.beta3 > 0.1 ? 'beta-pos' : 'beta-neu', sign = d.beta3 > 0 ? '+' : '', pFmt = d.pvalue < 0.0001 ? '<0.0001' : d.pvalue.toFixed(4);
-    return `<tr><td><strong>${cont}</strong></td><td class="${bCls}">${sign}${d.beta3.toFixed(3)} µg/m³</td><td class="${sig ? 'sig-yes' : 'sig-no'}">${pFmt} ${sig ? '✓' : ''}</td><td>[${d.ci_low > 0 ? '+' : ''}${d.ci_low.toFixed(3)}, ${d.ci_high > 0 ? '+' : ''}${d.ci_high.toFixed(3)}]</td><td class="${bCls}">${sign}${pct}%</td><td>${d.r2.toFixed(3)}</td><td>${d.n.toLocaleString()}</td><td class="${sig ? 'sig-yes' : 'sig-no'}">${sig ? 'Sí (p<0.05)' : 'No'}</td></tr>`;
+    const sig = d.significant;
+    const bCls = d.beta3 < -0.1 ? 'beta-neg' : d.beta3 > 0.1 ? 'beta-pos' : 'beta-neu';
+    const sign = d.beta3 > 0 ? '+' : '';
+    const pFmt = d.pvalue < 0.0001 ? '<0.0001' : d.pvalue.toFixed(4);
+    const sigText = sig ? t.didYes : t.didNo;
+    
+    return `<tr>
+      <td><strong>${cont}</strong></td>
+      <td class="${bCls}">${sign}${d.beta3.toFixed(3)} µg/m³</td>
+      <td class="${sig ? 'sig-yes' : 'sig-no'}">${pFmt} ${sig ? '✓' : ''}</td>
+      <td>[${d.ci_low.toFixed(3)}, ${d.ci_high.toFixed(3)}]</td>
+      <td>${d.r2.toFixed(3)}</td>
+      <td>${(d.n_obs || d.n || 0).toLocaleString()}</td>
+      <td class="${sig ? 'sig-yes' : 'sig-no'}">${sigText}</td>
+    </tr>`;
   });
-  document.getElementById('didTable').innerHTML = rows.join('');
+  const html = rows.join('');
+  const el1 = document.getElementById('didTable'); if(el1) el1.innerHTML = html;
+  const el2 = document.getElementById('didTableMap'); if(el2) el2.innerHTML = html;
 }
 
-function selectCont(cont, btn) { currentCont = cont; document.querySelectorAll('#contTabs .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderSummaryCards(); renderFig1(); renderFig2(); }
-function selectZone(zone, btn) { currentZone = zone; document.querySelectorAll('#zoneTabs .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderSummaryCards(); renderFig1(); renderFig2(); }
+function selectCont(cont, btn) { 
+  currentCont = cont; 
+  document.querySelectorAll('#contTabs .tab').forEach(t => t.classList.remove('active')); 
+  btn.classList.add('active'); 
+  renderSummaryCards(); 
+  renderFig1(); 
+  renderFig2(); 
+  window.dispatchEvent(new Event('resize'));
+}
+function selectZone(zone, btn) { 
+  currentZone = zone; 
+  document.querySelectorAll('#zoneTabs .tab').forEach(t => t.classList.remove('active')); 
+  btn.classList.add('active'); 
+  renderSummaryCards(); 
+  renderFig1(); 
+  renderFig2(); 
+  window.dispatchEvent(new Event('resize'));
+}
 
 // ===========================================================================
 // LÓGICA V9
@@ -1016,11 +1158,17 @@ function renderV9Cards() {
 function updateV9Images() {
   const contName = currentContV9 === 'PM2.5' ? 'PM25' : currentContV9;
   const imgSc = document.getElementById('img-sc'), imgEs = document.getElementById('img-es');
+  if(!imgSc || !imgEs) return;
+  
   imgSc.nextElementSibling.style.display = 'none';
   imgEs.nextElementSibling.style.display = 'none';
   imgSc.style.display = 'block'; imgEs.style.display = 'block'; 
-  imgSc.src = `__IMG_BASE_PATH__synthetic_control_${contName}_${currentStationV9}.png`; 
-  imgEs.src = `__IMG_BASE_PATH__event_study_${contName}.png`;
+  
+  const basePath = "";
+  console.log("Loading V9 Images from:", basePath);
+  
+  imgSc.src = `${basePath}synthetic_control_${contName}_${currentStationV9}.png`; 
+  imgEs.src = `${basePath}event_study_${contName}.png`;
 }
 
 function selectContV9(cont, btn) { currentContV9 = cont; document.querySelectorAll('#contTabsV9 .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderV9Cards(); updateV9Images(); }
@@ -1032,10 +1180,9 @@ function selectStationV9(station, btn) { currentStationV9 = station; document.qu
 let currentContV10 = 'NO2', currentZoneV10 = 'out', perfChart = null;
 
 function renderDashboard3() {
-  const zoneData = manana[currentZoneV10] || {};
-  const no2 = zoneData['NO2'] || 0;
-  const pm25 = zoneData['PM2.5'] || 0;
-  const pm10 = zoneData['PM10'] || 0;
+  const no2 = (manana['NO2'] && manana['NO2'][currentZoneV10]) || 0;
+  const pm25 = (manana['PM2.5'] && manana['PM2.5'][currentZoneV10]) || 0;
+  const pm10 = (manana['PM10'] && manana['PM10'][currentZoneV10]) || 0;
   const t = translations[currentLang];
 
   let badge = document.getElementById('riskBadge');
@@ -1055,18 +1202,19 @@ function renderDashboard3() {
   const ctx = document.getElementById('perfChart').getContext('2d');
   if(perfChart) perfChart.destroy();
   
+  const labels = (perfStats[currentZoneV10].labels || []).map(l => l === 'Ayer' ? (currentLang === 'es' ? 'Ayer' : 'Atzo') : l);
   const text = getCssVar('--muted'); const grid = getCssVar('--border');
 
   perfChart = new Chart(ctx, {
       type: 'line',
       data: {
-          labels: perfStats[currentZoneV10].labels || [],
+          labels: labels,
           datasets: [
               { label: t.backReal, data: d.real, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
               { label: t.backPred, data: d.pred, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 }
           ]
       },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: text, font: { family: 'IBM Plex Mono'} } } }, scales: { x: { ticks: { color: text }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: text, font: { family: 'IBM Plex Mono'} } }, }, scales: { x: { ticks: { color: text }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
   });
 
   const lastRealDraw = d.real[d.real.length - 1]; 
@@ -1110,14 +1258,14 @@ function renderMetricsTable() {
   const body = document.getElementById('metricsBody');
   if (!body) return;
   const t = translations[currentLang];
-  // Actualizar cabecera de tabla de métricas si es necesario (el thead tiene data-i18n pero no para RMSE/MAE/MAPE)
-  const thead = body.previousElementSibling;
+  // Actualizar cabecera de tabla de métricas si es necesario
+  const thead = body.closest('table').querySelector('thead');
   if (thead) {
       const rows = thead.querySelectorAll('th');
       if (rows.length >= 5) {
-          rows[1].innerText = t.colRMSE;
-          rows[2].innerText = t.colMAE;
-          rows[4].innerText = t.colMAPE;
+          rows[1].innerText = t.colRMSE || 'RMSE';
+          rows[2].innerText = t.colMAE || 'MAE';
+          rows[4].innerText = t.colMAPE || 'MAPE %';
       }
   }
 
@@ -1217,7 +1365,8 @@ function initMap() {
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 window.onload = function() {
-  updateI18n(); // Aplicar traducciones primero
+  updateI18n();
+  updateRiskDate();
   
   if (localStorage.getItem('vitoria_theme') === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -1225,13 +1374,20 @@ window.onload = function() {
     updateI18n(); // Re-actualizar textos de botones que dependen del tema
   }
 
-  renderSummaryCards(); renderFig1(); renderFig2(); renderFig3(); renderDidTable();
-  renderV9Cards(); updateV9Images();
-  renderDashboard3(); renderMetricsTable();
+  renderSummaryCards();
+  renderFig1();
+  renderFig2();
+  renderFig3();
+  renderDidTable();
+  renderDashboard3();
+  renderMetricsTable();
+  renderV9Cards();
+  updateV9Images();
   
   // Si estamos en la pestaña de tráfico, sincronizar lenguaje
-  if (document.getElementById('view-traffic').classList.contains('active')) {
-      toggleLang(); toggleLang(); // Truco para disparar la sincronización del iframe
+  const iframe = document.getElementById('trafficIframe');
+  if (iframe) {
+      iframe.src = `../html/traffic_map.html?lang=${currentLang}`;
   }
 };
 </script>
@@ -1245,6 +1401,8 @@ content = content.replace('__MANANA_DATA_PLACEHOLDER__', manana_json_str)
 content = content.replace('__METRICS_DATA_PLACEHOLDER__', metrics_json_str)
 content = content.replace('__STATIONS_DATA_PLACEHOLDER__', stations_json_str)
 content = content.replace('__V9_DATA_PLACEHOLDER__', v9_json_str)
+content = content.replace('__SUMMARY_DATA_PLACEHOLDER__', sum_json_str)
+content = content.replace('__DID_DATA_PLACEHOLDER__', did_json_str)
 content = content.replace('__IMG_BASE_PATH__', img_base_path)
 content = content.replace('__PRED_DATE_PLACEHOLDER__', prediction_date_str)
 

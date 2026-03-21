@@ -1,22 +1,22 @@
 """
 train_model_v8.py
 ==================
-Entrena 4 modelos LightGBM especializados (NO2, PM10, PM2.5, ICA — solo d1)
+Entrena 4 modelos LightGBM especializados (NO2, PM10, PM2.5, ICA - solo d1)
 
 CAMBIOS v8 respecto a v7 (nivel paper):
 
-  ⑦ Efectos fijos temporales C(month)×C(year) en el DiD:
+  (7) Efectos fijos temporales C(month)×C(year) en el DiD:
      - Controla shocks comunes del período (anticiclones, intrusión sahariana,
        episodios regionales de contaminación compartidos por ZBE y OUT)
-     - Granularidad mes×año: 22 dummies para el rango mar-2024 → dic-2025
+     - Granularidad mes×año: 22 dummies para el rango mar-2024 -> dic-2025
      - Más riguroso que C(month) solo porque distingue el mismo mes en años distintos
 
-  ⑧ Clustering de errores por fecha en el DiD:
+  (8) Clustering de errores por fecha en el DiD:
      - Sustituye HC3 por cov_type="cluster", groups=date
      - Las observaciones del mismo día (ZBE y OUT) no son independientes
-     - P-valores más conservadores y honestos → más creíbles en revisión
+     - P-valores más conservadores y honestos -> más creíbles en revisión
 
-  ⑨ Counterfactual dual (bound inferior / bound superior):
+  (9) Counterfactual dual (bound inferior / bound superior):
      - Versión METEO-PURO: solo meteorología + calendario, sin lags del
        contaminante. Es el bound conservador: efecto mínimo garantizado.
      - Versión CON-LAGS: incluye lags pre-ZBE del contaminante. Es el bound
@@ -82,8 +82,8 @@ METEO_COVARIATES = [
     "is_weekend", "day_of_week", "month", "season",
 ]
 
-# ⑨ Features permitidas en el counterfactual METEO-PURO
-# Solo meteorología y calendario — sin lags del contaminante
+# (9) Features permitidas en el counterfactual METEO-PURO
+# Solo meteorología y calendario - sin lags del contaminante
 METEO_PURE_FEATURES = [
     "HDD", "HDD_acum_7d", "HDD_acum_14d", "HDD_lag_1d", "HDD_lag_7d",
     "temperature_2m", "precipitation", "wind_speed_10m", "wind_u", "wind_v",
@@ -135,7 +135,7 @@ def log(msg=""):
     report_lines.append(str(msg))
 
 def section(title):
-    log(); log("═" * 65); log(f"  {title}"); log("═" * 65)
+    log(); log("=" * 65); log(f"  {title}"); log("=" * 65)
 
 def rmse(y_true, y_pred):
     return np.sqrt(np.mean((y_true - y_pred) ** 2))
@@ -191,7 +191,7 @@ def load_dataset():
     hdd_missing   = [f for f in HDD_FEATURES_REQUIRED if f not in feature_cols]
     log(f"  Features HDD disponibles : {len(hdd_available)} / {len(HDD_FEATURES_REQUIRED)}")
     if hdd_missing:
-        log(f"  ⚠️  HDD features ausentes: {hdd_missing}")
+        log(f"  [WARN]  HDD features ausentes: {hdd_missing}")
 
     log(f"  Features totales : {len(feature_cols)}")
     return df, feature_cols, all_target_cols
@@ -269,7 +269,7 @@ def train_single(X_train, y_train, X_val, y_val, tune=False):
 
 # ─── 5. ENTRENAR TODOS (CV) ───────────────────────────────────────────────────
 def train_all(df, feature_cols, target_cols, tune=False):
-    section(f"3. Entrenamiento LightGBM v8 — {HORIZON} · TimeSeriesSplit ({N_SPLITS} Folds)")
+    section(f"3. Entrenamiento LightGBM v8 - {HORIZON} · TimeSeriesSplit ({N_SPLITS} Folds)")
 
     tscv   = TimeSeriesSplit(n_splits=N_SPLITS)
     folds  = list(tscv.split(df[feature_cols].fillna(0)))
@@ -319,10 +319,10 @@ def train_all(df, feature_cols, target_cols, tune=False):
     return all_metrics, all_importances, all_selected
 
 
-# ─── ⑨ COUNTERFACTUAL DUAL ───────────────────────────────────────────────────
+# ─── (9) COUNTERFACTUAL DUAL ───────────────────────────────────────────────────
 def train_counterfactual_dual(df, feature_cols):
     """
-    Counterfactual dual — bound inferior y superior del efecto ZBE.
+    Counterfactual dual - bound inferior y superior del efecto ZBE.
 
     METEO-PURO (bound conservador):
         Solo meteorología + calendario + tráfico histórico esperado.
@@ -334,7 +334,7 @@ def train_counterfactual_dual(df, feature_cols):
 
     El efecto real de la ZBE está entre ambos bounds.
     """
-    section("⑨ Counterfactual Dual (Bound Inferior / Bound Superior)")
+    section("(9) Counterfactual Dual (Bound Inferior / Bound Superior)")
 
     from lightgbm import LGBMRegressor, early_stopping, log_evaluation
 
@@ -349,7 +349,7 @@ def train_counterfactual_dual(df, feature_cols):
     log(f"  Días post-ZBE (test) : {n_post}")
 
     if n_pre < 60 or n_post == 0:
-        log("  ⚠️  Datos insuficientes para counterfactual")
+        log("  [WARN]  Datos insuficientes para counterfactual")
         return []
 
     lag_features  = [c for c in feature_cols
@@ -446,53 +446,53 @@ def train_counterfactual_dual(df, feature_cols):
                 log(f"     Bound conservador (METEO-PURO) : {g_pure:+.1f}%")
                 log(f"     Bound optimista   (CON-LAGS)   : {g_lags:+.1f}%")
                 if low < 0 and high < 0:
-                    log(f"     ✅ Ambos bounds negativos → reducción robusta")
+                    log(f"     [OK] Ambos bounds negativos -> reducción robusta")
                     log(f"        Efecto estimado: entre {abs(high):.1f}% y {abs(low):.1f}% de reducción")
                 elif low < 0 <= high:
-                    log(f"     ⚠️  Bounds en direcciones opuestas → efecto incierto")
+                    log(f"     [WARN]  Bounds en direcciones opuestas -> efecto incierto")
                     log(f"        Necesitas datos de verano 2026 para confirmar")
                 else:
-                    log(f"     ⚠️  Ambos bounds positivos → aumento neto en {target_raw}")
+                    log(f"     [WARN]  Ambos bounds positivos -> aumento neto en {target_raw}")
                     log(f"        Fuente no-tráfico domina (hipótesis calderas)")
 
     if results:
         gap_df = pd.DataFrame(results)
         gap_df.to_csv(MODELS_DIR / "counterfactual_gap_v8.csv", index=False)
-        log(f"\n  ✅ counterfactual_gap_v8.csv guardado")
+        log(f"\n  [OK] counterfactual_gap_v8.csv guardado")
         log(f"     Filtra version='METEO-PURO' o 'CON-LAGS' para comparar bounds")
 
     return results
 
 
-# ─── ⑦⑧ DiD CON EFECTOS FIJOS Y CLUSTERING ──────────────────────────────────
+# ─── (7)(8) DiD CON EFECTOS FIJOS Y CLUSTERING ──────────────────────────────────
 def did_analysis_v8(df):
     """
     Difference-in-Differences v8:
         pollution_it = β0 + β1·Post + β2·ZBE + β3·(Post×ZBE)
-                     + Σδ_my·C(month_year)   ← efectos fijos ⑦
+                     + Σδ_my·C(month_year)   ← efectos fijos (7)
                      + Σγ·meteo
                      + ε_it
 
-    SE clusterizados por fecha ⑧ — más conservadores que HC3.
+    SE clusterizados por fecha (8) - más conservadores que HC3.
     β3 = efecto causal neto de la ZBE.
     """
-    section("⑦⑧ Difference-in-Differences v8 — Efectos Fijos + Clustering")
+    section("(7)(8) Difference-in-Differences v8 - Efectos Fijos + Clustering")
 
     try:
         import statsmodels.formula.api as smf
         use_sm = True
         log("  Motor: statsmodels OLS")
-        log("  ⑦ Efectos fijos: C(month_year)  — 22 dummies mes×año")
-        log("  ⑧ SE clusterizados por fecha")
+        log("  (7) Efectos fijos: C(month_year)  - 22 dummies mes×año")
+        log("  (8) SE clusterizados por fecha")
     except ImportError:
         use_sm = False
-        log("  ⚠️  statsmodels no instalado — DiD manual 2×2")
+        log("  [WARN]  statsmodels no instalado - DiD manual 2×2")
         log("     pip install statsmodels")
 
     df = df.copy()
     df["date"] = pd.to_datetime(df["date"], utc=True)
 
-    # ⑦ Variable mes×año para efectos fijos
+    # (7) Variable mes×año para efectos fijos
     df["month_year"] = (df["date"].dt.year.astype(str) + "_"
                         + df["date"].dt.month.astype(str).str.zfill(2))
 
@@ -525,15 +525,15 @@ def did_analysis_v8(df):
 
     n_month_year = panel["month_year"].nunique()
     log(f"\n  Panel: {len(panel):,} obs · {panel['date'].nunique()} fechas")
-    log(f"  Dummies mes×año (⑦): {n_month_year}")
-    log(f"  Clusters fecha  (⑧): {panel['date'].nunique()}")
+    log(f"  Dummies mes×año ((7)): {n_month_year}")
+    log(f"  Clusters fecha  ((8)): {panel['date'].nunique()}")
 
     did_results = {}
 
     for cont in ["NO2", "PM10", "PM2.5"]:
         sub = panel[panel["contaminant"] == cont].dropna(subset=["pollution"])
         if len(sub) < 50:
-            log(f"\n  ⚠️  {cont}: datos insuficientes ({len(sub)} obs)")
+            log(f"\n  [WARN]  {cont}: datos insuficientes ({len(sub)} obs)")
             continue
 
         log(f"\n  ── DiD v8: {cont} ──────────────────────────────────────────")
@@ -545,13 +545,13 @@ def did_analysis_v8(df):
             cov_str = " + ".join(cov_available) if cov_available else "1"
             formula = (
                 f"pollution ~ Post + ZBE + Post_x_ZBE"
-                f" + C(month_year)"        # ⑦ efectos fijos mes×año
+                f" + C(month_year)"        # (7) efectos fijos mes×año
                 f" + {cov_str}"
             )
 
             try:
                 model = smf.ols(formula, data=sub).fit(
-                    cov_type="cluster",    # ⑧ SE clusterizados
+                    cov_type="cluster",    # (8) SE clusterizados
                     cov_kwds={"groups": sub["date"]}
                 )
 
@@ -566,11 +566,11 @@ def did_analysis_v8(df):
                 log(f"  β2 (ZBE)            : {model.params.get('ZBE', 0):+.3f}")
                 log(f"  β3 (Post × ZBE)     : {beta3:+.3f}  ← EFECTO CAUSAL ZBE")
                 log(f"  p-valor β3          : {pval:.4f}  "
-                    f"{'✅ p<0.05' if pval < 0.05 else '⚠️  no significativo'}")
+                    f"{'[OK] p<0.05' if pval < 0.05 else '[WARN]  no significativo'}")
                 log(f"  IC 95% β3           : [{ci_low:+.3f}, {ci_high:+.3f}]")
                 log(f"  R²                  : {r2_val:.3f}")
-                log(f"  Efectos fijos ⑦     : {n_month_year} dummies C(month_year)")
-                log(f"  SE ⑧                : clusterizados por fecha")
+                log(f"  Efectos fijos (7)     : {n_month_year} dummies C(month_year)")
+                log(f"  SE (8)                : clusterizados por fecha")
 
                 mean_pre = sub[(sub["Post"] == 0) & (sub["ZBE"] == 1)]["pollution"].mean()
                 if mean_pre > 0 and not np.isnan(beta3):
@@ -580,12 +580,12 @@ def did_analysis_v8(df):
                 log(f"")
                 if not np.isnan(pval) and pval < 0.05:
                     if beta3 < 0:
-                        log(f"  ✅ ZBE redujo {cont} en {abs(beta3):.2f} µg/m³ — CAUSAL")
+                        log(f"  [OK] ZBE redujo {cont} en {abs(beta3):.2f} µg/m³ - CAUSAL")
                         log(f"     (controlando estacionalidad mes×año, meteo y clustering)")
                     else:
-                        log(f"  ⚠️  {cont} AUMENTÓ {beta3:.2f} µg/m³ en ZBE vs control")
-                        log(f"     → Fuente no-tráfico (calderas residenciales) domina")
-                        log(f"     → O desplazamiento de tráfico al límite de la ZBE")
+                        log(f"  [WARN]  {cont} AUMENTÓ {beta3:.2f} µg/m³ en ZBE vs control")
+                        log(f"     -> Fuente no-tráfico (calderas residenciales) domina")
+                        log(f"     -> O desplazamiento de tráfico al límite de la ZBE")
                 else:
                     log(f"  ≈  Efecto no significativo (p={pval:.3f})")
                     log(f"     Con datos de verano 2026 el poder estadístico mejorará")
@@ -625,7 +625,7 @@ def did_analysis_v8(df):
     did_path = MODELS_DIR / "did_results_v8.json"
     with open(did_path, "w", encoding="utf-8") as f:
         json.dump(did_results, f, indent=2, ensure_ascii=False)
-    log(f"\n  ✅ did_results_v8.json guardado")
+    log(f"\n  [OK] did_results_v8.json guardado")
 
     return did_results
 
@@ -641,9 +641,9 @@ def print_metrics_summary(all_metrics, all_selected):
             log(f"\n  ── {cont} ──")
             for tc, m in sorted(cm.items()):
                 log(f"  {tc.replace('target_',''):<22} {m['cv_rmse']:>10.3f} "
-                    f"{m['cv_r2']:>8.3f} {m['cv_mape']:>9.1f} {m.get('n_features','—'):>9}")
+                    f"{m['cv_r2']:>8.3f} {m['cv_mape']:>9.1f} {m.get('n_features','-'):>9}")
 
-    log(f"\n  ── Comparativa v7 → v8 ──")
+    log(f"\n  ── Comparativa v7 -> v8 ──")
     v7_ref = {
         "NO2_out_d1":   (4.710, 0.390), "NO2_zbe_d1":   (3.993, 0.375),
         "PM10_out_d1":  (4.354, 0.394), "PM10_zbe_d1":  (4.314, 0.365),
@@ -658,7 +658,7 @@ def print_metrics_summary(all_metrics, all_selected):
             v7r, v7r2 = v7_ref[key]
             dr = m["cv_rmse"] - v7r
             log(f"  {key:<22} {v7r:>9.3f} {m['cv_rmse']:>9.3f} "
-                f"{dr:>+8.3f}{'✅' if dr < 0 else '⚠️ '} {v7r2:>7.3f} {m['cv_r2']:>7.3f}")
+                f"{dr:>+8.3f}{'[OK]' if dr < 0 else '[WARN] '} {v7r2:>7.3f} {m['cv_r2']:>7.3f}")
 
 
 def analyze_hdd_importance(all_importances):
@@ -693,7 +693,7 @@ def prueba_domingo_ajustada(df, all_importances):
     pre     = dom_inv[dom_inv["date"] <  ZBE_DATE]
     post    = dom_inv[dom_inv["date"] >= ZBE_DATE]
     if pre.empty or post.empty:
-        log("  ⚠️  Datos insuficientes")
+        log("  [WARN]  Datos insuficientes")
         return
     delta_raw = post["NO2_zbe"].mean() - pre["NO2_zbe"].mean()
     pct_raw   = delta_raw / pre["NO2_zbe"].mean() * 100
@@ -710,9 +710,9 @@ def prueba_domingo_ajustada(df, all_importances):
         log(f"  Sensibilidad NO2/HDD = {coef[0]:+.3f} µg/m³ por HDD")
         log(f"  Δ ajustado           = {delta_adj:+.2f} µg/m³  ({pct_adj:+.1f}%)")
         if pct_adj < -5:
-            log(f"  ✅ ZBE reduce NO2 incluso ajustando temperatura")
+            log(f"  [OK] ZBE reduce NO2 incluso ajustando temperatura")
         elif pct_adj > 5:
-            log(f"  ⚠️  NO2 sube ajustando — fuente estructural (calderas)")
+            log(f"  [WARN]  NO2 sube ajustando - fuente estructural (calderas)")
         else:
             log(f"  ≈  Cambio explicado por temperatura")
 
@@ -740,7 +740,7 @@ def analyze_zbe_effect(df):
             if col in df.columns:
                 pm, pom = pre[col].mean(), post[col].mean()
                 chg = (pom - pm) / pm * 100 if pm > 0 else 0
-                log(f"  {col:<12}: pre={pm:.2f}  post={pom:.2f}  {chg:+.1f}% {'↓' if chg<0 else '↑'}")
+                log(f"  {col:<12}: pre={pm:.2f}  post={pom:.2f}  {chg:+.1f}% {'v' if chg<0 else '^'}")
 
 
 def save_outputs(all_metrics, did_results=None):
@@ -770,9 +770,9 @@ def main():
     skip_cv = "--skip-cv" in sys.argv
 
     log("=" * 65)
-    log("  TRAIN MODEL v8 — Vitoria Air Quality (ZBE Causal — Paper Level)")
+    log("  TRAIN MODEL v8 - Vitoria Air Quality (ZBE Causal - Paper Level)")
     log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    log(f"  ⑦ C(month_year)  ⑧ SE clusterizados  ⑨ Counterfactual dual")
+    log(f"  (7) C(month_year)  (8) SE clusterizados  (9) Counterfactual dual")
     log(f"  Tuning: {'sí' if tune else 'no'}  |  Skip CV: {'sí' if skip_cv else 'no'}")
     log("=" * 65)
 
@@ -789,26 +789,26 @@ def main():
         prueba_domingo_ajustada(df, all_importances)
         save_feature_importance(all_importances)
 
-    train_counterfactual_dual(df, feature_cols)   # ⑨
-    did_results = did_analysis_v8(df)             # ⑦⑧
+    train_counterfactual_dual(df, feature_cols)   # (9)
+    did_results = did_analysis_v8(df)             # (7)(8)
 
     analyze_zbe_effect(df)
     save_outputs(all_metrics, did_results)
 
     elapsed = time.time() - start
     log("\n" + "=" * 65)
-    log("  ✅ v8 COMPLETADO")
+    log("  [OK] v8 COMPLETADO")
     log(f"  ⏳ {int(elapsed//60)} min {int(elapsed%60)} s")
-    log(f"  counterfactual_gap_v8.csv  — observed vs CF (meteo-puro / con-lags)")
-    log(f"  did_results_v8.json        — β3, p-valor IC 95%")
-    log(f"  training_report_v8.txt     — log completo")
+    log(f"  counterfactual_gap_v8.csv  - observed vs CF (meteo-puro / con-lags)")
+    log(f"  did_results_v8.json        - β3, p-valor IC 95%")
+    log(f"  training_report_v8.txt     - log completo")
     log("=" * 65)
     log("")
     log("  📊 PARA EL PAPER:")
-    log("  Tabla 1 — DiD: β3 con IC 95% clusterizado y efectos fijos C(month_year)")
-    log("  Figura 1 — observed vs counterfactual METEO-PURO para NO2_zbe")
-    log("  Figura 2 — banda de incertidumbre: gap meteo-puro vs con-lags")
-    log("  Nota — Con datos verano 2026 repetir para aislar efecto tráfico puro")
+    log("  Tabla 1 - DiD: β3 con IC 95% clusterizado y efectos fijos C(month_year)")
+    log("  Figura 1 - observed vs counterfactual METEO-PURO para NO2_zbe")
+    log("  Figura 2 - banda de incertidumbre: gap meteo-puro vs con-lags")
+    log("  Nota - Con datos verano 2026 repetir para aislar efecto tráfico puro")
     log("=" * 65)
 
 
