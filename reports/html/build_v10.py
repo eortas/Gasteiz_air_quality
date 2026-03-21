@@ -299,8 +299,22 @@ html_template = """<!DOCTYPE html>
   .header-right { display: flex; align-items: center; gap: 24px; }
   .main-header-author { font-size: 13px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.9; }
   
-  /* Botón del selector de tema */
-  .theme-toggle { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 12px; transition: all 0.2s; }
+  /* Botón del selector de tema / idioma */
+  .theme-toggle { 
+    background: rgba(255,255,255,0.15); 
+    border: 1px solid rgba(255,255,255,0.3); 
+    color: #fff; 
+    padding: 6px 14px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-family: 'IBM Plex Mono', monospace; 
+    font-size: 12px; 
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 32px;
+  }
   .theme-toggle:hover { background: rgba(255,255,255,0.25); }
 
   .header { padding: 40px 48px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
@@ -684,12 +698,28 @@ const translations = {
     mapTag: "Vitoria-Gasteiz — Red Kunak",
     mapTitle: "Mapa de <span>Estaciones</span>",
     mapSubtitle: "Media diaria de ayer por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.",
-    mapLegendTitle: "Semáforo ICA",
-    icaGood: "Buena (≤25)",
-    icaMod: "Moderada (25-50)",
-    icaBad: "Mala (50-75)",
-    icaVeryBad: "Muy mala (>75)",
-    trafficTitle: "Mapa de Tráfico"
+    v9Adj: "Métrica de Ajuste (Pre-ZBE)",
+    v9Impact: "Impacto Post-ZBE Estimado",
+    v9Diag: "Diagnóstico Causal",
+    v9Trend: "Pre-Trend Test",
+    v9ParallelOK: "✓ OK Parallel Trends",
+    v10Good: "🟢 BUENO",
+    v10Mod: "🟡 MODERADO",
+    v10Bad: "🔴 MALO",
+    backReal: "Medición Real",
+    backPred: "Predicción",
+    backWait: "⏳ Esperando sensores Kunak",
+    backExcel: "✓ Precisión excelente",
+    backGood: "✓ Precisión buena",
+    backAccept: "✓ Precisión aceptable",
+    backReview: "🔴 Revisión modelo",
+    mapDailyAyer: "Media diaria (ayer)",
+    mapPredManana: "▶ Predicción mañana",
+    mapZone: "Zona",
+    mapNote: "⚠ Los valores son medias diarias, no lecturas horarias",
+    colRMSE: "RMSE (µg/m³)",
+    colMAE: "MAE (µg/m³)",
+    colMAPE: "MAPE %"
   },
   eu: {
     mainTitle: "Vitoria-Gasteiz — Airearen Kalitatearen eta EBEaren Analisia",
@@ -740,7 +770,39 @@ const translations = {
     icaMod: "Ertaina (25-50)",
     icaBad: "Txarra (50-75)",
     icaVeryBad: "Oso txarra (>75)",
-    trafficTitle: "Trafikoaren Mapa"
+    trafficTitle: "Trafikoaren Mapa",
+    sumObs: "Behatua (batez bestekoa)",
+    sumCF: "Kontrafaktuala (meteo-purua)",
+    sumEffect: "EBEaren efektua (meteo-purua)",
+    sumRange: "EBE efektuaren heina",
+    sumPeriod: "2025 Ira → 2026 Mar",
+    sumBound: "Muga kontserbadorea",
+    sumMeteoLag: "Meteo-purua vs Lag-ekin",
+    sumRobRed: "✓ Murrizketa sendoa",
+    sumUncertain: "⚠ Ziurgabea",
+    sumIncrease: "✕ Gehikuntza garbia",
+    v9Adj: "Egokitze Metrika (EBE aurretik)",
+    v9Impact: "EBE osteko eragin estimatua",
+    v9Diag: "Diagnostiko Kausala",
+    v9Trend: "Pre-Trend Test-a",
+    v9ParallelOK: "✓ OK Parallel Trends",
+    v10Good: "🟢 ONA",
+    v10Mod: "🟡 ERTAINA",
+    v10Bad: "🔴 TXARRA",
+    backReal: "Neurketa Erreala",
+    backPred: "Aurreikuspena",
+    backWait: "⏳ Kunak sentsoreen zain",
+    backExcel: "✓ Doitasun bikaina",
+    backGood: "✓ Doitasun ona",
+    backAccept: "✓ Doitasun onargarria",
+    backReview: "🔴 Eredua berrikusi",
+    mapDailyAyer: "Atzoko eguneroko batez bestekoak",
+    mapPredManana: "▶ Biharko aurreikuspena",
+    mapZone: "Eremua",
+    mapNote: "⚠ Balioak eguneroko batez bestekoak dira, ez orduko irakurketak",
+    colRMSE: "RMSE (µg/m³)",
+    colMAE: "MAE (µg/m³)",
+    colMAPE: "MAPE %"
   }
 };
 
@@ -753,7 +815,15 @@ function updateI18n() {
   });
   
   // Actualizar el botón de idioma
-  document.getElementById('langBtn').innerText = currentLang === 'es' ? 'EU' : 'ES';
+  const langBtn = document.getElementById('langBtn');
+  if (langBtn) {
+    if (currentLang === 'es') {
+      const ikurrina = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 28 20" style="vertical-align: middle; margin-right: 6px; border-radius: 1px;"><rect width="28" height="20" fill="#DA121A"/><path d="M0 0 L28 20 M28 0 L0 20" stroke="#009543" stroke-width="3"/><path d="M14 0 V20 M0 10 H28" stroke="#FFFFFF" stroke-width="3"/></svg>';
+      langBtn.innerHTML = ikurrina + 'EUSKARA';
+    } else {
+      langBtn.innerHTML = 'CASTELLANO';
+    }
+  }
   
   // Actualizar el texto del botón del tema
   const themeBtn = document.getElementById('themeBtn');
@@ -842,8 +912,14 @@ function getClass(val) { if (val < -5)  return 'neg'; if (val > 5)   return 'pos
 
 function renderSummaryCards() {
   const key = `${currentCont}_${currentZone}`; const s = SUMMARY_STATS[key]; if (!s) return;
+  const t = translations[currentLang];
   const low = Math.min(s.pure, s.lags), high = Math.max(s.pure, s.lags), gap_abs = ((s.obs - s.cf_pure)).toFixed(2);
-  const cards = [ { label: 'Observado (medio)', value: s.obs.toFixed(2), sub: s.unit, cls: 'neutral', range: 'Sep 2025 → Mar 2026' }, { label: 'Counterfactual (meteo-puro)', value: s.cf_pure.toFixed(2), sub: `${s.unit} sin ZBE`, cls: 'neutral', range: 'Bound conservador' }, { label: 'Efecto ZBE (meteo-puro)', value: `${s.pure > 0 ? '+' : ''}${s.pure.toFixed(1)}%`, sub: `${gap_abs} ${s.unit} absoluto`, cls: getClass(s.pure), range: 'Bound conservador' }, { label: 'Rango efecto ZBE', value: `[${low.toFixed(1)}%, ${high.toFixed(1)}%]`, sub: 'Meteo-puro vs Con-lags', cls: low < 0 && high < 0 ? 'neg' : (low > 0 && high > 0 ? 'pos' : 'neutral'), range: low < 0 && high < 0 ? '✓ Reducción robusta' : (low < 0 ? '⚠ Incierto' : '✕ Aumento neto') } ];
+  const cards = [ 
+      { label: t.sumObs, value: s.obs.toFixed(2), sub: s.unit, cls: 'neutral', range: t.sumPeriod }, 
+      { label: t.sumCF, value: s.cf_pure.toFixed(2), sub: `${s.unit} sin ZBE`, cls: 'neutral', range: t.sumBound }, 
+      { label: t.sumEffect, value: `${s.pure > 0 ? '+' : ''}${s.pure.toFixed(1)}%`, sub: `${gap_abs} ${s.unit} absoluto`, cls: getClass(s.pure), range: t.sumBound }, 
+      { label: t.sumRange, value: `[${low.toFixed(1)}%, ${high.toFixed(1)}%]`, sub: t.sumMeteoLag, cls: low < 0 && high < 0 ? 'neg' : (low > 0 && high > 0 ? 'pos' : 'neutral'), range: low < 0 && high < 0 ? t.sumRobRed : (low < 0 ? t.sumUncertain : t.sumIncrease) } 
+  ];
   document.getElementById('summaryCards').innerHTML = cards.map(c => `<div class="summary-card"><div class="card-label">${c.label}</div><div class="card-value ${c.cls}">${c.value}</div><div class="card-sub">${c.sub}</div><div class="card-range">${c.range}</div></div>`).join('');
 }
 
@@ -897,8 +973,9 @@ let currentContV9 = 'NO2', currentStationV9 = 'PAUL';
 function renderV9Cards() {
   const contKey = currentContV9 === 'PM2.5' ? 'PM25' : currentContV9;
   const key = `${contKey}_${currentStationV9}`; const data = v9Stats[key] || { preR2: 'N/A', gap: 'N/A', desc: 'Sin datos' };
+  const t = translations[currentLang];
   const colorClass = String(data.gap).includes('-') ? 'neg' : (String(data.gap).includes('+') ? 'pos' : 'neutral');
-  document.getElementById('summaryCardsV9').innerHTML = `<div class="summary-card"><div class="card-label">Métrica de Ajuste (Pre-ZBE)</div><div class="card-value neutral">R² = ${data.preR2}</div></div><div class="summary-card"><div class="card-label">Impacto Post-ZBE Estimado</div><div class="card-value ${colorClass}">${data.gap}</div></div><div class="summary-card"><div class="card-label">Diagnóstico Causal</div><div class="card-value neutral" style="font-size: 16px; margin-top:8px;">${data.desc}</div></div><div class="summary-card"><div class="card-label">Pre-Trend Test</div><div class="card-value neg" style="font-size: 16px; margin-top:8px;">✓ OK Parallel Trends</div></div>`;
+  document.getElementById('summaryCardsV9').innerHTML = `<div class="summary-card"><div class="card-label">${t.v9Adj}</div><div class="card-value neutral">R² = ${data.preR2}</div></div><div class="summary-card"><div class="card-label">${t.v9Impact}</div><div class="card-value ${colorClass}">${data.gap}</div></div><div class="summary-card"><div class="card-label">${t.v9Diag}</div><div class="card-value neutral" style="font-size: 16px; margin-top:8px;">${data.desc}</div></div><div class="summary-card"><div class="card-label">${t.v9Trend}</div><div class="card-value neg" style="font-size: 16px; margin-top:8px;">${t.v9ParallelOK}</div></div>`;
 }
 
 function updateV9Images() {
@@ -924,15 +1001,16 @@ function renderDashboard3() {
   const no2 = zoneData['NO2'] || 0;
   const pm25 = zoneData['PM2.5'] || 0;
   const pm10 = zoneData['PM10'] || 0;
+  const t = translations[currentLang];
 
   let badge = document.getElementById('riskBadge');
   let riskLevel = 0; 
   if (no2 >= 40 || pm10 >= 20 || pm25 >= 10) riskLevel = 1;
   if (no2 >= 90 || pm10 >= 40 || pm25 >= 20) riskLevel = 2;
 
-  if (riskLevel === 0) { badge.innerText = "🟢 BUENO"; badge.style.color = "var(--green)"; badge.style.borderColor = "var(--green)"; badge.style.backgroundColor = getCssVar('--green')+"1A"; }
-  else if (riskLevel === 1) { badge.innerText = "🟡 MODERADO"; badge.style.color = "var(--yellow)"; badge.style.borderColor = "var(--yellow)"; badge.style.backgroundColor = getCssVar('--yellow')+"1A"; }
-  else { badge.innerText = "🔴 MALO"; badge.style.color = "var(--red)"; badge.style.borderColor = "var(--red)"; badge.style.backgroundColor = getCssVar('--red')+"1A"; }
+  if (riskLevel === 0) { badge.innerText = t.v10Good; badge.style.color = "var(--green)"; badge.style.borderColor = "var(--green)"; badge.style.backgroundColor = getCssVar('--green')+"1A"; }
+  else if (riskLevel === 1) { badge.innerText = t.v10Mod; badge.style.color = "var(--yellow)"; badge.style.borderColor = "var(--yellow)"; badge.style.backgroundColor = getCssVar('--yellow')+"1A"; }
+  else { badge.innerText = t.v10Bad; badge.style.color = "var(--red)"; badge.style.borderColor = "var(--red)"; badge.style.backgroundColor = getCssVar('--red')+"1A"; }
 
   document.getElementById('val-no2').innerText = no2.toFixed(1);
   document.getElementById('val-pm25').innerText = pm25.toFixed(1);
@@ -949,8 +1027,8 @@ function renderDashboard3() {
       data: {
           labels: perfStats[currentZoneV10].labels || [],
           datasets: [
-              { label: 'Medición Real', data: d.real, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
-              { label: 'Predicción', data: d.pred, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 }
+              { label: t.backReal, data: d.real, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
+              { label: t.backPred, data: d.pred, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 }
           ]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: text, font: { family: 'IBM Plex Mono'} } } }, scales: { x: { ticks: { color: text }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
@@ -961,9 +1039,9 @@ function renderDashboard3() {
   let realText, errorText, interpret, interpretColor;
   
   if (lastRealDraw === null || lastRealDraw === undefined) {
-      realText = "N/D (Pendiente)";
+      realText = currentLang === 'es' ? "N/D (Pendiente)" : "E/D (Zain)";
       errorText = "N/D";
-      interpret = "⏳ Esperando sensores Kunak";
+      interpret = t.backWait;
       interpretColor = "var(--muted)";
   } else {
       const lastReal = lastRealDraw;
@@ -972,10 +1050,10 @@ function renderDashboard3() {
       errorText = `${error > 0 ? '+' : ''}${error}%`;
       const errorColor = error > 0 ? "var(--red)" : "var(--green)";
       const absError = Math.abs(error);
-      if (absError <= 10) { interpretColor = "var(--green)"; interpret = "✓ Precisión excelente"; } 
-      else if (absError <= 20) { interpretColor = "var(--green)"; interpret = "✓ Precisión buena"; } 
-      else if (absError <= 30) { interpretColor = "var(--green)"; interpret = "✓ Precisión aceptable"; } 
-      else { interpretColor = "var(--yellow)"; interpret = "🔴 Revisión modelo"; }
+      if (absError <= 10) { interpretColor = "var(--green)"; interpret = t.backExcel; } 
+      else if (absError <= 20) { interpretColor = "var(--green)"; interpret = t.backGood; } 
+      else if (absError <= 30) { interpretColor = "var(--green)"; interpret = t.backAccept; } 
+      else { interpretColor = "var(--yellow)"; interpret = t.backReview; }
 
       document.getElementById('backtestTable').innerHTML = `
         <tr>
@@ -996,6 +1074,18 @@ function renderMetricsTable() {
   const order = [ ['NO2','zbe'], ['NO2','out'], ['PM10','zbe'], ['PM10','out'], ['PM2.5','zbe'], ['PM2.5','out'], ['ICA','zbe'], ['ICA','out'], ];
   const body = document.getElementById('metricsBody');
   if (!body) return;
+  const t = translations[currentLang];
+  // Actualizar cabecera de tabla de métricas si es necesario (el thead tiene data-i18n pero no para RMSE/MAE/MAPE)
+  const thead = body.previousElementSibling;
+  if (thead) {
+      const rows = thead.querySelectorAll('th');
+      if (rows.length >= 5) {
+          rows[1].innerText = t.colRMSE;
+          rows[2].innerText = t.colMAE;
+          rows[4].innerText = t.colMAPE;
+      }
+  }
+
   body.innerHTML = order.map(([cont, zone]) => {
     const key = `target_${cont}_${zone}_d1`;
     const m = metricsData[key];
@@ -1058,21 +1148,21 @@ function initMap() {
       radius: 11, color: markerColor, weight: 2, fillColor: color, fillOpacity: 0.95,
     }).addTo(mapInstance);
 
-    function fmt(v) { return v !== null && v !== undefined ? v.toFixed(1) : 'N/D'; }
+    const t = translations[currentLang];
     const popupHtml = `
       <div class="popup-name">${icaEmoji(s.ICA)} ${s.label}</div>
-      <div style="font-size:10px;color:var(--accent);font-family:'IBM Plex Mono',monospace;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em">Media diaria (ayer)</div>
+      <div style="font-size:10px;color:var(--accent);font-family:'IBM Plex Mono',monospace;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em">${t.mapDailyAyer}</div>
       <div class="popup-row"><span class="popup-label">NO₂</span><span class="popup-val">${fmt(s.NO2)} µg/m³</span></div>
       <div class="popup-row"><span class="popup-label">PM10</span><span class="popup-val">${fmt(s.PM10)} µg/m³</span></div>
       <div class="popup-row"><span class="popup-label">PM2.5</span><span class="popup-val">${fmt(s.PM25)} µg/m³</span></div>
       <div class="popup-row"><span class="popup-label">ICA</span><span class="popup-val">${fmt(s.ICA)}</span></div>
       <div class="popup-section">
-        <div class="popup-section-title">▶ Predicción mañana</div>
+        <div class="popup-section-title">${t.mapPredManana}</div>
         <div class="popup-row"><span class="popup-label">NO₂</span><span class="popup-val">${fmt(s.pred_NO2)} µg/m³</span></div>
         <div class="popup-row"><span class="popup-label">PM10</span><span class="popup-val">${fmt(s.pred_PM10)} µg/m³</span></div>
         <div class="popup-row"><span class="popup-label">PM2.5</span><span class="popup-val">${fmt(s.pred_PM25)} µg/m³</span></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:6px">Zona ${s.zone} </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">⚠ Los valores son medias diarias, no lecturas horarias</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px">${t.mapZone} ${s.zone} </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${t.mapNote}</div>
       </div>`;
     marker.bindPopup(popupHtml, { maxWidth: 260 });
 
