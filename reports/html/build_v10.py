@@ -418,19 +418,22 @@ html_template = """<!DOCTYPE html>
 
 <div class="header-wrapper">
   <div class="main-header">
-    <div class="main-header-title">Vitoria-Gasteiz Air quality and ZBE analysis</div>
+    <div class="main-header-title" data-i18n="mainTitle">Vitoria-Gasteiz — Análisis Calidad del Aire y ZBE</div>
     <div class="header-right">
       <div class="main-header-author">Eduardo Ortas Armentia</div>
-      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn"> Modo Oscuro</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="theme-toggle" onclick="toggleLang()" id="langBtn">EU</button>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">Modo Oscuro</button>
+      </div>
     </div>
   </div>
 
   <div class="top-nav">
-    <button class="top-nav-btn active" onclick="switchMainView('v10', this)">1. Predicción Operativa</button>
-    <button class="top-nav-btn" onclick="switchMainView('v8', this)">2. Monitor Interactivo Diario</button>
-    <button class="top-nav-btn" onclick="switchMainView('v9', this)">3. Validación Causal</button>
-    <button class="top-nav-btn" onclick="switchMainView('map', this)">4. Mapa de Estaciones</button>
-    <button class="top-nav-btn" onclick="switchMainView('traffic', this)">5. Mapa de Tráfico</button>
+    <button class="top-nav-btn active" onclick="switchMainView('v10', this)" data-i18n="nav1">1. Predicción Operativa</button>
+    <button class="top-nav-btn" onclick="switchMainView('v8', this)" data-i18n="nav2">2. Monitor Interactivo Diario</button>
+    <button class="top-nav-btn" onclick="switchMainView('v9', this)" data-i18n="nav3">3. Validación Causal</button>
+    <button class="top-nav-btn" onclick="switchMainView('map', this)" data-i18n="nav4">4. Mapa de Estaciones</button>
+    <button class="top-nav-btn" onclick="switchMainView('traffic', this)" data-i18n="nav5">5. Mapa de Tráfico</button>
   </div>
 </div>
 
@@ -451,7 +454,7 @@ html_template = """<!DOCTYPE html>
   </div>
 
   <div class="controls">
-    <span class="controls-label">Contaminante</span>
+    <span class="controls-label" data-i18n="contaminant">Contaminante</span>
     <div class="tab-group" id="contTabs">
       <button class="tab active" onclick="selectCont('NO2',this)">NO₂</button>
       <button class="tab" onclick="selectCont('PM10',this)">PM10</button>
@@ -459,10 +462,10 @@ html_template = """<!DOCTYPE html>
       <button class="tab" onclick="selectCont('ICA',this)">ICA</button>
     </div>
     <div class="sep"></div>
-    <span class="controls-label">Zona</span>
+    <span class="controls-label" data-i18n="zone">Zona</span>
     <div class="tab-group" id="zoneTabs">
-      <button class="tab active" onclick="selectZone('zbe',this)">ZBE (dentro)</button>
-      <button class="tab" onclick="selectZone('out',this)">FUERA DE ZBE (control)</button>
+      <button class="tab active" onclick="selectZone('zbe',this)" data-i18n="zoneIn">ZBE (dentro)</button>
+      <button class="tab" onclick="selectZone('out',this)" data-i18n="zoneOut">FUERA DE ZBE (control)</button>
     </div>
   </div>
 
@@ -492,12 +495,12 @@ html_template = """<!DOCTYPE html>
 <div id="view-v9" class="view-container">
   <div class="header">
     <div class="header-left">
-      <div class="label-tag">Métodos econométricos — Evaluación del impacto</div>
-      <h1>Evaluación Causal ZBE<br><span>Event Study & Synthetic Control</span></h1>
+      <div class="label-tag" data-i18n="v9Tag">Métodos econométricos — Evaluación del impacto</div>
+      <h1 data-i18n="v9Title">Evaluación Causal ZBE<br><span>Event Study & Synthetic Control</span></h1>
     </div>
   </div>
   <div class="controls">
-    <span class="controls-label">Contaminante</span>
+    <span class="controls-label" data-i18n="contaminant">Contaminante</span>
     <div class="tab-group" id="contTabsV9">
       <button class="tab active" onclick="selectContV9('NO2', this)">NO₂</button>
       <button class="tab" onclick="selectContV9('PM10', this)">PM10</button>
@@ -505,7 +508,7 @@ html_template = """<!DOCTYPE html>
       <button class="tab" onclick="selectContV9('ICA', this)">ICA</button>
     </div>
     <div class="sep"></div>
-    <span class="controls-label">Estación IntraZBE</span>
+    <span class="controls-label" data-i18n="v9Station">Estación IntraZBE</span>
     <div class="tab-group" id="stationTabsV9">
       <button class="tab active" onclick="selectStationV9('PAUL', this)">PAUL</button>
       <button class="tab" onclick="selectStationV9('BEATO', this)">BEATO</button>
@@ -519,14 +522,14 @@ html_template = """<!DOCTYPE html>
       <div class="fig-header"><div class="fig-title"><strong>Figura 1</strong> — Control Sintético (Serie Suavizada)</div></div>
       <div class="img-wrap">
         <img id="img-sc" src="" alt="Gráfico Control Sintético" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-        <div id="err-sc" class="error-msg">Imagen no encontrada. Verifica el nombre del archivo.</div>
+        <div id="err-sc" class="error-msg" data-i18n="imgNotFound">Imagen no encontrada. Verifica el nombre del archivo.</div>
       </div>
     </div>
     <div class="fig-block">
       <div class="fig-header"><div class="fig-title"><strong>Figura 2</strong> — Event Study DiD</div></div>
       <div class="img-wrap">
         <img id="img-es" src="" alt="Gráfico Event Study" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-        <div id="err-es" class="error-msg">Imagen no encontrada. Verifica el nombre del archivo.</div>
+        <div id="err-es" class="error-msg" data-i18n="imgNotFound">Imagen no encontrada. Verifica el nombre del archivo.</div>
       </div>
     </div>
   </div>
@@ -534,9 +537,9 @@ html_template = """<!DOCTYPE html>
 
 <div id="view-v10" class="view-container active">
   <div class="v10-risk-container">
-    <div class="label-tag">EEA Standards — Air Quality Risk</div>
-    <h2 style="margin-bottom: 10px; color: var(--muted); font-weight: 400; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">Calidad del aire prevista para <span style="color:var(--text);font-weight:700;">mañana __PRED_DATE_PLACEHOLDER__</span></h2>
-    <div id="riskBadge" class="v10-risk-badge">CALCULANDO...</div>
+    <div class="label-tag" data-i18n="v10Tag">EEA Standards — Air Quality Risk</div>
+    <h2 style="margin-bottom: 10px; color: var(--muted); font-weight: 400; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;"><span data-i18n="v10Title">Calidad del aire prevista para</span> <span style="color:var(--text);font-weight:700;">mañana __PRED_DATE_PLACEHOLDER__</span></h2>
+    <div id="riskBadge" class="v10-risk-badge" data-i18n="v10Calculating">CALCULANDO...</div>
     <div class="v10-risk-grid">
       <div class="v10-risk-item"><div class="val" id="val-no2">--</div><div class="lab">NO₂ µg/m³</div></div>
       <div class="v10-risk-item"><div class="val" id="val-pm25">--</div><div class="lab">PM2.5 µg/m³</div></div>
@@ -545,24 +548,24 @@ html_template = """<!DOCTYPE html>
   </div>
 
   <div class="controls">
-    <span class="controls-label">Contaminante</span>
+    <span class="controls-label" data-i18n="contaminant">Contaminante</span>
     <div class="tab-group" id="contTabsV10">
       <button class="tab active" onclick="selectContV10('NO2', this)">NO₂</button>
       <button class="tab" onclick="selectContV10('PM10', this)">PM10</button>
       <button class="tab" onclick="selectContV10('PM2.5', this)">PM2.5</button>
     </div>
     <div class="sep"></div>
-    <span class="controls-label">ZONA </span>
+    <span class="controls-label" data-i18n="zone">ZONA </span>
     <div class="tab-group" id="zoneTabsV10">
-      <button class="tab active" onclick="selectZoneV10('out', this)">FUERA DE ZBE</button>
-      <button class="tab" onclick="selectZoneV10('zbe', this)">ZBE</button>
+      <button class="tab active" onclick="selectZoneV10('out', this)" data-i18n="zoneOut">FUERA DE ZBE</button>
+      <button class="tab" onclick="selectZoneV10('zbe', this)" data-i18n="zoneIn">ZBE</button>
     </div>
   </div>
 
   <div class="charts-section">
     <div class="fig-block">
       <div class="fig-header">
-        <div class="fig-title"><strong>Auditoría del Modelo:</strong> Predicción vs Real (Últimos 7 días)</div>
+        <div class="fig-title" data-i18n="auditTitle"><strong>Auditoría del Modelo:</strong> Predicción vs Real (Últimos 7 días)</div>
       </div>
       <div class="perf-chart-wrap">
         <canvas id="perfChart"></canvas>
@@ -570,24 +573,24 @@ html_template = """<!DOCTYPE html>
     </div>
     
     <div class="did-section" style="padding: 0;">
-      <div class="did-title"><strong>Validación de Ayer</strong> — Backtesting de precisión</div>
+      <div class="did-title" data-i18n="backtestTitle"><strong>Validación de Ayer</strong> — Backtesting de precisión</div>
       <table>
-        <thead><tr><th>Parámetro</th><th>Predicción Ayer (v8)</th><th>Medición Real</th><th>Desviación</th><th>Estado</th></tr></thead>
+        <thead><tr><th data-i18n="colParam">Parámetro</th><th data-i18n="colPred">Predicción Ayer (v8)</th><th data-i18n="colReal">Medición Real</th><th data-i18n="colDev">Desviación</th><th data-i18n="colStatus">Estado</th></tr></thead>
         <tbody id="backtestTable"></tbody>
       </table>
     </div>
   </div>
 
   <div class="did-section" style="padding: 0 0 40px;">
-    <div class="did-title" style="padding: 0 48px 16px;"><strong>Rendimiento del Modelo v8</strong> — Métricas Cross-Validation (5 Folds)</div>
+    <div class="did-title" style="padding: 0 48px 16px;" data-i18n="perfTitle"><strong>Rendimiento del Modelo v8</strong> — Métricas Cross-Validation (5 Folds)</div>
     <div style="padding: 0 48px; overflow-x: auto;">
       <table id="metricsTable">
-        <thead><tr><th>Contaminante + Zona</th><th>RMSE (µg/m³)</th><th>MAE (µg/m³)</th><th>R²</th><th>MAPE %</th><th>N. Features</th></tr></thead>
+        <thead><tr><th data-i18n="colContZone">Contaminante + Zona</th><th>RMSE (µg/m³)</th><th>MAE (µg/m³)</th><th data-i18n="colR2">R²</th><th>MAPE %</th><th data-i18n="colNFeatures">N. Features</th></tr></thead>
         <tbody id="metricsBody"></tbody>
       </table>
     </div>
     <p style="padding: 12px 48px 0; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace;">
-      MAPE calculado solo sobre filas con valor observado &gt; 1 µg/m³.&nbsp;&nbsp;Umbral aceptación: MAPE &lt; 25%, R² &gt; 0.35.
+      <span data-i18n="mapeNote">MAPE calculado solo sobre filas con valor observado > 1 µg/m³.</span>&nbsp;&nbsp;<span data-i18n="mapeThreshold">Umbral aceptación: MAPE < 25%, R² > 0.35.</span>
     </p>
   </div>
 </div>
@@ -595,16 +598,16 @@ html_template = """<!DOCTYPE html>
 <div id="view-map" class="view-container">
   <div class="map-header" style="padding: 16px 48px 16px;">
     <div class="header-left">
-      <div class="label-tag">Vitoria-Gasteiz — Red Kunak</div>
-      <h1>Mapa de <span>Estaciones</span></h1>
-      <p class="subtitle">Media diaria de ayer por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.</p>
+      <div class="label-tag" data-i18n="mapTag">Vitoria-Gasteiz — Red Kunak</div>
+      <h1 data-i18n="mapTitle">Mapa de <span>Estaciones</span></h1>
+      <p class="subtitle" data-i18n="mapSubtitle">Media diaria de ayer por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.</p>
     </div>
     <div class="map-legend">
-      <div class="card-label" style="margin-bottom:4px">Semáforo ICA</div>
-      <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green)"></div><span>Buena (&le;25)</span></div>
-      <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--yellow)"></div><span>Moderada (25-50)</span></div>
-      <div class="map-legend-item"><div class="map-legend-dot" style="background:#ff7043"></div><span>Mala (50-75)</span></div>
-      <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--red)"></div><span>Muy mala (&gt;75)</span></div>
+      <div class="card-label" style="margin-bottom:4px" data-i18n="mapLegendTitle">Semáforo ICA</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green)"></div><span data-i18n="icaGood">Buena (≤25)</span></div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--yellow)"></div><span data-i18n="icaMod">Moderada (25-50)</span></div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#ff7043"></div><span data-i18n="icaBad">Mala (50-75)</span></div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--red)"></div><span data-i18n="icaVeryBad">Muy mala (>75)</span></div>
     </div>
   </div>
   <div class="map-wrap">
@@ -634,8 +637,144 @@ let mapInstance = null;
 let mapTileLayer = null;
 let _mapInitialized = false;
 
-function getCssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+let currentLang = localStorage.getItem('vitoria_lang') || 'es';
+
+const translations = {
+  es: {
+    mainTitle: "Vitoria-Gasteiz — Análisis Calidad del Aire y ZBE",
+    nav1: "1. Predicción Operativa",
+    nav2: "2. Monitor Interactivo Diario",
+    nav3: "3. Validación Causal",
+    nav4: "4. Mapa de Estaciones",
+    nav5: "5. Mapa de Tráfico",
+    themeDark: "Modo Oscuro",
+    themeLight: "Modo Claro",
+    v8Tag: "Análisis Causal — ZBE Vitoria-Gasteiz",
+    v8Title: "Counterfactual Meteorológico<br><span>ZBE Sep·2025 → Actual</span>",
+    v8Subtitle: "Comparación entre contaminación observada y el escenario contrafactual.",
+    legendTitle: "Leyenda",
+    legendObs: "Observado (real)",
+    legendCFPure: "CF Meteo-Puro",
+    legendCFLags: "CF Con-Lags",
+    legendBand: "Banda de efecto",
+    contaminant: "Contaminante",
+    zone: "Zona",
+    zoneIn: "ZBE (dentro)",
+    zoneOut: "FUERA DE ZBE (control)",
+    v9Tag: "Métodos econométricos — Evaluación del impacto",
+    v9Title: "Evaluación Causal ZBE<br><span>Event Study & Synthetic Control</span>",
+    v9Station: "Estación IntraZBE",
+    imgNotFound: "Imagen no encontrada. Verifica el nombre del archivo.",
+    v10Tag: "EEA Standards — Air Quality Risk",
+    v10Title: "Calidad del aire prevista para",
+    v10Calculating: "CALCULANDO...",
+    auditTitle: "<strong>Auditoría del Modelo:</strong> Predicción vs Real (Últimos 7 días)",
+    backtestTitle: "<strong>Validación de Ayer</strong> — Backtesting de precisión",
+    colParam: "Parámetro",
+    colPred: "Predicción Ayer (v8)",
+    colReal: "Medición Real",
+    colDev: "Desviación",
+    colStatus: "Estado",
+    perfTitle: "<strong>Rendimiento del Modelo v8</strong> — Métricas Cross-Validation (5 Folds)",
+    colContZone: "Contaminante + Zona",
+    colR2: "R²",
+    colNFeatures: "N. Features",
+    mapeNote: "MAPE calculado solo sobre filas con valor observado > 1 µg/m³.",
+    mapeThreshold: "Umbral aceptación: MAPE < 25%, R² > 0.35.",
+    mapTag: "Vitoria-Gasteiz — Red Kunak",
+    mapTitle: "Mapa de <span>Estaciones</span>",
+    mapSubtitle: "Media diaria de ayer por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.",
+    mapLegendTitle: "Semáforo ICA",
+    icaGood: "Buena (≤25)",
+    icaMod: "Moderada (25-50)",
+    icaBad: "Mala (50-75)",
+    icaVeryBad: "Muy mala (>75)",
+    trafficTitle: "Mapa de Tráfico"
+  },
+  eu: {
+    mainTitle: "Vitoria-Gasteiz — Airearen Kalitatearen eta EBEaren Analisia",
+    nav1: "1. Iragarpen Operatiboa",
+    nav2: "2. Eguneroko Monitore Interaktiboa",
+    nav3: "3. Baliozkotze Kausala",
+    nav4: "4. Estazioen Mapa",
+    nav5: "5. Trafikoaren Mapa",
+    themeDark: "Modu Iluna",
+    themeLight: "Modu Argia",
+    v8Tag: "Analisi Kausala — Gasteizko EBE",
+    v8Title: "Kontrafaktual Meteorologikoa<br><span>EBE 2025eko Iraila → Gaur egun</span>",
+    v8Subtitle: "Behatutako kutsaduraren eta agertoki kontrafaktualaren arteko alderaketa.",
+    legendTitle: "Legenda",
+    legendObs: "Behatua (reala)",
+    legendCFPure: "KM Meteo-Purua",
+    legendCFLags: "KM Lag-ekin",
+    legendBand: "Efektu-banda",
+    contaminant: "Kutsatzailea",
+    zone: "Eremua",
+    zoneIn: "EBE (barruan)",
+    zoneOut: "EBEn KANPO (kontrola)",
+    v9Tag: "Metodo ekonometrikoak — Eraginaren ebaluazioa",
+    v9Title: "EBEren Ebaluazio Kausala<br><span>Event Study & Synthetic Control</span>",
+    v9Station: "EBE barneko estazioa",
+    imgNotFound: "Irudia ez da aurkitu. Egiaztatu fitxategiaren izena.",
+    v10Tag: "EEA Arauak — Airearen Kalitatearen Arriskua",
+    v10Title: "Biharko aurreikusitako aire-kalitatea",
+    v10Calculating: "KALKULATZEN...",
+    auditTitle: "<strong>Ereduaren Ikuskapena:</strong> Aurreikusitakoa vs Erreala (Azken 7 egunak)",
+    backtestTitle: "<strong>Atzoko Baliozkotzea</strong> — Doitasunaren Backtestinga",
+    colParam: "Parametroa",
+    colPred: "Atzoko Aurreikuspena (v8)",
+    colReal: "Neurketa Erreala",
+    colDev: "Desbideratzea",
+    colStatus: "Egoera",
+    perfTitle: "<strong>v8 Ereduaren Errendimendua</strong> — Baliozkotze Gurutzatuko Metrikak (5 Fold)",
+    colContZone: "Kutsatzailea + Eremua",
+    colR2: "R²",
+    colNFeatures: "Ezaugarri Kopurua",
+    mapeNote: "MAPE behatutako balioa > 1 µg/m³ duten errenkadetan soilik kalkulatua.",
+    mapeThreshold: "Onarpen-atalasea: MAPE < %25, R² > 0.35.",
+    mapTag: "Vitoria-Gasteiz — Kunak Sarea",
+    mapTitle: "Estazioen <span>Mapa</span>",
+    mapSubtitle: "Atzoko eguneroko batez bestekoak eta biharko aurreikuspenak. Egin klik puntu batean xehetasunak ikusteko.",
+    mapLegendTitle: "ICA Semaforoa",
+    icaGood: "Ona (≤25)",
+    icaMod: "Ertaina (25-50)",
+    icaBad: "Txarra (50-75)",
+    icaVeryBad: "Oso txarra (>75)",
+    trafficTitle: "Trafikoaren Mapa"
+  }
+};
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (translations[currentLang][key]) {
+      el.innerHTML = translations[currentLang][key];
+    }
+  });
+  
+  // Actualizar el botón de idioma
+  document.getElementById('langBtn').innerText = currentLang === 'es' ? 'EU' : 'ES';
+  
+  // Actualizar el texto del botón del tema
+  const themeBtn = document.getElementById('themeBtn');
+  if (themeBtn) {
+    themeBtn.innerText = currentTheme === 'dark' 
+      ? translations[currentLang].themeLight 
+      : translations[currentLang].themeDark;
+  }
+  
+  // Sincronizar el iframe de tráfico
+  const iframe = document.getElementById('trafficIframe');
+  if (iframe) {
+    const baseUrl = iframe.src.split('?')[0];
+    iframe.src = `${baseUrl}?lang=${currentLang}`;
+  }
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'es' ? 'eu' : 'es';
+  localStorage.setItem('vitoria_lang', currentLang);
+  updateI18n();
 }
 
 const DID_RESULTS = {
@@ -953,9 +1092,22 @@ function initMap() {
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 window.onload = function() {
+  updateI18n(); // Aplicar traducciones primero
+  
+  if (localStorage.getItem('vitoria_theme') === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    currentTheme = 'dark';
+    updateI18n(); // Re-actualizar textos de botones que dependen del tema
+  }
+
   renderSummaryCards(); renderFig1(); renderFig2(); renderFig3(); renderDidTable();
   renderV9Cards(); updateV9Images();
   renderDashboard3(); renderMetricsTable();
+  
+  // Si estamos en la pestaña de tráfico, sincronizar lenguaje
+  if (document.getElementById('view-traffic').classList.contains('active')) {
+      toggleLang(); toggleLang(); // Truco para disparar la sincronización del iframe
+  }
 };
 </script>
 </body>

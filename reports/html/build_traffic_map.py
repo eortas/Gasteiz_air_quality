@@ -141,19 +141,75 @@ def build_traffic_dashboard():
 </head>
 <body>
     <div class="header">
-        <h1>Vitoria-Gasteiz — Mapa de Sensores de Tráfico</h1>
-        <div style="font-size: 12px; font-family: 'IBM Plex Mono', monospace;">Real-time-ish feed</div>
+        <h1 data-i18n="title">Vitoria-Gasteiz — Mapa de Sensores de Tráfico</h1>
+        <div style="font-size: 12px; font-family: 'IBM Plex Mono', monospace;" data-i18n="subtitle">Real-time-ish feed</div>
     </div>
     <div class="controls">
-        <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted);">Ver datos de:</span>
-        <button id="btn-yesterday" class="btn-toggle" onclick="setView('yesterday')">Día __YESTERDAY__</button>
-        <button id="btn-today" class="btn-toggle active" onclick="setView('today')">Día __TODAY__</button>
+        <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted);" data-i18n="viewLabel">Ver datos de:</span>
+        <button id="btn-yesterday" class="btn-toggle" onclick="setView('yesterday')"><span data-i18n="dayPrefix">Día </span>__YESTERDAY__</button>
+        <button id="btn-today" class="btn-toggle active" onclick="setView('today')"><span data-i18n="dayPrefix">Día </span>__TODAY__</button>
     </div>
     <div id="map"></div>
 
     <script>
         const sensors = __SENSORS_DATA__;
         let currentView = 'today';
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentLang = urlParams.get('lang') || 'es';
+
+        const translations = {
+          es: {
+            title: "Vitoria-Gasteiz — Mapa de Sensores de Tráfico",
+            subtitle: "Real-time-ish feed",
+            viewLabel: "Ver datos de:",
+            dayPrefix: "Día ",
+            carga: "Carga:",
+            ocupacion: "Ocupación:",
+            volumen: "Volumen total:",
+            picoTitle: "Pico de Carga (Tramo Máx)",
+            hora: "Hora:",
+            cargaPico: "Carga pico:",
+            volumenPico: "Volumen pico:",
+            legendTitle: "Carga Tráfico (%)",
+            legendFluido: "< 15% (Fluido)",
+            legendMod: "15-30% (Moderado)",
+            legendDenso: "> 30% (Denso)",
+            legendNoData: "Sin datos"
+          },
+          eu: {
+            title: "Gasteiz — Trafiko Sentsoreen Mapa",
+            subtitle: "Real-time-ish feed",
+            viewLabel: "Ikusi datuak:",
+            dayPrefix: "Eguna ",
+            carga: "Karga:",
+            ocupacion: "Okupazioa:",
+            volumen: "Bolumen osoa:",
+            picoTitle: "Karga Gailurra (Gehienezko Tartea)",
+            hora: "Ordua:",
+            cargaPico: "Karga gailurra:",
+            volumenPico: "Bolumen gailurra:",
+            legendTitle: "Trafiko Karga (%)",
+            legendFluido: "< %15 (Arina)",
+            legendMod: "%15-30 (Ertaina)",
+            legendDenso: "> %30 (Densea)",
+            legendNoData: "Daturik gabe"
+          }
+        };
+
+        function updateI18n() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerText = translations[currentLang][key];
+                }
+            });
+            if (legendInstance) {
+                legendInstance.remove();
+                legendInstance.addTo(map);
+            }
+        }
+
         let map = L.map('map').setView([42.8467, -2.6716], 14);
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -171,6 +227,7 @@ def build_traffic_dashboard():
 
         function updateMarkers() {
             markers.clearLayers();
+            const t = translations[currentLang];
             sensors.forEach(s => {
                 const data = s[currentView];
                 const color = getColor(data.l);
@@ -186,15 +243,15 @@ def build_traffic_dashboard():
 
                 const popupContent = `
                     <div class="popup-title">${s.name} (${s.code})</div>
-                    <div class="popup-row"><span>Carga:</span> <b>${data.l !== null ? data.l + '%' : 'N/A'}</b></div>
-                    <div class="popup-row"><span>Ocupación:</span> <b>${data.o !== null ? data.o + '%' : 'N/A'}</b></div>
-                    <div class="popup-row"><span>Volumen total:</span> <b>${data.v !== null ? data.v : 'N/A'}</b></div>
+                    <div class="popup-row"><span>${t.carga}</span> <b>${data.l !== null ? data.l + '%' : 'N/A'}</b></div>
+                    <div class="popup-row"><span>${t.ocupacion}</span> <b>${data.o !== null ? data.o + '%' : 'N/A'}</b></div>
+                    <div class="popup-row"><span>${t.volumen}</span> <b>${data.v !== null ? data.v : 'N/A'}</b></div>
                     
                     <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border);">
-                        <div style="font-size: 10px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Pico de Carga (Tramo Máx)</div>
-                        <div class="popup-row"><span>Hora:</span> <b>${data.peak.h || 'N/A'}</b></div>
-                        <div class="popup-row"><span>Carga pico:</span> <b>${data.peak.l !== null ? data.peak.l + '%' : 'N/A'}</b></div>
-                        <div class="popup-row"><span>Volumen pico:</span> <b>${data.peak.v || 'N/A'}</b></div>
+                        <div style="font-size: 10px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">${t.picoTitle}</div>
+                        <div class="popup-row"><span>${t.hora}</span> <b>${data.peak.h || 'N/A'}</b></div>
+                        <div class="popup-row"><span>${t.cargaPico}</span> <b>${data.peak.l !== null ? data.peak.l + '%' : 'N/A'}</b></div>
+                        <div class="popup-row"><span>${t.volumenPico}</span> <b>${data.peak.v || 'N/A'}</b></div>
                     </div>
                 `;
                 
@@ -210,18 +267,21 @@ def build_traffic_dashboard():
             updateMarkers();
         }
 
-        const legend = L.control({position: 'bottomright'});
-        legend.onAdd = function (map) {
+        let legendInstance = L.control({position: 'bottomright'});
+        legendInstance.onAdd = function (map) {
+            const t = translations[currentLang];
             const div = L.DomUtil.create('div', 'legend');
-            div.innerHTML += '<b>Carga Tráfico (%)</b><br>';
-            div.innerHTML += '<i style="background: var(--green)"></i> < 15% (Fluido)<br>';
-            div.innerHTML += '<i style="background: var(--yellow)"></i> 15-30% (Moderado)<br>';
-            div.innerHTML += '<i style="background: var(--red)"></i> > 30% (Denso)<br>';
-            div.innerHTML += '<i style="background: #999"></i> Sin datos';
+            div.innerHTML += `<b>${t.legendTitle}</b><br>`;
+            div.innerHTML += `<i style="background: var(--green)"></i> ${t.legendFluido}<br>`;
+            div.innerHTML += `<i style="background: var(--yellow)"></i> ${t.legendMod}<br>`;
+            div.innerHTML += `<i style="background: var(--red)"></i> ${t.legendDenso}<br>`;
+            div.innerHTML += `<i style="background: #999"></i> ${t.legendNoData}`;
             return div;
         };
-        legend.addTo(map);
+        legendInstance.addTo(map);
 
+        // Inicialización
+        updateI18n();
         updateMarkers();
     </script>
 </body>
