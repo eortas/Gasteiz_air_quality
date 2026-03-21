@@ -203,6 +203,7 @@ def main():
     logger.info("\n── FASE 9: Dashboard")
     dated_name    = f"dashboard_{datetime.now().strftime('%Y-%m-%d')}.html"
     dashboard_dir = ROOT_DIR / "reports" / "html"
+    # 9a. Dashboard de Calidad del Aire (v10)
     if not run_script(
         f"Build dashboard → {dated_name}",
         str(dashboard_dir / "build_v10.py"),
@@ -212,6 +213,16 @@ def main():
         logger.warning("⚠️  La generación del dashboard falló.")
     else:
         logger.info(f"  → reports/html/{dated_name}")
+
+    # 9b. Dashboard de Tráfico (Mapa de Sensores)
+    if not run_script(
+        "Build traffic map dashboard",
+        str(dashboard_dir / "build_traffic_map.py"),
+        cwd=dashboard_dir,
+    ):
+        logger.warning("⚠️  La generación del mapa de tráfico falló.")
+    else:
+        logger.info("  → reports/html/traffic_map.html")
 
     logger.info("\n" + "=" * 60)
     logger.success("  PIPELINE COMPLETADO")
