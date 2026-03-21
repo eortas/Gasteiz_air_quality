@@ -4,7 +4,7 @@
 
 <a id="euskara"></a>
 
-Biltegi honek Gasteizko Emisio Baxuko Eremuaren (EBE) eragina ebaluatzeko datu-kanalizazioa (pipeline) eta eredu analitikoak ditu. Jarraipen operatibo iragarlerako eta inferentzia kausal akademiko zorrotzerako tresnak eskaintzen ditu.
+Biltegi honek Gasteizko Emisio Garbiagoen Eremuaren (EGE) eragina ebaluatzeko datu-kanalizazioa (pipeline) eta eredu analitikoak ditu. Jarraipen operatibo iragarlerako eta inferentzia kausal akademiko zorrotzerako tresnak eskaintzen ditu.
 
 ### Ikuspegi orokorra
 

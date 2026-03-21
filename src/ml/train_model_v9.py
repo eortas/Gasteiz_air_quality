@@ -67,7 +67,7 @@ def run_synthetic_control(df: pd.DataFrame):
     post_df = df[df["date"] >= zbe_date]
 
     if len(pre_df) < 30:
-        print("  ⚠️ Insuficientes datos pre-ZBE para Synthetic Control.")
+        print("  [WARN]️ Insuficientes datos pre-ZBE para Synthetic Control.")
         return {}
 
     sc_results = {cont: {} for cont in CONTAMINANTS}
@@ -125,16 +125,16 @@ def run_synthetic_control(df: pd.DataFrame):
             # Determinando la descripción automática
             if gap_pct < -5.0:
                 if pre_r2 > 0.4:
-                    desc = f"✓ Reducción robusta ({gap_abs:+.2f} unit)"
+                    desc = f"[OK] Reducción robusta ({gap_abs:+.2f} unit)"
                 else:
-                    desc = f"✓ Posible mejora ({gap_abs:+.2f} unit)"
+                    desc = f"[OK] Posible mejora ({gap_abs:+.2f} unit)"
             elif gap_pct > 5.0:
                 if pre_r2 > 0.4:
-                    desc = f"⚠ Aumento comprobado ({gap_abs:+.2f} unit)"
+                    desc = f"[WARN] Aumento comprobado ({gap_abs:+.2f} unit)"
                 else:
-                    desc = f"⚠ Aumento incierto ({gap_abs:+.2f} unit)"
+                    desc = f"[WARN] Aumento incierto ({gap_abs:+.2f} unit)"
             else:
-                desc = "≈ Efecto neto nulo"
+                desc = "~ Efecto neto nulo"
 
             sc_results[cont][tr_station] = {
                 "preR2": f"{pre_r2:.2f}",

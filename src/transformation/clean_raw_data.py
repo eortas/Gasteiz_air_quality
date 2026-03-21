@@ -3,10 +3,9 @@ clean_raw_data.py
 ==================
 Limpia los CSVs crudos de calidad del aire antes de ejecutar build_features.py.
 
-Problemas detectados:
-  - 139 días con >50% lecturas en 0 (sensores caídos) → convertir a NaN
-  - Ceros parciales en NO2 distribuidos todo el año → convertir a NaN
-  - Ceros puntuales en ICA (16-22 por estación) → convertir a NaN
+Problemas detectados7. 139 dias con >50% lecturas en 0 (sensores caidos) -> convertir a NaN
+8. Ceros parciales en NO2 distribuidos todo el año -> convertir a NaN
+9. Ceros puntuales en ICA (16-22 por estación) -> convertir a NaN
   - Interpolación lineal con límite 3h para huecos cortos
   - Forward/backward fill con límite 6h para huecos medianos
 
@@ -30,7 +29,7 @@ warnings.filterwarnings("ignore")
 
 # ─── RUTAS ────────────────────────────────────────────────────────────────────
 # Ubicación: src/transformation/clean_raw_data.py
-# __file__ → src/transformation/ → parent = src/ → parent = vitoria-air-quality/
+# __file__ -> src/transformation/ -> parent = src/ -> parent = vitoria-air-quality/
 ROOT_DIR   = Path(__file__).parent.parent.parent
 AIR_DIR     = ROOT_DIR / "data" / "raw" / "air"
 BACKUP_DIR  = AIR_DIR / "backup"
@@ -40,20 +39,20 @@ WEATHER_DIR = ROOT_DIR / "data" / "raw" / "weather"
 # Contaminantes donde 0 es físicamente imposible en entorno urbano
 ZERO_IMPOSSIBLE = ["NO2", "ICA", "PM10", "PM2.5"]
 
-# Si un día tiene más de este % de lecturas en 0 → sensor caído → NaN todo el día
+# Si un día tiene más de este % de lecturas en 0 -> sensor caído -> NaN todo el día
 SENSOR_DOWN_THRESHOLD = 0.5
 
 # Límites de interpolación (en número de registros horarios)
-INTERP_LIMIT_LINEAR = 3   # hasta 3h → interpolación lineal
-FILL_LIMIT_FFILL    = 6   # hasta 6h → forward fill
-FILL_LIMIT_BFILL    = 6   # hasta 6h → backward fill
+INTERP_LIMIT_LINEAR = 3   # hasta 3h -> interpolación lineal
+FILL_LIMIT_FFILL    = 6   # hasta 6h -> forward fill
+FILL_LIMIT_BFILL    = 6   # hasta 6h -> backward fill
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
 def log(msg=""):
     print(msg)
 
 def section(title):
-    log(); log("═" * 65); log(f"  {title}"); log("═" * 65)
+    log(); log("=" * 65); log(f"  {title}"); log("=" * 65)
 
 
 # ─── 1. BACKUP ────────────────────────────────────────────────────────────────
@@ -71,9 +70,9 @@ def make_backup(dry_run=False):
         dest = BACKUP_DIR / f.name
         if not dest.exists():
             shutil.copy2(f, dest)
-            log(f"  ✅ Backup: {f.name}")
+            log(f"  [OK] Backup: {f.name}")
         else:
-            log(f"  ⏭  Ya existe backup: {f.name}")
+            log(f"  [SKIP] Ya existe backup: {f.name}")
 
     log(f"\n  Backups en: {BACKUP_DIR}")
 
@@ -141,14 +140,14 @@ def clean_zeros(df, dry_run=False):
             df.loc[mask_zero, "valor"] = np.nan
 
         log(f"  {cont}:")
-        log(f"    Días sensor caído   : {len(sensor_down):>4} días  ({n_sensor_down:>5} registros → NaN)")
-        log(f"    Ceros restantes     : {n_zeros:>5} registros → NaN")
+        log(f"    Dias sensor caido   : {len(sensor_down):>4} dias  ({n_sensor_down:>5} registros -> NaN)")
+        log(f"    Ceros restantes     : {n_zeros:>5} registros -> NaN")
         log(f"    Total convertidos   : {n_sensor_down + n_zeros:>5} registros")
 
         total_ceros += n_zeros
         total_sensor_caido += n_sensor_down
 
-    log(f"\n  Total registros → NaN : {total_ceros + total_sensor_caido:,}")
+    log(f"\n  Total registros -> NaN : {total_ceros + total_sensor_caido:,}")
     return df
 
 
@@ -196,8 +195,8 @@ def interpolate_gaps(df, dry_run=False):
             df.loc[mask, "valor"] = s
 
             if n_nan_after > 0:
-                log(f"  ⚠️  {estacion}/{cont}: {n_nan_after} NaN sin rellenar "
-                    f"(huecos >6h — se dejarán como NaN)")
+                log(f"  [WARN] {estacion}/{cont}: {n_nan_after} NaN sin rellenar "
+                    f"(huecos >6h - se dejaran como NaN)")
 
     log(f"\n  Total registros interpolados: {total_filled:,}")
     return df
@@ -227,9 +226,9 @@ def validate(df):
     ceros_residuales = ((df["contaminante"].isin(ZERO_IMPOSSIBLE)) &
                         (df["valor"] == 0)).sum()
     if ceros_residuales > 0:
-        log(f"  ⚠️  Ceros residuales: {ceros_residuales} — revisar manualmente")
+        log(f"  [WARN] Ceros residuales: {ceros_residuales} - revisar manualmente")
     else:
-        log(f"  ✅ Sin ceros residuales en contaminantes críticos")
+        log(f"  [OK] Sin ceros residuales en contaminantes criticos")
 
 
 # ─── 6. GUARDAR CSVs LIMPIOS ──────────────────────────────────────────────────
@@ -241,7 +240,7 @@ def clean_weather_csvs(dry_run=False):
 
     files = sorted(WEATHER_DIR.glob("weather_*.csv"))
     if not files:
-        log(f"  \u26a0\ufe0f  No se encontraron weather_*.csv en {WEATHER_DIR}")
+        log(f"  [WARN] No se encontraron weather_*.csv en {WEATHER_DIR}")
         return
 
     total_fixed = 0
@@ -255,13 +254,13 @@ def clean_weather_csvs(dry_run=False):
         inf_count  = np.isinf(df[num_cols].values).sum()
 
         if nan_before == 0 and inf_count == 0:
-            log(f"  \u23ed\ufe0f  {f.name}: sin NaN/inf — omitido")
+            log(f"  [SKIP] {f.name}: sin NaN/inf - omitido")
             continue
 
         if not dry_run:
             # Sustituir inf por NaN
             df[num_cols] = df[num_cols].replace([np.inf, -np.inf], np.nan)
-            # Interpolación lineal → huecos cortos (hasta 6 registros horarios)
+            # Interpolación lineal -> huecos cortos (hasta 6 registros horarios)
             df[num_cols] = df[num_cols].interpolate(method="linear", limit=6)
             # Forward/backward fill para huecos que queden en los extremos
             df[num_cols] = df[num_cols].ffill(limit=12).bfill(limit=12)
@@ -270,8 +269,8 @@ def clean_weather_csvs(dry_run=False):
         fixed      = nan_before + inf_count - nan_after
         total_fixed += fixed
 
-        log(f"  {'[DRY RUN] ' if dry_run else ''}\u2705 {f.name}: "
-            f"{nan_before} NaN + {inf_count} inf → {nan_after} NaN residuales "
+        log(f"  {'[DRY RUN] ' if dry_run else ''}[OK] {f.name}: "
+            f"{nan_before} NaN + {inf_count} inf -> {nan_after} NaN residuales "
             f"({fixed} valores corregidos)")
 
         if not dry_run:
@@ -279,7 +278,7 @@ def clean_weather_csvs(dry_run=False):
 
     log(f"\n  Total valores corregidos en weather: {total_fixed:,}")
     if total_fixed > 0 and not dry_run:
-        log("  ℹ️  Los CSVs se han sobrescrito. El backfill a Supabase usará datos limpios.")
+        log("  [INFO]  Los CSVs se han sobrescrito. El backfill a Supabase usará datos limpios.")
 
 
 # ─── 6. GUARDAR CSVs LIMPIOS ──────────────────────────────────────────────────
@@ -290,14 +289,14 @@ def save_clean(df, dry_run=False):
         log("  [DRY RUN] No se guardan cambios")
         return
 
-    # Guardar por archivo original — eliminar columnas auxiliares al escribir
+    # Guardar por archivo original - eliminar columnas auxiliares al escribir
     for fname in sorted(df["_source_file"].unique()):
         subset = df[df["_source_file"] == fname].drop(
             columns=["date", "_source_file"], errors="ignore"
         )
         out_path = AIR_DIR / fname
         subset.to_csv(out_path, index=False)
-        log(f"  ✅ Guardado: {fname} ({len(subset):,} filas)")
+        log(f"  [OK] Guardado: {fname} ({len(subset):,} filas)")
 
 
 # ─── MAIN ─────────────────────────────────────────────────────────────────────
@@ -305,14 +304,14 @@ def main():
     dry_run = "--dry-run" in sys.argv
 
     log("=" * 65)
-    log("  CLEAN RAW DATA — Vitoria Air Quality")
+    log("  CLEAN RAW DATA - Vitoria Air Quality")
     log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     log(f"  Modo: {'DRY RUN (sin cambios)' if dry_run else 'ESCRITURA'}")
     log("=" * 65)
 
     files = sorted(AIR_DIR.glob("kunak_*.csv"))
     if not files:
-        log(f"  ❌ No se encuentran CSVs en {AIR_DIR}")
+        log(f"  [ERROR] No se encuentran CSVs en {AIR_DIR}")
         sys.exit(1)
 
     log(f"\n  Archivos encontrados: {len(files)}")
@@ -336,9 +335,9 @@ def main():
 
     log("\n" + "=" * 65)
     if dry_run:
-        log("  ✅ DRY RUN COMPLETADO — ejecuta sin --dry-run para aplicar cambios")
+        log("  [OK] DRY RUN COMPLETADO - ejecuta sin --dry-run para aplicar cambios")
     else:
-        log("  ✅ LIMPIEZA COMPLETADA")
+        log("  [OK] LIMPIEZA COMPLETADA")
         log("  Siguiente paso: python build_features.py")
     log("=" * 65)
 

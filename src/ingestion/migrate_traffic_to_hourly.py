@@ -76,7 +76,7 @@ def main():
     target_year = year_arg or (None if process_all else datetime.now().year)
 
     print("=" * 60)
-    print("MIGRACIÓN TRÁFICO: 15 MIN → 1 HORA")
+    print("MIGRACION TRAFICO: 15 MIN -> 1 HORA")
     print("=" * 60)
     if dry_run:
         print("  MODO DRY RUN — no se sobreescribe nada")
@@ -108,7 +108,7 @@ def main():
         rows_after = len(df_hourly)
         reduction  = (1 - rows_after / rows_before) * 100
 
-        print(f"{rows_before:,} filas → {rows_after:,} filas (reduccion {reduction:.0f}%)")
+        print(f"{rows_before:,} filas -> {rows_after:,} filas (reduccion {reduction:.0f}%)")
 
         if not dry_run:
             df_hourly.to_csv(f, index=False, encoding="utf-8")

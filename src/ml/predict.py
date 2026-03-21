@@ -8,12 +8,12 @@ Cada modelo carga sus propias features seleccionadas por permutation importance
 (77-80 de las 256 totales) desde los archivos lgbm_v5_*_features.json.
 
 Fuentes de datos para la predicción:
-  - data/processed/features_daily.parquet  → última fila con features conocidas
-  - Open-Meteo API (opcional)              → pronóstico meteorológico real d1
+  - data/processed/features_daily.parquet  -> última fila con features conocidas
+  - Open-Meteo API (opcional)              -> pronóstico meteorológico real d1
 
 Salida:
   - Tabla en consola con predicciones + intervalos de confianza aproximados
-  - data/processed/predictions_latest.json → para consumo por otros módulos
+  - data/processed/predictions_latest.json -> para consumo por otros módulos
 
 Uso:
     python src/ml/predict.py
@@ -49,7 +49,7 @@ TARGETS = [
     "ICA_zbe_d1", "ICA_out_d1",
 ]
 
-# Métricas CV v5 — usadas para construir intervalos de confianza aproximados
+# Métricas CV v5 - usadas para construir intervalos de confianza aproximados
 CV_RMSE = {
     "NO2_zbe_d1":   3.915,
     "NO2_out_d1":   4.490,
@@ -63,10 +63,10 @@ CV_RMSE = {
 
 # Unidades y umbrales de alerta (WHO 2021 guidelines, medias diarias)
 META = {
-    "NO2":   {"unit": "µg/m³", "alert": 25.0,  "label": "NO₂"},
-    "PM10":  {"unit": "µg/m³", "alert": 45.0,  "label": "PM10"},
-    "PM2.5": {"unit": "µg/m³", "alert": 15.0,  "label": "PM2.5"},
-    "ICA":   {"unit": "µg/m³", "alert": 40.0,  "label": "ICA"},
+    "NO2":   {"unit": "ug/m3", "alert": 25.0,  "label": "NO₂"},
+    "PM10":  {"unit": "ug/m3", "alert": 45.0,  "label": "PM10"},
+    "PM2.5": {"unit": "ug/m3", "alert": 15.0,  "label": "PM2.5"},
+    "ICA":   {"unit": "ug/m3", "alert": 40.0,  "label": "ICA"},
 }
 
 LATITUDE  = 42.8467
@@ -85,7 +85,7 @@ def log(msg=""):
     print(msg)
 
 def section(title):
-    log(); log("═" * 65); log(f"  {title}"); log("═" * 65)
+    log(); log("=" * 65); log(f"  {title}"); log("=" * 65)
 
 
 # ─── 1. CARGAR MODELOS Y FEATURES ────────────────────────────────────────────
@@ -113,12 +113,12 @@ def load_models() -> dict:
         log(f"\n  ❌ Archivos no encontrados:")
         for m in missing:
             log(f"     {m}")
-        log(f"\n  → Ejecuta primero: python src/ml/train_model_v8.py")
+        log(f"\n  -> Ejecuta primero: python src/ml/train_model_v8.py")
         sys.exit(1)
 
-    log(f"  ✅ {len(models)} modelos cargados")
+    log(f"  [OK] {len(models)} modelos cargados")
     for target, m in models.items():
-        log(f"     {target:<20} — {len(m['features'])} features")
+        log(f"     {target:<20} - {len(m['features'])} features")
 
     return models
 
@@ -134,7 +134,7 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
     """
     if not DATASET_PATH.exists():
         log(f"  ❌ No se encuentra {DATASET_PATH}")
-        log(f"  → Ejecuta primero: python src/features/build_features.py")
+        log(f"  -> Ejecuta primero: python src/features/build_features.py")
         sys.exit(1)
 
     df = pd.read_parquet(DATASET_PATH)
@@ -157,7 +157,7 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
             if pred_row_date > last_training_date:
                 row = df_pred_row.iloc[[-1]]
                 pred_date = pred_row_date + pd.Timedelta(days=1)
-                log(f"  Usando features_latest.parquet: {pred_row_date.date()} → predice {pred_date.date()}")
+                log(f"  Usando features_latest.parquet: {pred_row_date.date()} -> predice {pred_date.date()}")
             else:
                 row = df.iloc[[-1]]
                 pred_date = last_training_date + pd.Timedelta(days=1)
@@ -175,7 +175,7 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
             if row.empty:
                 log(f"  ❌ No hay datos disponibles para predecir el {target_date.date()}")
                 sys.exit(1)
-            log(f"  ⚠️  Fecha exacta no encontrada — usando fila más cercana: {row['date'].iloc[0].date()}")
+            log(f"  [WARN]  Fecha exacta no encontrada - usando fila más cercana: {row['date'].iloc[0].date()}")
         pred_date = target_date
 
     source_date = row["date"].iloc[0]
@@ -192,7 +192,7 @@ def fetch_forecast_d1() -> dict:
     try:
         import requests
     except ImportError:
-        log("  ⚠️  requests no instalado — pip install requests")
+        log("  [WARN]  requests no instalado - pip install requests")
         return {}
 
     url = "https://api.open-meteo.com/v1/forecast"
@@ -215,7 +215,7 @@ def fetch_forecast_d1() -> dict:
         r.raise_for_status()
         data = r.json()
     except Exception as e:
-        log(f"  ⚠️  Error Open-Meteo: {e} — usando proxy histórico del parquet")
+        log(f"  [WARN]  Error Open-Meteo: {e} - usando proxy histórico del parquet")
         return {}
 
     df = pd.DataFrame(data.get("hourly", {}))
@@ -226,7 +226,7 @@ def fetch_forecast_d1() -> dict:
     df_tomorrow = df[df["date"] == tomorrow]
 
     if df_tomorrow.empty:
-        log("  ⚠️  Sin datos de mañana en Open-Meteo")
+        log("  [WARN]  Sin datos de mañana en Open-Meteo")
         return {}
 
     agg = {}
@@ -248,7 +248,7 @@ def fetch_forecast_d1() -> dict:
         agg["fc_wind_u_d1"] = -agg["fc_wind_speed_10m_d1"] * np.sin(rad)
         agg["fc_wind_v_d1"] = -agg["fc_wind_speed_10m_d1"] * np.cos(rad)
 
-    log(f"  ✅ Pronóstico descargado: {len(agg)} features fc_*_d1 para {tomorrow.date()}")
+    log(f"  [OK] Pronóstico descargado: {len(agg)} features fc_*_d1 para {tomorrow.date()}")
     return agg
 
 
@@ -274,7 +274,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
         # Construir vector de entrada con las features del modelo
         missing_features = [f for f in features if f not in row.columns]
         if missing_features:
-            log(f"  ⚠️  {target}: {len(missing_features)} features no encontradas en parquet")
+            log(f"  [WARN]  {target}: {len(missing_features)} features no encontradas en parquet")
             log(f"       Primeras: {missing_features[:5]}")
 
         X = row.reindex(columns=features, fill_value=0).fillna(0)
@@ -310,10 +310,10 @@ def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
             pred  = r["prediction"]
             lower = r["lower"]
             upper = r["upper"]
-            alert = "⚠️  ALERTA" if pred >= meta["alert"] else "✅  OK"
+            alert = "[WARN]  ALERTA" if pred >= meta["alert"] else "[OK]  OK"
             zone_label = "ZBE" if zone == "zbe" else "OUT"
             log(f"  {meta['label']:<12} {zone_label:<6} {pred:>7.2f} {meta['unit']}  "
-                f"[{lower:.1f} – {upper:.1f}]  {alert}")
+                f"[{lower:.1f} - {upper:.1f}]  {alert}")
 
     log()
     log(f"  Intervalo de confianza: ±1.28 × RMSE_CV (~90%)")
@@ -332,7 +332,7 @@ def save_json(results: dict, pred_date: pd.Timestamp):
     }
     out_path = PROCESSED_DIR / "predictions_latest.json"
     out_path.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
-    log(f"\n  ✅ JSON guardado: {out_path}")
+    log(f"\n  [OK] JSON guardado: {out_path}")
     return out
 
 
@@ -345,7 +345,7 @@ def main():
 
     if not json_only:
         log("=" * 65)
-        log("  PREDICT — Vitoria Air Quality")
+        log("  PREDICT - Vitoria Air Quality")
         log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         log(f"  Modelo: LightGBM v8 · 8 targets d1")
         log(f"  Meteo d1: {'Open-Meteo real' if with_forecast else 'proxy histórico'}")
@@ -382,7 +382,7 @@ def main():
 
         log()
         log("=" * 65)
-        log("  ✅ PREDICCIÓN COMPLETADA")
+        log("  [OK] PREDICCIÓN COMPLETADA")
         log("=" * 65)
 
 

@@ -49,7 +49,7 @@ def log(msg=""):
 
 
 def section(title):
-    log(); log("═" * 60); log(f"  {title}"); log("═" * 60)
+    log(); log("=" * 60); log(f"  {title}"); log("=" * 60)
 
 
 # ─── CARGA ────────────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ def load_kunak_csvs(start_date: pd.Timestamp | None = None) -> pd.DataFrame:
 
     csv_files = sorted(RAW_AIR_DIR.glob("kunak_*.csv"))
     if not csv_files:
-        log(f"  ❌ No se encontraron kunak_*.csv en {RAW_AIR_DIR}")
+        log(f"  [ERROR] No se encontraron kunak_*.csv en {RAW_AIR_DIR}")
         sys.exit(1)
 
     dfs = []
@@ -96,7 +96,7 @@ def load_kunak_csvs(start_date: pd.Timestamp | None = None) -> pd.DataFrame:
     log(f"  Filas tras limpieza : {len(df):,}")
     log(f"  Estaciones          : {sorted(df['estacion'].unique())}")
     log(f"  Contaminantes       : {sorted(df['contaminante'].unique())}")
-    log(f"  Rango               : {df['date'].min().date()} → {df['date'].max().date()}")
+    log(f"  Rango               : {df['date'].min().date()} -> {df['date'].max().date()}")
 
     return df
 
@@ -142,7 +142,7 @@ def build_daily_pivot(df: pd.DataFrame) -> pd.DataFrame:
 
     log(f"  Días en el pivote   : {len(pivot)}")
     log(f"  Columnas            : {len(data_cols)}")
-    log(f"  Registros interpolados (≤{MAX_INTERP_DAYS}d): {interpolated:,}")
+    log(f"  Registros interpolados (<={MAX_INTERP_DAYS}d): {interpolated:,}")
 
     # Cobertura por columna
     log(f"\n  Cobertura por columna:")
@@ -150,7 +150,7 @@ def build_daily_pivot(df: pd.DataFrame) -> pd.DataFrame:
     for col in sorted(data_cols):
         pct   = pivot[col].notna().mean() * 100
         first = pivot.loc[pivot[col].notna(), "date"].min()
-        first_str = str(first.date()) if pd.notna(first) else "—"
+        first_str = str(first.date()) if pd.notna(first) else "-"
         log(f"  {col:<25}  {pct:>9.1f}%  {first_str:>12}")
 
     return pivot
@@ -164,8 +164,8 @@ def print_zbe_stats(pivot: pd.DataFrame):
     pre      = pivot[pivot["date"] < ZBE_DATE]
     post     = pivot[pivot["date"] >= ZBE_DATE]
 
-    log(f"  Pre-ZBE  : {len(pre)} días ({pre['date'].min().date()} → {pre['date'].max().date()})")
-    log(f"  Post-ZBE : {len(post)} días ({post['date'].min().date()} → {post['date'].max().date()})")
+    log(f"  Pre-ZBE  : {len(pre)} días ({pre['date'].min().date()} -> {pre['date'].max().date()})")
+    log(f"  Post-ZBE : {len(post)} días ({post['date'].min().date()} -> {post['date'].max().date()})")
 
     log(f"\n  {'Columna':<25}  {'Pre media':>10}  {'Post media':>11}  {'Cambio':>8}")
     log(f"  {'-'*25}  {'-'*10}  {'-'*11}  {'-'*8}")
@@ -181,7 +181,7 @@ def print_zbe_stats(pivot: pd.DataFrame):
             if pd.isna(pm) or pd.isna(pom):
                 continue
             chg = (pom - pm) / pm * 100 if pm > 0 else 0
-            arrow = "↓" if chg < 0 else "↑"
+            arrow = "v" if chg < 0 else "^"
             log(f"  {col:<25}  {pm:>10.2f}  {pom:>11.2f}  {chg:>+7.1f}% {arrow}")
 
 
@@ -195,7 +195,7 @@ def main():
     start_date = pd.Timestamp(args.start) if args.start else None
 
     log("=" * 60)
-    log("  BUILD STATION DAILY — Vitoria Air Quality")
+    log("  BUILD STATION DAILY - Vitoria Air Quality")
     log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     log(f"  Output: {OUTPUT_PATH}")
     log("=" * 60)
@@ -208,12 +208,12 @@ def main():
     section("4. Guardando")
     pivot.to_csv(OUTPUT_PATH, index=False)
     size_mb = OUTPUT_PATH.stat().st_size / 1024 / 1024
-    log(f"  ✅ {OUTPUT_PATH}")
+    log(f"  [OK] {OUTPUT_PATH}")
     log(f"     {len(pivot)} días × {len(pivot.columns)-1} columnas  ({size_mb:.2f} MB)")
     log(f"\n  Siguiente paso: python src/ml/train_model_v9.py")
 
     log("\n" + "=" * 60)
-    log("  ✅ COMPLETADO")
+    log("  [OK] COMPLETADO")
     log("=" * 60)
 
 
