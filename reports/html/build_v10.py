@@ -454,16 +454,16 @@ html_template = """<!DOCTYPE html>
 <div id="view-v8" class="view-container">
   <div class="header">
     <div class="header-left">
-      <div class="label-tag">Análisis Causal — ZBE Vitoria-Gasteiz</div>
-      <h1>Counterfactual Meteorológico<br><span>ZBE Sep·2025 → Actual</span></h1>
-      <p class="subtitle">Comparación entre contaminación observada y el escenario si no se hubiera implementado la ZBE.</p>
+      <div class="label-tag" data-i18n="v8Tag">Análisis Causal — ZBE Vitoria-Gasteiz</div>
+      <h1 data-i18n="v8Title">Counterfactual Meteorológico<br><span>ZBE Sep·2025 → Actual</span></h1>
+      <p class="subtitle" data-i18n="v8Subtitle">Comparación entre contaminación observada y el escenario si no se hubiera implementado la ZBE.</p>
     </div>
     <div class="legend-global">
-      <div class="card-label" style="margin-bottom:4px">Leyenda</div>
-      <div class="legend-item"><div class="legend-line" style="background:var(--observed);height:2px"></div><span>Observado (real)</span></div>
-      <div class="legend-item"><div class="legend-line dashed" style="color:var(--cf-pure);height:0;border-top:2px dashed var(--cf-pure)"></div><span>CF Meteo-Puro</span></div>
-      <div class="legend-item"><div class="legend-line dashed" style="color:var(--cf-lags);height:0;border-top:2px dashed var(--cf-lags)"></div><span>CF Con-Lags</span></div>
-      <div class="legend-item"><div style="width:28px;height:12px;background:rgba(79,195,247,0.2);border-radius:2px;flex-shrink:0"></div><span>Banda de efecto</span></div>
+      <div class="card-label" style="margin-bottom:4px" data-i18n="legendTitle">Leyenda</div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--observed);height:2px"></div><span data-i18n="legendObs">Observado (real)</span></div>
+      <div class="legend-item"><div class="legend-line dashed" style="color:var(--cf-pure);height:0;border-top:2px dashed var(--cf-pure)"></div><span data-i18n="legendCFPure">CF Meteo-Puro</span></div>
+      <div class="legend-item"><div class="legend-line dashed" style="color:var(--cf-lags);height:0;border-top:2px dashed var(--cf-lags)"></div><span data-i18n="legendCFLags">CF Con-Lags</span></div>
+      <div class="legend-item"><div style="width:28px;height:12px;background:rgba(79,195,247,0.2);border-radius:2px;flex-shrink:0"></div><span data-i18n="legendBand">Banda de efecto</span></div>
     </div>
   </div>
 
@@ -487,15 +487,15 @@ html_template = """<!DOCTYPE html>
 
   <div class="charts-section">
     <div class="fig-block">
-      <div class="fig-header"><div class="fig-title"><strong>Figura 1</strong> — Observado vs Counterfactual</div></div>
+      <div class="fig-header"><div class="fig-title" data-i18n="v8Fig1"><strong>Figura 1</strong> — Observado vs Counterfactual</div></div>
       <div class="chart-wrap"><canvas id="fig1" height="100"></canvas></div>
     </div>
     <div class="fig-block">
-      <div class="fig-header"><div class="fig-title"><strong>Figura 2</strong> — Banda de incertidumbre del efecto ZBE</div></div>
+      <div class="fig-header"><div class="fig-title" data-i18n="v8Fig2"><strong>Figura 2</strong> — Banda de incertidumbre del efecto ZBE</div></div>
       <div class="chart-wrap"><canvas id="fig2" height="80"></canvas></div>
     </div>
     <div class="fig-block">
-      <div class="fig-header"><div class="fig-title"><strong>Figura 3</strong> — Gap medio por contaminante y zona</div></div>
+      <div class="fig-header"><div class="fig-title" data-i18n="v8Fig3"><strong>Figura 3</strong> — Gap medio por contaminante y zona</div></div>
       <div class="chart-wrap"><canvas id="fig3" height="60"></canvas></div>
     </div>
   </div>
@@ -533,14 +533,14 @@ html_template = """<!DOCTYPE html>
   
   <div class="charts-section">
     <div class="fig-block">
-      <div class="fig-header"><div class="fig-title"><strong>Figura 1</strong> — Control Sintético (Serie Suavizada)</div></div>
+      <div class="fig-header"><div class="fig-title" data-i18n="v9Fig1"><strong>Figura 1</strong> — Control Sintético (Serie Suavizada)</div></div>
       <div class="img-wrap">
         <img id="img-sc" src="" alt="Gráfico Control Sintético" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
         <div id="err-sc" class="error-msg" data-i18n="imgNotFound">Imagen no encontrada. Verifica el nombre del archivo.</div>
       </div>
     </div>
     <div class="fig-block">
-      <div class="fig-header"><div class="fig-title"><strong>Figura 2</strong> — Event Study DiD</div></div>
+      <div class="fig-header"><div class="fig-title" data-i18n="v9Fig2"><strong>Figura 2</strong> — Event Study DiD</div></div>
       <div class="img-wrap">
         <img id="img-es" src="" alt="Gráfico Event Study" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
         <div id="err-es" class="error-msg" data-i18n="imgNotFound">Imagen no encontrada. Verifica el nombre del archivo.</div>
@@ -552,7 +552,7 @@ html_template = """<!DOCTYPE html>
 <div id="view-v10" class="view-container active">
   <div class="v10-risk-container">
     <div class="label-tag" data-i18n="v10Tag">EEA Standards — Air Quality Risk</div>
-    <h2 style="margin-bottom: 10px; color: var(--muted); font-weight: 400; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;"><span data-i18n="v10Title">Calidad del aire prevista para</span> <span style="color:var(--text);font-weight:700;">mañana __PRED_DATE_PLACEHOLDER__</span></h2>
+    <h2 style="margin-bottom: 10px; color: var(--muted); font-weight: 400; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;"><span data-i18n="v10Title">Calidad del aire prevista para</span> <span style="color:var(--text);font-weight:700;"><span data-i18n="v10Tomorrow">mañana</span> __PRED_DATE_PLACEHOLDER__</span></h2>
     <div id="riskBadge" class="v10-risk-badge" data-i18n="v10Calculating">CALCULANDO...</div>
     <div class="v10-risk-grid">
       <div class="v10-risk-item"><div class="val" id="val-no2">--</div><div class="lab">NO₂ µg/m³</div></div>
@@ -652,6 +652,9 @@ let mapTileLayer = null;
 let _mapInitialized = false;
 
 let currentLang = localStorage.getItem('vitoria_lang') || 'es';
+if (currentLang !== 'es' && currentLang !== 'eu') currentLang = 'es';
+
+const getCssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 const translations = {
   es: {
@@ -719,7 +722,24 @@ const translations = {
     mapNote: "⚠ Los valores son medias diarias, no lecturas horarias",
     colRMSE: "RMSE (µg/m³)",
     colMAE: "MAE (µg/m³)",
-    colMAPE: "MAPE %"
+    colMAPE: "MAPE %",
+    trafficTitle: "Mapa de Tráfico",
+    sumObs: "Observado (media)",
+    sumCF: "Contrafactual (meteo-puro)",
+    sumEffect: "Efecto ZBE (meteo-puro)",
+    sumRange: "Rango efecto ZBE",
+    sumPeriod: "Sep 2025 → Mar 2026",
+    sumBound: "Límite conservador",
+    sumMeteoLag: "Meteo-puro vs Con-Lags",
+    sumRobRed: "✓ Reducción robusta",
+    sumUncertain: "⚠ Incierto",
+    sumIncrease: "✕ Incremento neto",
+    v8Fig1: "<strong>Figura 1</strong> — Observado vs Counterfactual",
+    v8Fig2: "<strong>Figura 2</strong> — Banda de incertidumbre del efecto ZBE",
+    v8Fig3: "<strong>Figura 3</strong> — Gap medio por contaminante y zona",
+    v9Fig1: "<strong>Figura 1</strong> — Control Sintético (Serie Suavizada)",
+    v9Fig2: "<strong>Figura 2</strong> — Event Study DiD",
+    v10Tomorrow: "mañana"
   },
   eu: {
     mainTitle: "Vitoria-Gasteiz — Airearen Kalitatearen eta EBEaren Analisia",
@@ -802,7 +822,13 @@ const translations = {
     mapNote: "⚠ Balioak eguneroko batez bestekoak dira, ez orduko irakurketak",
     colRMSE: "RMSE (µg/m³)",
     colMAE: "MAE (µg/m³)",
-    colMAPE: "MAPE %"
+    colMAPE: "MAPE %",
+    v8Fig1: "<strong>1. Irudia</strong> — Behatua vs Kontrafaktuala",
+    v8Fig2: "<strong>2. Irudia</strong> — EBE efektuaren ziurgabetasun-banda",
+    v8Fig3: "<strong>3. Irudia</strong> — Gap-a batez beste, kutsatzaile eta eremuka",
+    v9Fig1: "<strong>1. Irudia</strong> — Kontrol Sintetikoa (Serie Leundua)",
+    v9Fig2: "<strong>2. Irudia</strong> — Event Study DiD",
+    v10Tomorrow: "bihar"
   }
 };
 
@@ -845,6 +871,15 @@ function toggleLang() {
   currentLang = currentLang === 'es' ? 'eu' : 'es';
   localStorage.setItem('vitoria_lang', currentLang);
   updateI18n();
+  
+  // Re-renderizar componentes que dependen de traducciones
+  renderSummaryCards();
+  renderFig1();
+  renderFig2();
+  renderFig3();
+  renderDidTable();
+  renderV9Cards();
+  if (document.getElementById('view-v10').classList.contains('active')) renderDashboard3();
 }
 
 const DID_RESULTS = {
