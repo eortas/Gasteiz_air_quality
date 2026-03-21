@@ -18,6 +18,7 @@ Proiektuak hainbat datu-iturri (trafikoa, meteorologia, airearen kalitatea) egun
 - **Eredu iragarleak (LightGBM):** NO₂, PM10 eta PM2.5 mailak doitasun handiz iragartzea egunero.
 - **Azterketa Kausala:** EBE-aren eraginkortasuna ebaluatzeko maila akademikoko kausalitate-probak.
 - **Aginte-taula interaktiboa:** Iragarpenak, ereduen auditoretzak eta mapa-ikuspegiak erakusten dituen irakurketa-taula operatibo automatikoa.
+- **Trafiko-Mapa Berria:** Sentsore interaktiboak, eguneko bolumen-totalak eta **pico de carga** (tramo hoberena) barne.
 
 ### Instalazioa
 
@@ -67,6 +68,7 @@ The project integrates multiple data sources (traffic, meteorology, air quality)
 - **Predictive Modeling (LightGBM):** High-precision daily forecasting of NO₂, PM10, and PM2.5 levels.
 - **Causal Analysis:** Academic-grade causality tests to evaluate the effectiveness of the ZBE policy.
 - **Interactive Dashboard:** Auto-generated operational dashboard displaying predictions, model audits, and map views.
+- **New Traffic Map:** Interactive sensor map with daily volume totals and **peak load hour** identification.
 
 ### Installation
 
