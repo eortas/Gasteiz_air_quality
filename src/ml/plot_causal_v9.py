@@ -59,7 +59,8 @@ def plot_event_study():
         ax.legend()
 
         plt.tight_layout()
-        out_path = PLOTS_DIR / f"event_study_{cont}.png"
+        cont_save = cont.replace("PM2.5", "PM25")
+        out_path = PLOTS_DIR / f"event_study_{cont_save}.png"
         plt.savefig(out_path, dpi=300)
         print(f"Guardado: {out_path}")
         plt.close()
@@ -113,7 +114,8 @@ def plot_synthetic_control():
             ax.legend(loc='upper left')
 
             plt.tight_layout()
-            out_path = PLOTS_DIR / f"synthetic_control_{cont}_{station}.png"
+            cont_save = cont.replace("PM2.5", "PM25")
+            out_path = PLOTS_DIR / f"synthetic_control_{cont_save}_{station}.png"
             plt.savefig(out_path, dpi=300)
             print(f"Guardado: {out_path}")
             plt.close()

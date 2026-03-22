@@ -1,24 +1,24 @@
 """
 predict.py
 ==================
-Genera predicciones d1 (mañana) para los 8 targets de calidad del aire
+Genera predicciones d1 (ma?ana) para los 8 targets de calidad del aire
 usando los modelos LightGBM v8 entrenados.
 
 Cada modelo carga sus propias features seleccionadas por permutation importance
 (77-80 de las 256 totales) desde los archivos lgbm_v5_*_features.json.
 
-Fuentes de datos para la predicción:
-  - data/processed/features_daily.parquet  -> última fila con features conocidas
-  - Open-Meteo API (opcional)              -> pronóstico meteorológico real d1
+Fuentes de datos para la predicci?n:
+  - data/processed/features_daily.parquet  -> ?ltima fila con features conocidas
+  - Open-Meteo API (opcional)              -> pron?stico meteorol?gico real d1
 
 Salida:
   - Tabla en consola con predicciones + intervalos de confianza aproximados
-  - data/processed/predictions_latest.json -> para consumo por otros módulos
+  - data/processed/predictions_latest.json -> para consumo por otros m?dulos
 
 Uso:
     python src/ml/predict.py
-    python src/ml/predict.py --with-forecast   # usa pronóstico real Open-Meteo
-    python src/ml/predict.py --date 2026-01-15 # predice para un día histórico
+    python src/ml/predict.py --with-forecast   # usa pron?stico real Open-Meteo
+    python src/ml/predict.py --date 2026-01-15 # predice para un d?a hist?rico
     python src/ml/predict.py --json            # solo salida JSON (para pipelines)
 """
 
@@ -34,14 +34,14 @@ import joblib
 
 warnings.filterwarnings("ignore")
 
-# ─── RUTAS ────────────────────────────────────────────────────────────────────
+# ??? RUTAS ????????????????????????????????????????????????????????????????????
 ROOT_DIR      = Path(__file__).parent.parent.parent
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 MODELS_DIR    = ROOT_DIR / "models"
 
 DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
 
-# ─── CONFIG ───────────────────────────────────────────────────────────────────
+# ??? CONFIG ???????????????????????????????????????????????????????????????????
 TARGETS = [
     "NO2_zbe_d1", "NO2_out_d1",
     "PM10_zbe_d1", "PM10_out_d1",
@@ -49,7 +49,7 @@ TARGETS = [
     "ICA_zbe_d1", "ICA_out_d1",
 ]
 
-# Métricas CV v5 - usadas para construir intervalos de confianza aproximados
+# M?tricas CV v5 - usadas para construir intervalos de confianza aproximados
 CV_RMSE = {
     "NO2_zbe_d1":   3.915,
     "NO2_out_d1":   4.490,
@@ -63,7 +63,7 @@ CV_RMSE = {
 
 # Unidades y umbrales de alerta (WHO 2021 guidelines, medias diarias)
 META = {
-    "NO2":   {"unit": "ug/m3", "alert": 25.0,  "label": "NO₂"},
+    "NO2":   {"unit": "ug/m3", "alert": 25.0,  "label": "NO?"},
     "PM10":  {"unit": "ug/m3", "alert": 45.0,  "label": "PM10"},
     "PM2.5": {"unit": "ug/m3", "alert": 15.0,  "label": "PM2.5"},
     "ICA":   {"unit": "ug/m3", "alert": 40.0,  "label": "ICA"},
@@ -80,7 +80,7 @@ FORECAST_VARS = [
 ]
 
 
-# ─── HELPERS ──────────────────────────────────────────────────────────────────
+# ??? HELPERS ??????????????????????????????????????????????????????????????????
 def log(msg=""):
     print(msg)
 
@@ -88,7 +88,7 @@ def section(title):
     log(); log("=" * 65); log(f"  {title}"); log("=" * 65)
 
 
-# ─── 1. CARGAR MODELOS Y FEATURES ────────────────────────────────────────────
+# ??? 1. CARGAR MODELOS Y FEATURES ????????????????????????????????????????????
 def load_models() -> dict:
     """Carga los 8 modelos v8 y sus listas de features seleccionadas."""
     models = {}
@@ -110,7 +110,7 @@ def load_models() -> dict:
         models[target] = {"model": model, "features": features}
 
     if missing:
-        log(f"\n  ❌ Archivos no encontrados:")
+        log(f"\n  ? Archivos no encontrados:")
         for m in missing:
             log(f"     {m}")
         log(f"\n  -> Ejecuta primero: python src/ml/train_model_v8.py")
@@ -123,17 +123,17 @@ def load_models() -> dict:
     return models
 
 
-# ─── 2. CARGAR ROW DE PREDICCIÓN ─────────────────────────────────────────────
+# ??? 2. CARGAR ROW DE PREDICCI?N ?????????????????????????????????????????????
 def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame, pd.Timestamp]:
     """
-    Carga la fila del parquet correspondiente al día de predicción.
+    Carga la fila del parquet correspondiente al d?a de predicci?n.
 
-    El parquet tiene features construidas con datos hasta el día D,
-    y el target es D+1. Para predecir mañana (D+1) usamos la última fila (D).
-    Para un día histórico (--date), usamos la fila del día anterior.
+    El parquet tiene features construidas con datos hasta el d?a D,
+    y el target es D+1. Para predecir ma?ana (D+1) usamos la ?ltima fila (D).
+    Para un d?a hist?rico (--date), usamos la fila del d?a anterior.
     """
     if not DATASET_PATH.exists():
-        log(f"  ❌ No se encuentra {DATASET_PATH}")
+        log(f"  ? No se encuentra {DATASET_PATH}")
         log(f"  -> Ejecuta primero: python src/features/build_features.py")
         sys.exit(1)
 
@@ -141,9 +141,9 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
     df["date"] = pd.to_datetime(df["date"], utc=True)
     df = df.sort_values("date").reset_index(drop=True)
 
-    # ── Verificar si hay features_latest.parquet más reciente ─────────────────
+    # ?? Verificar si hay features_latest.parquet m?s reciente ?????????????????
     # build_features_v6.py guarda todo el dataset (con features completas pero
-    # sin d2/d3 targets) antes de filtrar. Esto permite predecir mañana real.
+    # sin d2/d3 targets) antes de filtrar. Esto permite predecir ma?ana real.
     pred_row_path = PROCESSED_DIR / "features_latest.parquet"
 
     if target_date is None:
@@ -165,30 +165,30 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
             row = df.iloc[[-1]]
             pred_date = last_training_date + pd.Timedelta(days=1)
     else:
-        # Predecir un día histórico: buscar la fila del día anterior
+        # Predecir un d?a hist?rico: buscar la fila del d?a anterior
         target_date = pd.Timestamp(target_date, tz="UTC")
         source_date = target_date - pd.Timedelta(days=1)
         row = df[df["date"] == source_date]
         if row.empty:
-            # Intentar con la fila más cercana anterior
+            # Intentar con la fila m?s cercana anterior
             row = df[df["date"] <= source_date].iloc[[-1]]
             if row.empty:
-                log(f"  ❌ No hay datos disponibles para predecir el {target_date.date()}")
+                log(f"  ? No hay datos disponibles para predecir el {target_date.date()}")
                 sys.exit(1)
-            log(f"  [WARN]  Fecha exacta no encontrada - usando fila más cercana: {row['date'].iloc[0].date()}")
+            log(f"  [WARN]  Fecha exacta no encontrada - usando fila m?s cercana: {row['date'].iloc[0].date()}")
         pred_date = target_date
 
     source_date = row["date"].iloc[0]
-    log(f"  Fila fuente   : {source_date.date()} (datos conocidos hasta este día)")
-    log(f"  Predicción    : {pred_date.date()} (mañana)")
+    log(f"  Fila fuente   : {source_date.date()} (datos conocidos hasta este d?a)")
+    log(f"  Predicci?n    : {pred_date.date()} (ma?ana)")
     log(f"  Features disp.: {len(df.columns)} columnas en parquet")
 
     return row, pred_date
 
 
-# ─── 3. PRONÓSTICO OPEN-METEO (OPCIONAL) ─────────────────────────────────────
+# ??? 3. PRON?STICO OPEN-METEO (OPCIONAL) ?????????????????????????????????????
 def fetch_forecast_d1() -> dict:
-    """Descarga pronóstico Open-Meteo para mañana y devuelve dict de features fc_*_d1."""
+    """Descarga pron?stico Open-Meteo para ma?ana y devuelve dict de features fc_*_d1."""
     try:
         import requests
     except ImportError:
@@ -215,7 +215,7 @@ def fetch_forecast_d1() -> dict:
         r.raise_for_status()
         data = r.json()
     except Exception as e:
-        log(f"  [WARN]  Error Open-Meteo: {e} - usando proxy histórico del parquet")
+        log(f"  [WARN]  Error Open-Meteo: {e} - usando proxy hist?rico del parquet")
         return {}
 
     df = pd.DataFrame(data.get("hourly", {}))
@@ -226,7 +226,7 @@ def fetch_forecast_d1() -> dict:
     df_tomorrow = df[df["date"] == tomorrow]
 
     if df_tomorrow.empty:
-        log("  [WARN]  Sin datos de mañana en Open-Meteo")
+        log("  [WARN]  Sin datos de ma?ana en Open-Meteo")
         return {}
 
     agg = {}
@@ -248,11 +248,11 @@ def fetch_forecast_d1() -> dict:
         agg["fc_wind_u_d1"] = -agg["fc_wind_speed_10m_d1"] * np.sin(rad)
         agg["fc_wind_v_d1"] = -agg["fc_wind_speed_10m_d1"] * np.cos(rad)
 
-    log(f"  [OK] Pronóstico descargado: {len(agg)} features fc_*_d1 para {tomorrow.date()}")
+    log(f"  [OK] Pron?stico descargado: {len(agg)} features fc_*_d1 para {tomorrow.date()}")
     return agg
 
 
-# ─── 4. PREDECIR ──────────────────────────────────────────────────────────────
+# ??? 4. PREDECIR ??????????????????????????????????????????????????????????????
 def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> dict:
     """
     Genera predicciones para los 8 targets usando sus respectivas features.
@@ -260,7 +260,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
     """
     results = {}
 
-    # Aplicar pronóstico real si está disponible
+    # Aplicar pron?stico real si est? disponible
     if forecast_override:
         for feat, val in forecast_override.items():
             if feat in row.columns:
@@ -292,7 +292,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
     return results
 
 
-# ─── 5. MOSTRAR RESULTADOS ────────────────────────────────────────────────────
+# ??? 5. MOSTRAR RESULTADOS ????????????????????????????????????????????????????
 def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
     section(f"Predicciones para {pred_date.date()}")
 
@@ -316,13 +316,13 @@ def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
                 f"[{lower:.1f} - {upper:.1f}]  {alert}")
 
     log()
-    log(f"  Intervalo de confianza: ±1.28 × RMSE_CV (~90%)")
-    source = "pronóstico Open-Meteo real" if with_forecast else "proxy histórico (parquet)"
-    log(f"  Meteorología d1: {source}")
-    log(f"  Modelos: LightGBM v8 · TimeSeriesSplit 5 folds · permutation importance")
+    log(f"  Intervalo de confianza: ?1.28 ? RMSE_CV (~90%)")
+    source = "pron?stico Open-Meteo real" if with_forecast else "proxy hist?rico (parquet)"
+    log(f"  Meteorolog?a d1: {source}")
+    log(f"  Modelos: LightGBM v8 ? TimeSeriesSplit 5 folds ? permutation importance")
 
 
-# ─── 6. GUARDAR JSON ──────────────────────────────────────────────────────────
+# ??? 6. GUARDAR JSON ??????????????????????????????????????????????????????????
 def save_json(results: dict, pred_date: pd.Timestamp):
     out = {
         "prediction_date": pred_date.date().isoformat(),
@@ -336,7 +336,7 @@ def save_json(results: dict, pred_date: pd.Timestamp):
     return out
 
 
-# ─── MAIN ─────────────────────────────────────────────────────────────────────
+# ??? MAIN ?????????????????????????????????????????????????????????????????????
 def main():
     with_forecast = "--with-forecast" in sys.argv
     json_only     = "--json"          in sys.argv
@@ -347,8 +347,8 @@ def main():
         log("=" * 65)
         log("  PREDICT - Vitoria Air Quality")
         log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        log(f"  Modelo: LightGBM v8 · 8 targets d1")
-        log(f"  Meteo d1: {'Open-Meteo real' if with_forecast else 'proxy histórico'}")
+        log(f"  Modelo: LightGBM v8 ? 8 targets d1")
+        log(f"  Meteo d1: {'Open-Meteo real' if with_forecast else 'proxy hist?rico'}")
         log("=" * 65)
 
     # 1. Cargar modelos
@@ -356,17 +356,17 @@ def main():
         section("1. Cargando modelos v5")
     models = load_models()
 
-    # 2. Fila de predicción
+    # 2. Fila de predicci?n
     target_date = pd.Timestamp(date_arg) if date_arg else None
     if not json_only:
-        section("2. Preparando fila de predicción")
+        section("2. Preparando fila de predicci?n")
     row, pred_date = load_prediction_row(target_date)
 
-    # 3. Pronóstico meteorológico (opcional)
+    # 3. Pron?stico meteorol?gico (opcional)
     forecast_override = {}
     if with_forecast:
         if not json_only:
-            section("3. Descargando pronóstico Open-Meteo")
+            section("3. Descargando pron?stico Open-Meteo")
         forecast_override = fetch_forecast_d1()
 
     # 4. Predecir
@@ -382,7 +382,7 @@ def main():
 
         log()
         log("=" * 65)
-        log("  [OK] PREDICCIÓN COMPLETADA")
+        log("  [OK] PREDICCI?N COMPLETADA")
         log("=" * 65)
 
 

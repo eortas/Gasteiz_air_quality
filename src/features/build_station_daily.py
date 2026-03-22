@@ -35,8 +35,8 @@ OUTPUT_PATH   = PROCESSED_DIR / "station_daily.csv"
 
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
 CONTAMINANTS  = ["NO2", "PM10", "PM2.5", "ICA"]
-ZBE_STATIONS  = ["PAUL", "BEATO", "FUEROS"]
-OUT_STATIONS  = ["LANDAZURI", "HUETOS", "ZUMABIDE"]
+ZBE_STATIONS  = ["PAUL", "FUEROS"]
+OUT_STATIONS  = ["LANDAZURI", "HUETOS", "ZUMABIDE", "BEATO"]
 ALL_STATIONS  = ZBE_STATIONS + OUT_STATIONS
 
 # Interpolación máxima: 7 días (huecos más largos se dejan como NaN)
