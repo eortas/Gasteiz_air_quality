@@ -15,7 +15,7 @@ DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
 csv_file = MODELS_DIR / "counterfactual_gap_v8.csv"
 
 _out_idx = sys.argv.index("--output") if "--output" in sys.argv else None
-output_html = sys.argv[_out_idx + 1] if _out_idx is not None else str(ROOT_DIR / "reports" / "plots" / "index.html")
+output_html = sys.argv[_out_idx + 1] if _out_idx is not None else str(ROOT_DIR / "index.html")
 
 # Forzamos ruta local (misma carpeta que el HTML) y copiamos los archivos
 img_base_path = ""
@@ -27,7 +27,7 @@ if plots_source.exists():
         shutil.copy(f, plots_dest / f.name)
     print(f"  OK Copiados {len(list(plots_source.glob('*.png')))} plots a {plots_dest}")
 
-traffic_path = "../html/traffic_map.html"
+traffic_path = "traffic_map.html"
 
 # ==============================================================================
 # 2. DATOS PESTAÑAS 1 Y 2 (Causal v8)
@@ -64,13 +64,31 @@ cf_json_str = json.dumps(cf_data)
 # 3. DATOS PESTAÑAS 2 (Causal v8 Summary & DiD)
 # ==============================================================================
 summary_stats = {}
-for cont in df_cv['contaminant'].unique():
-    for zone in df_cv['zone'].unique():
-        key = f"{cont}_{zone}"
-        mask = (df_cv['contaminant'] == cont) & (df_cv['zone'] == zone) & (df_cv['version'] == 'METEO-PURO')
-        sub = df_cv[mask]
-        if not sub.empty:
-            summary_stats[key] = { "pure": round(sub['gap_pct'].mean(), 2) }
+try:
+    for cont in df_cv['contaminant'].unique():
+        for zone in df_cv['zone'].unique():
+            key = f"{cont}_{zone}"
+            
+            # Meteo-Puro
+            mask_pure = (df_cv['contaminant'] == cont) & (df_cv['zone'] == zone) & (df_cv['version'] == 'METEO-PURO')
+            sub_pure = df_cv[mask_pure]
+            
+            # Con-Lags
+            mask_lags = (df_cv['contaminant'] == cont) & (df_cv['zone'] == zone) & (df_cv['version'] == 'CON-LAGS')
+            sub_lags = df_cv[mask_lags]
+            
+            if not sub_pure.empty:
+                summary_stats[key] = {
+                    "obs": round(sub_pure['observed'].mean(), 1),
+                    "cf_pure": round(sub_pure['counterfactual'].mean(), 1),
+                    "pure": round(sub_pure['gap_pct'].mean(), 1),
+                    "unit": "µg/m³" if cont != "ICA" else "",
+                    "lags": round(sub_lags['gap_pct'].mean(), 1) if not sub_lags.empty else 0
+                }
+    print("  OK Summary Stats calculados.")
+except Exception as e:
+    print(f"  WARN Error calculando summary stats: {e}")
+
 sum_json_str = json.dumps(summary_stats)
 
 try:
