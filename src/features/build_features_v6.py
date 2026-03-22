@@ -49,8 +49,8 @@ PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 # -- CONFIG ----------------------------------
-ZBE_STATIONS  = ["PAUL", "BEATO", "FUEROS"]
-OUT_STATIONS  = ["LANDAZURI", "HUETOS", "ZUMABIDE"]
+ZBE_STATIONS  = ["PAUL", "FUEROS"]
+OUT_STATIONS  = ["LANDAZURI", "HUETOS", "ZUMABIDE", "BEATO"]
 CONTAMINANTS  = ["NO2", "PM10", "PM2.5", "ICA"]
 TARGETS       = [f"{c}_{g}" for c in CONTAMINANTS for g in ["zbe", "out"]]
 HORIZON_DAYS  = 3

@@ -19,7 +19,7 @@ output_html = sys.argv[_out_idx + 1] if _out_idx is not None else str(ROOT_DIR /
 
 # Forzamos ruta local (misma carpeta que el HTML) y copiamos los archivos
 img_base_path = ""
-plots_source = MODELS_DIR / "plots"
+plots_source = ROOT_DIR / "reports" / "plots"
 plots_dest   = Path(output_html).parent
 
 if plots_source.exists():
@@ -217,8 +217,9 @@ try:
         sc_data = json.load(f)
         v9_stats = {}
         for cont, stations in sc_data.items():
+            cont_key = cont.replace("PM2.5", "PM25")
             for st, st_data in stations.items():
-                v9_stats[f"{cont}_{st}"] = {
+                v9_stats[f"{cont_key}_{st}"] = {
                     "preR2": st_data.get("preR2", "N/A"),
                     "gap": st_data.get("gap", "N/A"),
                     "desc": st_data.get("desc", "Sin datos")
@@ -234,7 +235,7 @@ except Exception as e:
 STATION_COORDS = {
     "HUETOS":    {"lat": 42.853846, "lon": -2.699907, "zone": "OUT", "label": "Huetos"},
     "LANDAZURI": {"lat": 42.847626, "lon": -2.677065, "zone": "OUT", "label": "Landazuri"},
-    "BEATO":     {"lat": 42.849319, "lon": -2.675857, "zone": "ZBE", "label": "Beato (ZBE)"},
+    "BEATO":     {"lat": 42.849319, "lon": -2.675857, "zone": "OUT", "label": "Beato (Control)"},
     "PAUL":      {"lat": 42.851130, "lon": -2.670824, "zone": "ZBE", "label": "Vicente de Paul (ZBE)"},
     "FUEROS":    {"lat": 42.846270, "lon": -2.669415, "zone": "ZBE", "label": "Fueros (ZBE)"},
     "ZUMABIDE":  {"lat": 42.835437, "lon": -2.673657, "zone": "OUT", "label": "Zumabide"},
@@ -566,7 +567,7 @@ html_template = """<!DOCTYPE html>
     <span class="controls-label" data-i18n="v9Station">Estación IntraZBE</span>
     <div class="tab-group" id="stationTabsV9">
       <button class="tab active" onclick="selectStationV9('PAUL', this)">PAUL</button>
-      <button class="tab" onclick="selectStationV9('LANDAZURI', this)">LANDAZURI</button>
+      <button class="tab" onclick="selectStationV9('FUEROS', this)">FUEROS</button>
     </div>
   </div>
   <div class="summary-grid" id="summaryCardsV9"></div>
@@ -652,7 +653,7 @@ html_template = """<!DOCTYPE html>
 <div id="view-map" class="view-container">
   <div class="map-header" style="padding: 16px 48px 16px;">
     <div class="header-left">
-      <div class="label-tag" data-i18n="mapTag">Vitoria-Gasteiz — Red Kunak</div>
+      <div class="label-tag" data-i18n="mapTag">Vitoria-Gasteiz — Red Sensores Municipales</div>
       <h1 data-i18n="mapTitle">Mapa de <span>Estaciones</span></h1>
       <p class="subtitle" data-i18n="mapSubtitle">Media diaria de ayer por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.</p>
     </div>
@@ -753,7 +754,7 @@ const translations = {
     colNFeatures: "N. Features",
     mapeNote: "MAPE calculado solo sobre filas con valor observado > 1 µg/m³.",
     mapeThreshold: "Umbral de aceptación: MAPE < 25%, R² > 0.35.",
-    mapTag: "Vitoria-Gasteiz — Red Kunak",
+    mapTag: "Vitoria-Gasteiz — Red Sensores Municipales",
     mapTitle: "Mapa de <span>Estaciones</span>",
     mapSubtitle: "Medias diarias de ayer y predicción para mañana. Haga clic en un punto para ver detalles.",
     mapLegendTitle: "Semáforo ICA",
@@ -797,7 +798,7 @@ const translations = {
     v10Bad: "🔴 MALA",
     backReal: "Medición Real",
     backPred: "Predicción",
-    backWait: "⏳ Esperando sensores Kunak",
+    backWait: "⏳ Esperando sensores municipales",
     backExcel: "✓ Precisión Excelente",
     backGood: "✓ Precisión Buena",
     backAccept: "✓ Precisión Aceptable",
@@ -851,7 +852,7 @@ const translations = {
     colNFeatures: "Ezaugarri Kopurua",
     mapeNote: "MAPE behatutako balioa > 1 µg/m³ duten errenkadetan soilik kalkulatua.",
     mapeThreshold: "Onarpen-atalasea: MAPE < %25, R² > 0.35.",
-    mapTag: "Vitoria-Gasteiz — Kunak Sarea",
+    mapTag: "Vitoria-Gasteiz — Udaltzaingoaren sentsoreen sarea",
     mapTitle: "Estazioen <span>Mapa</span>",
     mapSubtitle: "Atzoko eguneroko batez bestekoak eta biharko aurreikuspenak. Egin klik puntu batean xehetasunak ikusteko.",
     mapLegendTitle: "ICA Semaforoa",
@@ -880,7 +881,7 @@ const translations = {
     v10Bad: "🔴 TXARRA",
     backReal: "Neurketa Erreala",
     backPred: "Aurreikuspena",
-    backWait: "⏳ Kunak sentsoreen zain",
+    backWait: "⏳ Sentsoreen zain",
     backExcel: "✓ Doitasun bikaina",
     backGood: "✓ Doitasun ona",
     backAccept: "✓ Doitasun onargarria",

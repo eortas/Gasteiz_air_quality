@@ -34,8 +34,8 @@ OUT_SC_FILE = MODELS_DIR / "synthetic_control_v9.json"
 ZBE_DATE_STR = "2025-09-01"
 
 CONTAMINANTS = ["NO2", "PM10", "PM2.5", "ICA"]
-TREATED = ["PAUL", "BEATO", "FUEROS"]
-DONORS = ["LANDAZURI", "HUETOS", "ZUMABIDE"]
+TREATED     = ["PAUL", "FUEROS"]
+DONORS      = ["LANDAZURI", "HUETOS", "ZUMABIDE", "BEATO"]
 
 
 def load_data(path: Path) -> pd.DataFrame:
