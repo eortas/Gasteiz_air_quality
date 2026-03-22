@@ -68,6 +68,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
+          git add traffic_map.html || true
           git add *.png || true
           git add reports/plots/*.png || true
           git diff --staged --quiet || git commit -m "dashboard: actualización automática $(date -u '+%Y-%m-%d')"

@@ -953,7 +953,7 @@ function updateI18n() {
   const iframe = document.getElementById('trafficIframe');
   if (iframe) {
     const baseUrl = iframe.src.split('?')[0];
-    iframe.src = `../html/traffic_map.html?lang=${currentLang}`;
+    iframe.src = `traffic_map.html?lang=${currentLang}`;
   }
 }
 
