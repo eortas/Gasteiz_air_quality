@@ -656,23 +656,6 @@ html_template = """<!DOCTYPE html>
       <h1 data-i18n="mapTitle">Mapa de <span>Estaciones</span></h1>
       <p class="subtitle" data-i18n="mapSubtitle">Media diaria de ayer por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.</p>
     </div>
-    <div class="metrics-card">
-      <div class="card-label" style="margin-bottom:12px" data-i18n="didTitle">Tabla 1 — Difference-in-Differences v8</div>
-      <table class="metrics-table">
-        <thead>
-          <tr>
-            <th data-i18n="didCont">Contaminante</th>
-            <th>β₃</th>
-            <th data-i18n="didPVal">P-Valor</th>
-            <th>IC 95%</th>
-            <th>R²</th>
-            <th>N Obs</th>
-            <th data-i18n="didSig">Significativo</th>
-          </tr>
-        </thead>
-        <tbody id="didTableMap"></tbody>
-      </table>
-    </div>
     <div class="map-legend">
       <div class="card-label" style="margin-bottom:4px" data-i18n="mapLegendTitle">Semáforo ICA</div>
       <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green)"></div><span data-i18n="icaGood">Buena (≤25)</span></div>
@@ -1147,7 +1130,6 @@ function renderDidTable() {
   });
   const html = rows.join('');
   const el1 = document.getElementById('didTable'); if(el1) el1.innerHTML = html;
-  const el2 = document.getElementById('didTableMap'); if(el2) el2.innerHTML = html;
 }
 
 function selectCont(cont, btn) { 
@@ -1207,9 +1189,10 @@ function selectStationV9(station, btn) { currentStationV9 = station; document.qu
 let currentContV10 = 'NO2', currentZoneV10 = 'out', perfChart = null;
 
 function renderDashboard3() {
-  const no2 = (manana['NO2'] && manana['NO2'][currentZoneV10]) || 0;
-  const pm25 = (manana['PM2.5'] && manana['PM2.5'][currentZoneV10]) || 0;
-  const pm10 = (manana['PM10'] && manana['PM10'][currentZoneV10]) || 0;
+  const zoneData = manana[currentZoneV10] || {};
+  const no2 = zoneData['NO2'] || 0;
+  const pm25 = zoneData['PM2.5'] || 0;
+  const pm10 = zoneData['PM10'] || 0;
   const t = translations[currentLang];
 
   let badge = document.getElementById('riskBadge');
