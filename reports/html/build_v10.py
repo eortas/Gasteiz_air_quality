@@ -670,7 +670,7 @@ html_template = """<!DOCTYPE html>
 
 <div id="view-traffic" class="view-container">
   <div class="traffic-iframe-container">
-    <iframe id="trafficIframe" src="../html/traffic_map.html" title="Mapa de Tráfico"></iframe>
+    <iframe id="trafficIframe" src="traffic_map.html" title="Mapa de Tráfico"></iframe>
   </div>
 </div>
 
@@ -1061,7 +1061,12 @@ function renderSummaryCards() {
 }
 
 function renderFig1() {
-  const key = `${currentCont}_${currentZone}`; if (!cfData || !cfData[key]) return;
+  const key = `${currentCont}_${currentZone}`; 
+  if (!cfData || !cfData[key] || !cfData[key]['METEO-PURO']) {
+    console.warn("No data for Fig1:", key);
+    if(fig1Chart) fig1Chart.destroy();
+    return;
+  }
   const pure = cfData[key]['METEO-PURO'], lags = cfData[key]['CON-LAGS'], dates = pure.dates.map(formatDate); const obsSmooth = movingAvg(pure.observed, 7);
   const t = translations[currentLang];
   const ctx = document.getElementById('fig1').getContext('2d');
@@ -1073,7 +1078,12 @@ function renderFig1() {
 }
 
 function renderFig2() {
-  const key = `${currentCont}_${currentZone}`; if (!cfData || !cfData[key]) return;
+  const key = `${currentCont}_${currentZone}`; 
+  if (!cfData || !cfData[key] || !cfData[key]['METEO-PURO']) {
+    console.warn("No data for Fig2:", key);
+    if(fig2Chart) fig2Chart.destroy();
+    return;
+  }
   const pure = cfData[key]['METEO-PURO'], lags = cfData[key]['CON-LAGS'], dates = pure.dates.map(formatDate); const gapPureSmooth = movingAvg(pure.gap_pct, 14), gapLagsSmooth = movingAvg(lags.gap_pct, 14), zero = dates.map(() => 0);
   const t = translations[currentLang];
   const ctx = document.getElementById('fig2').getContext('2d');
@@ -1096,7 +1106,6 @@ function renderFig3() {
   const text = getCssVar('--muted'); const grid = getCssVar('--border'); const bg = getCssVar('--surface2'); const title = getCssVar('--text');
 
   fig3Chart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: t.fig3Label, data: vals, backgroundColor: colors, borderColor: borders, borderWidth: 1, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => ` Efecto: ${ctx.parsed.y.toFixed(1)}%` } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 11 } }, grid: { display: false } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v + '%' }, grid: { color: grid }, title: { display: true, text: 'Gap %', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
-}
 }
 
 function renderDidTable() {
@@ -1387,8 +1396,9 @@ window.onload = function() {
   // Si estamos en la pestaña de tráfico, sincronizar lenguaje
   const iframe = document.getElementById('trafficIframe');
   if (iframe) {
-      iframe.src = `../html/traffic_map.html?lang=${currentLang}`;
+      iframe.src = `traffic_map.html?lang=${currentLang}`;
   }
+  console.log("DASHBOARD INITIALIZED SUCCESSFULLY");
 };
 </script>
 </body>
