@@ -40,6 +40,7 @@ PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 MODELS_DIR    = ROOT_DIR / "models"
 
 DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
+STATION_DAILY_PATH = PROCESSED_DIR / "station_daily.csv"
 
 # ??? CONFIG ???????????????????????????????????????????????????????????????????
 TARGETS = [
@@ -252,6 +253,85 @@ def fetch_forecast_d1() -> dict:
     return agg
 
 
+# ??? 4. REFINAR CON META-MODELOS ?????????????????????????????????????????????
+def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.DataFrame) -> dict:
+    """
+    Usa los meta-modelos Ridge para corregir las predicciones v1.
+    Calcula error_lag_1d y error_roll_mean_7d usando el hist?rico reciente.
+    """
+    refined_results = {}
+    
+    # 1. Calcular errores recientes para las features del meta-modelo
+    # Necesitamos las predicciones del modelo 1 para los ?ltimos 8 d?as
+    # y los valores reales para compararlos.
+    history_8d = df_history.tail(8).copy()
+    
+    for target, r in results.items():
+        model_meta_path = MODELS_DIR / f"meta_model_{target}.pkl"
+        if not model_meta_path.exists():
+            refined_results[target] = r
+            continue
+            
+        try:
+            meta_model = joblib.load(model_meta_path)
+            
+            # Cargar el modelo 1 original para calcular errores pasados
+            m1_path = MODELS_DIR / f"lgbm_v8_{target}.pkl"
+            f1_path = MODELS_DIR / f"lgbm_v8_{target}_features.json"
+            model_v1 = joblib.load(m1_path)
+            feats_v1 = json.loads(f1_path.read_text(encoding="utf-8"))
+            
+            # Calcular errores de los ?ltimos 7 d?as (si hay datos)
+            errors = []
+            for _, h_row in history_8d.iterrows():
+                X_h = h_row.to_frame().T.reindex(columns=feats_v1, fill_value=0).fillna(0)
+                p_h = float(model_v1.predict(X_h)[0])
+                
+                # Buscar valor real en el target correspondiente (mismo d?a, d1 shift)
+                # En features_daily, el target_XXX_d1 es el valor del d?a SIGUIENTE.
+                # As? que el error de "hoy" (t) lo vemos comparando la predicci?n hecha en t-1 con el target en t-1.
+                actual = h_row.get(f"target_{target}") 
+                if pd.notna(actual):
+                    errors.append(actual - p_h)
+            
+            error_lag_1d = errors[-1] if len(errors) >= 1 else 0
+            error_roll_7d = np.mean(errors) if len(errors) >= 1 else 0
+            
+            # Preparar features para el meta-modelo
+            meta_input = {
+                "pred_v1": float(r["prediction"]),
+                "error_lag_1d": float(error_lag_1d),
+                "error_roll_mean_7d": float(error_roll_7d),
+                "temperature_2m": float(row["temperature_2m"].fillna(0).iloc[0]),
+                "wind_speed_10m": float(row["wind_speed_10m"].fillna(0).iloc[0]),
+                "boundary_layer_height": float(row["boundary_layer_height"].fillna(0).iloc[0]),
+                "relative_humidity_2m": float(row["relative_humidity_2m"].fillna(0).iloc[0]),
+                "is_weekend": float(row["is_weekend"].fillna(0).iloc[0]),
+                "es_domingo": float(row["es_domingo"].fillna(0).iloc[0]),
+                "es_invierno_estricto": float(row["es_invierno_estricto"].fillna(0).iloc[0]),
+            }
+            
+            X_meta = pd.DataFrame([meta_input])
+            pred_v2 = float(meta_model.predict(X_meta)[0])
+            pred_v2 = max(0.0, pred_v2)
+            
+            # El meta-modelo ya reduce el sesgo, mantenemos el RMSE_CV original para el IC
+            # aunque t?cnicamente podr?amos usar el meta_rmse si lo guardamos.
+            refined_results[target] = {
+                "prediction_v1": r["prediction"],
+                "prediction":    round(pred_v2, 2),
+                "lower":         round(max(0, pred_v2 - 1.28 * r["rmse_cv"]), 2),
+                "upper":         round(pred_v2 + 1.28 * r["rmse_cv"], 2),
+                "rmse_cv":       r["rmse_cv"],
+                "correction":    round(pred_v2 - r["prediction"], 2)
+            }
+        except Exception as e:
+            log(f"  [WARN] Fallo en meta-modelo {target}: {e}")
+            refined_results[target] = r
+            
+    return refined_results
+
+
 # ??? 4. PREDECIR ??????????????????????????????????????????????????????????????
 def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> dict:
     """
@@ -317,9 +397,10 @@ def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
 
     log()
     log(f"  Intervalo de confianza: ?1.28 ? RMSE_CV (~90%)")
+    log(f"  Correcci?n: Aplicado Meta-Modelo Ridge (Error Correction)")
     source = "pron?stico Open-Meteo real" if with_forecast else "proxy hist?rico (parquet)"
     log(f"  Meteorolog?a d1: {source}")
-    log(f"  Modelos: LightGBM v8 ? TimeSeriesSplit 5 folds ? permutation importance")
+    log(f"  Modelos: LightGBM v8 + Ridge Meta-Model ? TimeSeriesSplit 5 folds")
 
 
 # ??? 6. GUARDAR JSON ??????????????????????????????????????????????????????????
@@ -371,6 +452,13 @@ def main():
 
     # 4. Predecir
     results = predict(models, row, forecast_override)
+
+    # 4b. Refinar con Meta-Modelos
+    if "--no-meta" not in sys.argv:
+        if not json_only:
+            section("4. Refinando con Meta-Modelos (v2)")
+        df_history = pd.read_parquet(DATASET_PATH) # Necesitamos el hist?rico para errores
+        results = refine_with_meta_models(results, row, df_history)
 
     # 5. Mostrar o volcar JSON
     if json_only:

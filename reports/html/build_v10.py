@@ -119,11 +119,14 @@ try:
         for zone in ["zbe", "out"]:
             key = f"{cont}_{zone}_d1"
             if key in targets:
-                manana_data[zone][cont] = targets[key]["prediction"]
+                # Prioridad a 'refined' (v2), si no 'prediction' (v1)
+                val_v2 = targets[key].get("refined")
+                val_v1 = targets[key].get("prediction", 0)
+                manana_data[zone][cont] = val_v2 if val_v2 is not None else val_v1
             else:
                 manana_data[zone][cont] = 0
 
-    print(f"  OK Predicciones para {prediction_date_str} cargadas.")
+    print(f"  OK Predicciones para {prediction_date_str} cargadas (usando refinamiento v2 si disponible).")
 
 except Exception as e:
     print(f"  WARN No se pudo leer predictions_latest.json: {e}")
@@ -225,9 +228,15 @@ try:
                     "desc": st_data.get("desc", "Sin datos")
                 }
         v9_json_str = json.dumps(v9_stats)
-except Exception as e:
-    print(f"  WARN No se encontro synthetic_control_v9.json: {e}")
+except Exception:
     v9_json_str = "{}"
+
+try:
+    with open(MODELS_DIR / "meta_metrics.json", "r", encoding="utf-8") as f:
+        meta_metrics = json.load(f)
+    meta_json_str = json.dumps(meta_metrics)
+except Exception:
+    meta_json_str = "{}"
 
 # ==============================================================================
 # 5. DATOS MAPA DE ESTACIONES
@@ -686,6 +695,7 @@ let manana = __MANANA_DATA_PLACEHOLDER__;
 let metricsData = __METRICS_DATA_PLACEHOLDER__;
 let stationsData = __STATIONS_DATA_PLACEHOLDER__;
 const v9Stats = __V9_DATA_PLACEHOLDER__;
+const metaData = __META_DATA_PLACEHOLDER__;
 
 let currentTheme = 'light';
 let mapInstance = null;
@@ -1205,9 +1215,9 @@ function renderDashboard3() {
   else if (riskLevel === 1) { badge.innerText = t.v10Mod; badge.style.color = "var(--yellow)"; badge.style.borderColor = "var(--yellow)"; badge.style.backgroundColor = getCssVar('--yellow')+"1A"; }
   else { badge.innerText = t.v10Bad; badge.style.color = "var(--red)"; badge.style.borderColor = "var(--red)"; badge.style.backgroundColor = getCssVar('--red')+"1A"; }
 
-  document.getElementById('val-no2').innerText = no2.toFixed(1);
-  document.getElementById('val-pm25').innerText = pm25.toFixed(1);
-  document.getElementById('val-pm10').innerText = pm10.toFixed(1);
+  document.getElementById('val-no2').innerHTML = `${no2.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
+  document.getElementById('val-pm25').innerHTML = `${pm25.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
+  document.getElementById('val-pm10').innerHTML = `${pm10.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
 
   const d = perfStats[currentZoneV10][currentContV10] || {labels:[], real:[], pred:[]};
   const ctx = document.getElementById('perfChart').getContext('2d');
@@ -1286,8 +1296,14 @@ function renderMetricsTable() {
     if (!m) return '';
     const mapeColor = m.cv_mape <= 25 ? 'var(--green)' : 'var(--yellow)';
     const r2Color   = m.cv_r2   >= 0.35 ? 'var(--green)' : 'var(--yellow)';
+    
+    // Buscar mejora del meta-modelo
+    const metaKey = `${cont}_${zone}_d1`;
+    const meta = metaData[metaKey];
+    const metaStr = meta ? `<div style="font-size:9px; color:var(--accent); margin-top:2px">+${meta.improvement_pct}% mejora meta-model</div>` : '';
+
     return `<tr>
-      <td><strong>${cont}</strong> <span style="color:var(--muted)">${zone.toUpperCase()}</span></td>
+      <td><strong>${cont}</strong> <span style="color:var(--muted)">${zone.toUpperCase()}</span>${metaStr}</td>
       <td style="font-family:'IBM Plex Mono',monospace">${m.cv_rmse.toFixed(2)}</td>
       <td style="font-family:'IBM Plex Mono',monospace">${m.cv_mae.toFixed(2)}</td>
       <td style="color:${r2Color};font-family:'IBM Plex Mono',monospace">${m.cv_r2.toFixed(3)}</td>
@@ -1413,6 +1429,7 @@ content = content.replace('__MANANA_DATA_PLACEHOLDER__', manana_json_str)
 content = content.replace('__METRICS_DATA_PLACEHOLDER__', metrics_json_str)
 content = content.replace('__STATIONS_DATA_PLACEHOLDER__', stations_json_str)
 content = content.replace('__V9_DATA_PLACEHOLDER__', v9_json_str)
+content = content.replace('__META_DATA_PLACEHOLDER__', meta_json_str)
 content = content.replace('__SUMMARY_DATA_PLACEHOLDER__', sum_json_str)
 content = content.replace('__DID_DATA_PLACEHOLDER__', did_json_str)
 content = content.replace('__IMG_BASE_PATH__', img_base_path)

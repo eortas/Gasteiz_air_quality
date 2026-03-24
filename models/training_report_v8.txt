@@ -1,14 +1,14 @@
 =================================================================
   TRAIN MODEL v8 - Vitoria Air Quality (ZBE Causal - Paper Level)
-  2026-03-22 19:15
+  2026-03-24 18:43
   (7) C(month_year)  (8) SE clusterizados  (9) Counterfactual dual
-  Tuning: no  |  Skip CV: no
+  Tuning: s?  |  Skip CV: no
 =================================================================
 
 =================================================================
   1. Cargando dataset
 =================================================================
-  Filas    : 737
+  Filas    : 739
   Targets  : 8 (solo d1)
   Features HDD disponibles : 12 / 12
   Features totales : 273
@@ -17,63 +17,103 @@
   2. Verificando features del dataset v6
 =================================================================
   Features calderas/HDD : 13
-    HDD                            mean=3.935  std=3.983
-    dia_muy_frio                   mean=0.091  std=0.288
-    es_invierno_estricto           mean=0.326  std=0.469
-    es_verano                      mean=0.331  std=0.471
-    es_domingo                     mean=0.142  std=0.350
+    HDD                            mean=3.944  std=3.982
+    dia_muy_frio                   mean=0.091  std=0.287
+    es_invierno_estricto           mean=0.325  std=0.469
+    es_verano                      mean=0.330  std=0.471
+    es_domingo                     mean=0.143  std=0.351
     domingo_invierno               mean=0.046  std=0.210
-    HDD_acum_7d                    mean=27.609  std=25.657
-    HDD_acum_14d                   mean=55.334  std=49.248
-    HDD_lag_1d                     mean=3.932  std=3.983
-    HDD_lag_7d                     mean=3.953  std=3.993
-    fc_HDD_d1                      mean=3.936  std=3.986
-    fc_HDD_d2                      mean=3.936  std=3.988
-    fc_HDD_d3                      mean=3.940  std=3.990
+    HDD_acum_7d                    mean=27.635  std=25.627
+    HDD_acum_14d                   mean=55.420  std=49.209
+    HDD_lag_1d                     mean=3.940  std=3.980
+    HDD_lag_7d                     mean=3.963  std=3.993
+    fc_HDD_d1                      mean=3.945  std=3.984
+    fc_HDD_d2                      mean=3.945  std=3.987
+    fc_HDD_d3                      mean=3.949  std=3.988
 
 =================================================================
   3. Entrenamiento LightGBM v8 - d1 ? TimeSeriesSplit (5 Folds)
 =================================================================
 
   Calculando permutation importance para target_NO2_zbe_d1...
-  HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_1d', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
-  Features seleccionadas: 90
-  Top 5: ['NO2_zbe', 'fc_temperature_2m_d1', 'exp_traffic_volume_d1', 'NO2_zbe_roll_mean_7d', 'fc_wind_gusts_10m_d1']
+  HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
+  Features seleccionadas: 91
+  Top 5: ['NO2_zbe', 'exp_traffic_volume_d1', 'fc_temperature_2m_d1', 'NO2_zbe_roll_mean_7d', 'fc_wind_gusts_10m_d1']
+    Mejor RMSE tuning: 4.3324
+    Mejor RMSE tuning: 3.6460
+    Mejor RMSE tuning: 2.8228
+    Mejor RMSE tuning: 2.2587
+    Mejor RMSE tuning: 3.3994
 
   Calculando permutation importance para target_NO2_out_d1...
-  HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
-  Features seleccionadas: 78
+  HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_7d', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
+  Features seleccionadas: 85
   Top 5: ['NO2_out', 'exp_traffic_volume_d1', 'fc_temperature_2m_d1', 'fc_HDD_d1', 'fc_wind_gusts_10m_d1']
+    Mejor RMSE tuning: 4.0572
+    Mejor RMSE tuning: 6.3535
+    Mejor RMSE tuning: 4.5545
+    Mejor RMSE tuning: 2.7179
+    Mejor RMSE tuning: 3.9427
 
   Calculando permutation importance para target_PM10_zbe_d1...
-  HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_1d', 'fc_HDD_d1', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
-  Features seleccionadas: 91
-  Top 5: ['PM10_zbe', 'ICA_zbe', 'weather_code', 'ICA_out', 'wind_gusts_10m']
+  HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d1', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
+  Features seleccionadas: 92
+  Top 5: ['PM10_zbe', 'ICA_zbe', 'ICA_out', 'weather_code', 'wind_gusts_10m']
+    Mejor RMSE tuning: 3.7296
+    Mejor RMSE tuning: 4.9618
+    Mejor RMSE tuning: 3.8565
+    Mejor RMSE tuning: 3.6922
+    Mejor RMSE tuning: 5.8375
 
   Calculando permutation importance para target_PM10_out_d1...
-  HDD features forzadas : ['HDD', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d1', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
-  Features seleccionadas: 91
-  Top 5: ['ICA_out', 'PM10_zbe', 'PM10_out', 'PM2.5_out', 'weather_code']
+  HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d1', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
+  Features seleccionadas: 92
+  Top 5: ['ICA_out', 'PM10_zbe', 'PM10_out', 'PM2.5_out', 'fc_boundary_layer_height_d3']
+    Mejor RMSE tuning: 3.2071
+    Mejor RMSE tuning: 5.4594
+    Mejor RMSE tuning: 4.2809
+    Mejor RMSE tuning: 3.3884
+    Mejor RMSE tuning: 3.5716
 
   Calculando permutation importance para target_PM2.5_zbe_d1...
-  HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d1', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
-  Features seleccionadas: 91
-  Top 5: ['ICA_zbe', 'PM10_zbe', 'PM2.5_zbe', 'ICA_out', 'weather_code']
+  HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d1', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
+  Features seleccionadas: 92
+  Top 5: ['PM10_zbe', 'ICA_zbe', 'PM2.5_zbe', 'weather_code', 'ICA_out']
+    Mejor RMSE tuning: 2.5178
+    Mejor RMSE tuning: 3.0013
+    Mejor RMSE tuning: 2.8430
+    Mejor RMSE tuning: 2.7143
+    Mejor RMSE tuning: 3.3830
 
   Calculando permutation importance para target_PM2.5_out_d1...
   HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d1', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
   Features seleccionadas: 92
-  Top 5: ['PM2.5_out', 'ICA_out', 'PM10_zbe', 'rain', 'wind_speed_10m']
+  Top 5: ['PM2.5_out', 'ICA_out', 'PM10_zbe', 'wind_speed_10m', 'rain']
+    Mejor RMSE tuning: 2.2926
+    Mejor RMSE tuning: 3.8670
+    Mejor RMSE tuning: 3.4664
+    Mejor RMSE tuning: 2.8837
+    Mejor RMSE tuning: 2.8712
 
   Calculando permutation importance para target_ICA_zbe_d1...
-  HDD features forzadas : ['HDD', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d1', 'fc_HDD_d2', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
-  Features seleccionadas: 90
+  HDD features forzadas : ['HDD', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d1', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
+  Features seleccionadas: 91
   Top 5: ['PM10_zbe', 'ICA_zbe', 'weather_code', 'ICA_out', 'PM2.5_zbe']
+    Mejor RMSE tuning: 5.9435
+    Mejor RMSE tuning: 7.5466
+    Mejor RMSE tuning: 7.1704
+    Mejor RMSE tuning: 7.2529
+    Mejor RMSE tuning: 9.2552
 
   Calculando permutation importance para target_ICA_out_d1...
   HDD features forzadas : ['HDD', 'HDD_acum_7d', 'HDD_acum_14d', 'HDD_lag_1d', 'HDD_lag_7d', 'fc_HDD_d1', 'fc_HDD_d2', 'fc_HDD_d3', 'dia_muy_frio', 'es_invierno_estricto', 'domingo_invierno', 'es_domingo']
   Features seleccionadas: 92
-  Top 5: ['ICA_out', 'PM2.5_out', 'fc_wind_speed_10m_d1', 'PM10_zbe', 'fc_wind_gusts_10m_d1']
+  Top 5: ['ICA_out', 'PM2.5_out', 'PM10_zbe', 'fc_wind_speed_10m_d1', 'PM10_zbe_lag_30d']
+    Mejor RMSE tuning: 5.3903
+    Mejor RMSE tuning: 9.6524
+    Mejor RMSE tuning: 8.5511
+    Mejor RMSE tuning: 7.2315
+    Mejor RMSE tuning: 7.0261
 
 =================================================================
   4. Resumen de m?tricas (Media Cross-Validation)
@@ -82,52 +122,52 @@
   ---------------------- ---------- -------- --------- ---------
 
   -- NO2 --
-  NO2_out_d1                  4.583    0.367      27.7        78
-  NO2_zbe_d1                  3.413    0.386      23.3        90
+  NO2_out_d1                  4.325    0.440      26.8        85
+  NO2_zbe_d1                  3.292    0.442      22.6        91
 
   -- PM10 --
-  PM10_out_d1                 4.128    0.406      24.1        91
-  PM10_zbe_d1                 4.366    0.442      25.7        91
+  PM10_out_d1                 3.982    0.468      23.2        92
+  PM10_zbe_d1                 4.415    0.443      25.5        92
 
   -- PM2.5 --
-  PM2.5_out_d1                3.087    0.445      25.8        92
-  PM2.5_zbe_d1                2.828    0.541      24.1        91
+  PM2.5_out_d1                3.076    0.476      25.9        92
+  PM2.5_zbe_d1                2.892    0.548      23.4        92
 
   -- ICA --
-  ICA_out_d1                  7.764    0.357      28.7        92
-  ICA_zbe_d1                  7.430    0.469      28.0        90
+  ICA_out_d1                  7.570    0.431      27.1        92
+  ICA_zbe_d1                  7.434    0.504      27.6        91
 
   -- Comparativa v7 -> v8 --
   Target                   v7 RMSE   v8 RMSE        ?   v7 R?   v8 R?
   ------------------------------------------------------------------
-  ICA_out_d1                 8.147     7.764   -0.383[OK]   0.396   0.357
-  ICA_zbe_d1                 6.956     7.430   +0.474[WARN]    0.374   0.469
-  NO2_out_d1                 4.710     4.583   -0.127[OK]   0.390   0.367
-  NO2_zbe_d1                 3.993     3.413   -0.580[OK]   0.375   0.386
-  PM10_out_d1                4.354     4.128   -0.226[OK]   0.394   0.406
-  PM10_zbe_d1                4.314     4.366   +0.052[WARN]    0.365   0.442
-  PM2.5_out_d1               3.233     3.087   -0.146[OK]   0.445   0.445
-  PM2.5_zbe_d1               2.698     2.828   +0.130[WARN]    0.479   0.541
+  ICA_out_d1                 8.147     7.570   -0.577[OK]   0.396   0.431
+  ICA_zbe_d1                 6.956     7.434   +0.478[WARN]    0.374   0.504
+  NO2_out_d1                 4.710     4.325   -0.385[OK]   0.390   0.440
+  NO2_zbe_d1                 3.993     3.292   -0.701[OK]   0.375   0.442
+  PM10_out_d1                4.354     3.982   -0.373[OK]   0.394   0.468
+  PM10_zbe_d1                4.314     4.415   +0.101[WARN]    0.365   0.443
+  PM2.5_out_d1               3.233     3.076   -0.157[OK]   0.445   0.476
+  PM2.5_zbe_d1               2.698     2.892   +0.194[WARN]    0.479   0.548
 
 =================================================================
   5. HDD en Feature Importance
 =================================================================
   Top 15 para NO2_zbe_d1:
-  1    PM2.5_out_diff_7d                                  802.0
-  2    traffic_occupancy_lag_2d                           661.0
-  3    NO2_zbe_lag_30d                                    649.0
-  4    NO2_zbe_lag_1d                                     583.0
-  5    NO2_zbe                                            576.0
-  6    PM10_zbe_roll_std_3d                               551.0
-  7    fc_wind_speed_10m_d2                               548.0
-  8    traffic_volume_lag_2d                              520.0
-  9    temp_min_dia                                       420.0
-  10   fc_wind_gusts_10m_d2                               398.0
-  11   NO2_zbe_roll_mean_7d                               385.0
-  12   fc_wind_gusts_10m_d1                               371.0
-  13   traffic_volume_lag_1d                              338.0
-  14   fc_sunshine_duration_d1                            338.0
-  15   cloud_cover                                        334.0
+  1    exp_traffic_volume_d1                              161.0
+  2    NO2_zbe                                            141.0
+  3    fc_temperature_2m_d1                               116.0
+  4    PM2.5_out                                          100.0
+  5    NO2_zbe_lag_14d                                    100.0
+  6    fc_wind_speed_10m_d1                                97.0
+  7    fc_wind_direction_10m_d1                            94.0
+  8    viento_dir_out                                      94.0
+  9    traffic_volume_lag_1d                               87.0
+  10   fc_relative_humidity_2m_d1                          84.0
+  11   cloud_cover                                         79.0
+  12   NO2_zbe_roll_mean_7d                                77.0
+  13   NO2_zbe_lag_3d                                      77.0
+  14   traffic_volume_lag_2d                               75.0
+  15   traffic_occupancy_lag_2d                            73.0
 
 =================================================================
   6. Prueba del Domingo ajustada por HDD
@@ -142,155 +182,155 @@
 =================================================================
   7. Feature importance global
 =================================================================
-  PM2.5_out_diff_7d                                       106.2
-  NO2_zbe                                                 100.1
-  NO2_zbe_lag_1d                                           96.6
-  NO2_zbe_lag_30d                                          94.1
-  traffic_occupancy_lag_2d                                 90.9
-  PM10_zbe                                                 79.6
-  fc_wind_speed_10m_d1                                     78.5
-  fc_wind_gusts_10m_d1                                     75.1
-  PM10_zbe_roll_std_3d                                     71.1
-  weather_code                                             70.9
-  traffic_volume_lag_2d                                    70.6
-  fc_wind_speed_10m_d2                                     69.5
-  wind_v                                                   64.2
-  viento_vel_out                                           62.5
-  traffic_volume_lag_1d                                    62.5
+  fc_wind_speed_10m_d1                                     62.0
+  ICA_out                                                  59.8
+  PM10_zbe                                                 55.5
+  wind_v                                                   51.0
+  fc_boundary_layer_height_d3                              50.6
+  PM2.5_out                                                48.5
+  weather_code                                             45.4
+  fc_wind_gusts_10m_d1                                     40.6
+  exp_traffic_volume_d1                                    40.6
+  relative_humidity_2m                                     40.0
+  NO2_zbe                                                  39.1
+  traffic_volume_lag_1d                                    36.4
+  wind_speed_10m                                           35.1
+  cloud_cover                                              34.1
+  exp_traffic_volume_d3                                    34.1
 
 =================================================================
   (9) Counterfactual Dual (Bound Inferior / Bound Superior)
 =================================================================
   D?as pre-ZBE  (train): 535
-  D?as post-ZBE (test) : 202
+  D?as post-ZBE (test) : 204
 
   ?? NO2_zbe ??????????????????????????????????????????
-  [METEO-PURO]  n_features=37  R?_val=-0.711
-    Observado     : 11.54 ?g/m?
-    Predicho (CF) : 13.98 ?g/m?
-    Gap medio     : -2.43 ?g/m?  (-17.4%)
-  [CON-LAGS]  n_features=155  R?_val=0.067
-    Observado     : 11.54 ?g/m?
-    Predicho (CF) : 12.32 ?g/m?
-    Gap medio     : -0.78 ?g/m?  (-6.3%)
+  [METEO-PURO]  n_features=37  R?_val=-0.722
+    Observado     : 11.58 ?g/m?
+    Predicho (CF) : 13.92 ?g/m?
+    Gap medio     : -2.34 ?g/m?  (-16.8%)
+  [CON-LAGS]  n_features=155  R?_val=0.073
+    Observado     : 11.58 ?g/m?
+    Predicho (CF) : 12.40 ?g/m?
+    Gap medio     : -0.81 ?g/m?  (-6.6%)
 
   ? RANGO EFECTO ZBE en NO2_zbe:
-     Bound conservador (METEO-PURO) : -17.4%
-     Bound optimista   (CON-LAGS)   : -6.3%
+     Bound conservador (METEO-PURO) : -16.8%
+     Bound optimista   (CON-LAGS)   : -6.6%
      [OK] Ambos bounds negativos -> reducci?n robusta
-        Efecto estimado: entre 6.3% y 17.4% de reducci?n
+        Efecto estimado: entre 6.6% y 16.8% de reducci?n
 
   ?? NO2_out ??????????????????????????????????????????
-  [METEO-PURO]  n_features=37  R?_val=-0.039
-    Observado     : 13.67 ?g/m?
-    Predicho (CF) : 16.01 ?g/m?
-    Gap medio     : -2.34 ?g/m?  (-14.6%)
-  [CON-LAGS]  n_features=155  R?_val=-0.074
-    Observado     : 13.67 ?g/m?
-    Predicho (CF) : 14.99 ?g/m?
-    Gap medio     : -1.32 ?g/m?  (-8.8%)
+  [METEO-PURO]  n_features=37  R?_val=-0.013
+    Observado     : 13.72 ?g/m?
+    Predicho (CF) : 16.31 ?g/m?
+    Gap medio     : -2.59 ?g/m?  (-15.9%)
+  [CON-LAGS]  n_features=155  R?_val=-0.018
+    Observado     : 13.72 ?g/m?
+    Predicho (CF) : 14.95 ?g/m?
+    Gap medio     : -1.23 ?g/m?  (-8.2%)
 
   ? RANGO EFECTO ZBE en NO2_out:
-     Bound conservador (METEO-PURO) : -14.6%
-     Bound optimista   (CON-LAGS)   : -8.8%
+     Bound conservador (METEO-PURO) : -15.9%
+     Bound optimista   (CON-LAGS)   : -8.2%
      [OK] Ambos bounds negativos -> reducci?n robusta
-        Efecto estimado: entre 8.8% y 14.6% de reducci?n
+        Efecto estimado: entre 8.2% y 15.9% de reducci?n
 
   ?? PM10_zbe ??????????????????????????????????????????
-  [METEO-PURO]  n_features=37  R?_val=0.060
-    Observado     : 12.87 ?g/m?
-    Predicho (CF) : 10.96 ?g/m?
-    Gap medio     : +1.91 ?g/m?  (+17.4%)
-  [CON-LAGS]  n_features=155  R?_val=-0.033
-    Observado     : 12.87 ?g/m?
-    Predicho (CF) : 11.08 ?g/m?
-    Gap medio     : +1.79 ?g/m?  (+16.2%)
+  [METEO-PURO]  n_features=37  R?_val=0.053
+    Observado     : 13.14 ?g/m?
+    Predicho (CF) : 11.04 ?g/m?
+    Gap medio     : +2.10 ?g/m?  (+19.0%)
+  [CON-LAGS]  n_features=155  R?_val=-0.014
+    Observado     : 13.14 ?g/m?
+    Predicho (CF) : 11.23 ?g/m?
+    Gap medio     : +1.90 ?g/m?  (+17.0%)
 
   ? RANGO EFECTO ZBE en PM10_zbe:
-     Bound conservador (METEO-PURO) : +17.4%
-     Bound optimista   (CON-LAGS)   : +16.2%
+     Bound conservador (METEO-PURO) : +19.0%
+     Bound optimista   (CON-LAGS)   : +17.0%
      [WARN]  Ambos bounds positivos -> aumento neto en PM10_zbe
         Fuente no-tr?fico domina (hip?tesis calderas)
 
   ?? PM10_out ??????????????????????????????????????????
-  [METEO-PURO]  n_features=37  R?_val=-0.145
-    Observado     : 9.00 ?g/m?
-    Predicho (CF) : 9.82 ?g/m?
-    Gap medio     : -0.82 ?g/m?  (-8.3%)
-  [CON-LAGS]  n_features=155  R?_val=-0.243
-    Observado     : 9.00 ?g/m?
-    Predicho (CF) : 9.44 ?g/m?
-    Gap medio     : -0.44 ?g/m?  (-4.6%)
+  [METEO-PURO]  n_features=37  R?_val=-0.164
+    Observado     : 9.22 ?g/m?
+    Predicho (CF) : 9.79 ?g/m?
+    Gap medio     : -0.57 ?g/m?  (-5.8%)
+  [CON-LAGS]  n_features=155  R?_val=-0.234
+    Observado     : 9.22 ?g/m?
+    Predicho (CF) : 9.42 ?g/m?
+    Gap medio     : -0.19 ?g/m?  (-2.1%)
 
   ? RANGO EFECTO ZBE en PM10_out:
-     Bound conservador (METEO-PURO) : -8.3%
-     Bound optimista   (CON-LAGS)   : -4.6%
+     Bound conservador (METEO-PURO) : -5.8%
+     Bound optimista   (CON-LAGS)   : -2.1%
      [OK] Ambos bounds negativos -> reducci?n robusta
-        Efecto estimado: entre 4.6% y 8.3% de reducci?n
+        Efecto estimado: entre 2.1% y 5.8% de reducci?n
 
   ?? PM2.5_zbe ??????????????????????????????????????????
-  [METEO-PURO]  n_features=37  R?_val=-0.047
-    Observado     : 6.89 ?g/m?
-    Predicho (CF) : 6.84 ?g/m?
-    Gap medio     : +0.05 ?g/m?  (+0.8%)
-  [CON-LAGS]  n_features=155  R?_val=-0.046
-    Observado     : 6.89 ?g/m?
-    Predicho (CF) : 7.04 ?g/m?
-    Gap medio     : -0.15 ?g/m?  (-2.2%)
+  [METEO-PURO]  n_features=37  R?_val=-0.051
+    Observado     : 7.12 ?g/m?
+    Predicho (CF) : 6.86 ?g/m?
+    Gap medio     : +0.26 ?g/m?  (+3.8%)
+  [CON-LAGS]  n_features=155  R?_val=-0.035
+    Observado     : 7.12 ?g/m?
+    Predicho (CF) : 7.09 ?g/m?
+    Gap medio     : +0.03 ?g/m?  (+0.4%)
 
   ? RANGO EFECTO ZBE en PM2.5_zbe:
-     Bound conservador (METEO-PURO) : +0.8%
-     Bound optimista   (CON-LAGS)   : -2.2%
-     [WARN]  Bounds en direcciones opuestas -> efecto incierto
-        Necesitas datos de verano 2026 para confirmar
+     Bound conservador (METEO-PURO) : +3.8%
+     Bound optimista   (CON-LAGS)   : +0.4%
+     [WARN]  Ambos bounds positivos -> aumento neto en PM2.5_zbe
+        Fuente no-tr?fico domina (hip?tesis calderas)
 
   ?? PM2.5_out ??????????????????????????????????????????
-  [METEO-PURO]  n_features=37  R?_val=-0.285
-    Observado     : 5.93 ?g/m?
-    Predicho (CF) : 6.42 ?g/m?
-    Gap medio     : -0.49 ?g/m?  (-7.6%)
+  [METEO-PURO]  n_features=37  R?_val=-0.281
+    Observado     : 6.13 ?g/m?
+    Predicho (CF) : 6.44 ?g/m?
+    Gap medio     : -0.31 ?g/m?  (-4.8%)
   [CON-LAGS]  n_features=155  R?_val=-0.302
-    Observado     : 5.93 ?g/m?
-    Predicho (CF) : 6.51 ?g/m?
-    Gap medio     : -0.58 ?g/m?  (-8.8%)
+    Observado     : 6.13 ?g/m?
+    Predicho (CF) : 6.52 ?g/m?
+    Gap medio     : -0.39 ?g/m?  (-5.9%)
 
   ? RANGO EFECTO ZBE en PM2.5_out:
-     Bound conservador (METEO-PURO) : -7.6%
-     Bound optimista   (CON-LAGS)   : -8.8%
+     Bound conservador (METEO-PURO) : -4.8%
+     Bound optimista   (CON-LAGS)   : -5.9%
      [OK] Ambos bounds negativos -> reducci?n robusta
-        Efecto estimado: entre 7.6% y 8.8% de reducci?n
+        Efecto estimado: entre 4.8% y 5.9% de reducci?n
 
   ?? ICA_zbe ??????????????????????????????????????????
-  [METEO-PURO]  n_features=37  R?_val=0.052
-    Observado     : 20.48 ?g/m?
-    Predicho (CF) : 19.31 ?g/m?
-    Gap medio     : +1.17 ?g/m?  (+6.1%)
-  [CON-LAGS]  n_features=155  R?_val=0.042
-    Observado     : 20.48 ?g/m?
-    Predicho (CF) : 19.79 ?g/m?
-    Gap medio     : +0.69 ?g/m?  (+3.5%)
+  [METEO-PURO]  n_features=37  R?_val=0.027
+    Observado     : 21.10 ?g/m?
+    Predicho (CF) : 19.41 ?g/m?
+    Gap medio     : +1.69 ?g/m?  (+8.7%)
+  [CON-LAGS]  n_features=155  R?_val=0.030
+    Observado     : 21.10 ?g/m?
+    Predicho (CF) : 20.07 ?g/m?
+    Gap medio     : +1.02 ?g/m?  (+5.1%)
 
   ? RANGO EFECTO ZBE en ICA_zbe:
-     Bound conservador (METEO-PURO) : +6.1%
-     Bound optimista   (CON-LAGS)   : +3.5%
+     Bound conservador (METEO-PURO) : +8.7%
+     Bound optimista   (CON-LAGS)   : +5.1%
      [WARN]  Ambos bounds positivos -> aumento neto en ICA_zbe
         Fuente no-tr?fico domina (hip?tesis calderas)
 
   ?? ICA_out ??????????????????????????????????????????
-  [METEO-PURO]  n_features=37  R?_val=-0.219
-    Observado     : 17.51 ?g/m?
-    Predicho (CF) : 19.13 ?g/m?
-    Gap medio     : -1.62 ?g/m?  (-8.5%)
-  [CON-LAGS]  n_features=155  R?_val=-0.230
-    Observado     : 17.51 ?g/m?
-    Predicho (CF) : 18.85 ?g/m?
-    Gap medio     : -1.34 ?g/m?  (-7.1%)
+  [METEO-PURO]  n_features=37  R?_val=-0.193
+    Observado     : 18.04 ?g/m?
+    Predicho (CF) : 19.30 ?g/m?
+    Gap medio     : -1.27 ?g/m?  (-6.6%)
+  [CON-LAGS]  n_features=155  R?_val=-0.215
+    Observado     : 18.04 ?g/m?
+    Predicho (CF) : 18.94 ?g/m?
+    Gap medio     : -0.90 ?g/m?  (-4.8%)
 
   ? RANGO EFECTO ZBE en ICA_out:
-     Bound conservador (METEO-PURO) : -8.5%
-     Bound optimista   (CON-LAGS)   : -7.1%
+     Bound conservador (METEO-PURO) : -6.6%
+     Bound optimista   (CON-LAGS)   : -4.8%
      [OK] Ambos bounds negativos -> reducci?n robusta
-        Efecto estimado: entre 7.1% y 8.5% de reducci?n
+        Efecto estimado: entre 4.8% y 6.6% de reducci?n
 
   [OK] counterfactual_gap_v8.csv guardado
      Filtra version='METEO-PURO' o 'CON-LAGS' para comparar bounds
@@ -302,51 +342,51 @@
   (7) Efectos fijos: C(month_year)  - 22 dummies mes?a?o
   (8) SE clusterizados por fecha
 
-  Panel: 4,422 obs ? 737 fechas
+  Panel: 4,434 obs ? 739 fechas
   Dummies mes?a?o ((7)): 25
-  Clusters fecha  ((8)): 737
+  Clusters fecha  ((8)): 739
 
   ?? DiD v8: NO2 ??????????????????????????????????????????
-  ?1 (Post)           : -1.897
+  ?1 (Post)           : -1.844
   ?2 (ZBE)            : -1.532
-  ?3 (Post ? ZBE)     : -0.585  ? EFECTO CAUSAL ZBE
-  p-valor ?3          : 0.0274  [OK] p<0.05
-  IC 95% ?3           : [-1.105, -0.065]
+  ?3 (Post ? ZBE)     : -0.601  ? EFECTO CAUSAL ZBE
+  p-valor ?3          : 0.0229  [OK] p<0.05
+  IC 95% ?3           : [-1.118, -0.083]
   R?                  : 0.678
   Efectos fijos (7)     : 25 dummies C(month_year)
   SE (8)                : clusterizados por fecha
-  Efecto relativo     : -5.2% vs pre-ZBE (11.24 ?g/m?)
+  Efecto relativo     : -5.3% vs pre-ZBE (11.24 ?g/m?)
 
-  [OK] ZBE redujo NO2 en 0.58 ?g/m? - CAUSAL
+  [OK] ZBE redujo NO2 en 0.60 ?g/m? - CAUSAL
      (controlando estacionalidad mes?a?o, meteo y clustering)
 
   ?? DiD v8: PM10 ??????????????????????????????????????????
-  ?1 (Post)           : +0.146
+  ?1 (Post)           : +0.295
   ?2 (ZBE)            : +0.730
-  ?3 (Post ? ZBE)     : +3.114  ? EFECTO CAUSAL ZBE
+  ?3 (Post ? ZBE)     : +3.147  ? EFECTO CAUSAL ZBE
   p-valor ?3          : 0.0000  [OK] p<0.05
-  IC 95% ?3           : [+2.562, +3.665]
+  IC 95% ?3           : [+2.598, +3.696]
   R?                  : 0.322
   Efectos fijos (7)     : 25 dummies C(month_year)
   SE (8)                : clusterizados por fecha
-  Efecto relativo     : +26.5% vs pre-ZBE (11.76 ?g/m?)
+  Efecto relativo     : +26.8% vs pre-ZBE (11.76 ?g/m?)
 
-  [WARN]  PM10 AUMENT? 3.11 ?g/m? en ZBE vs control
+  [WARN]  PM10 AUMENT? 3.15 ?g/m? en ZBE vs control
      -> Fuente no-tr?fico (calderas residenciales) domina
      -> O desplazamiento de tr?fico al l?mite de la ZBE
 
   ?? DiD v8: PM2.5 ??????????????????????????????????????????
-  ?1 (Post)           : +0.237
+  ?1 (Post)           : +0.393
   ?2 (ZBE)            : +0.137
-  ?3 (Post ? ZBE)     : +0.808  ? EFECTO CAUSAL ZBE
+  ?3 (Post ? ZBE)     : +0.833  ? EFECTO CAUSAL ZBE
   p-valor ?3          : 0.0000  [OK] p<0.05
-  IC 95% ?3           : [+0.584, +1.031]
-  R?                  : 0.365
+  IC 95% ?3           : [+0.608, +1.058]
+  R?                  : 0.355
   Efectos fijos (7)     : 25 dummies C(month_year)
   SE (8)                : clusterizados por fecha
-  Efecto relativo     : +10.7% vs pre-ZBE (7.58 ?g/m?)
+  Efecto relativo     : +11.0% vs pre-ZBE (7.58 ?g/m?)
 
-  [WARN]  PM2.5 AUMENT? 0.81 ?g/m? en ZBE vs control
+  [WARN]  PM2.5 AUMENT? 0.83 ?g/m? en ZBE vs control
      -> Fuente no-tr?fico (calderas residenciales) domina
      -> O desplazamiento de tr?fico al l?mite de la ZBE
 
@@ -355,14 +395,14 @@
 =================================================================
   8. Cambio observado pre/post ZBE
 =================================================================
-  NO2_zbe     : pre=11.24  post=11.50  +2.3% ^
-  NO2_out     : pre=12.78  post=13.62  +6.6% ^
-  PM10_zbe    : pre=11.76  post=12.83  +9.1% ^
-  PM10_out    : pre=11.03  post=8.98  -18.6% v
-  PM2.5_zbe   : pre=7.58  post=6.85  -9.6% v
-  PM2.5_out   : pre=7.44  post=5.91  -20.6% v
-  ICA_zbe     : pre=20.71  post=20.39  -1.5% v
-  ICA_out     : pre=20.74  post=17.46  -15.8% v
+  NO2_zbe     : pre=11.24  post=11.52  +2.5% ^
+  NO2_out     : pre=12.78  post=13.66  +6.9% ^
+  PM10_zbe    : pre=11.76  post=13.01  +10.6% ^
+  PM10_out    : pre=11.03  post=9.13  -17.2% v
+  PM2.5_zbe   : pre=7.58  post=7.01  -7.5% v
+  PM2.5_out   : pre=7.44  post=6.04  -18.8% v
+  ICA_zbe     : pre=20.71  post=20.79  +0.4% ^
+  ICA_out     : pre=20.74  post=17.79  -14.2% v
 
 =================================================================
   9. Guardando m?tricas y reporte
