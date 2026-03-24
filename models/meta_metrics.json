@@ -1,0 +1,146 @@
+{
+  "NO2_zbe_d1": {
+    "rmse_v1": 3.6034,
+    "rmse_v2": 3.7001,
+    "improvement_pct": -2.68,
+    "r2_v2": 0.4248,
+    "coefficients": {
+      "pred_v1": 0.7271077911687133,
+      "error_lag_1d": 0.2786470973772254,
+      "error_roll_mean_7d": 0.512019642177978,
+      "temperature_2m": -0.1279465554634205,
+      "wind_speed_10m": -0.03260515965534058,
+      "boundary_layer_height": 0.0020333731767786085,
+      "relative_humidity_2m": 0.0033407478027299388,
+      "is_weekend": -1.1772198946324202,
+      "es_domingo": 1.665794779452091,
+      "es_invierno_estricto": 0.34335002127644365
+    }
+  },
+  "NO2_out_d1": {
+    "rmse_v1": 4.6262,
+    "rmse_v2": 4.1309,
+    "improvement_pct": 10.7,
+    "r2_v2": 0.371,
+    "coefficients": {
+      "pred_v1": 0.8339404315777441,
+      "error_lag_1d": 0.38388338881667317,
+      "error_roll_mean_7d": 0.298770528907962,
+      "temperature_2m": -0.08557170881733342,
+      "wind_speed_10m": -0.08261015445233007,
+      "boundary_layer_height": 0.003398795480909136,
+      "relative_humidity_2m": 0.026544634593400823,
+      "is_weekend": -1.3452435920771053,
+      "es_domingo": 2.668829199859394,
+      "es_invierno_estricto": 1.2539566033132983
+    }
+  },
+  "PM10_zbe_d1": {
+    "rmse_v1": 6.0849,
+    "rmse_v2": 5.9226,
+    "improvement_pct": 2.67,
+    "r2_v2": 0.504,
+    "coefficients": {
+      "pred_v1": 0.6241102929456179,
+      "error_lag_1d": 0.2533068902885333,
+      "error_roll_mean_7d": 0.06390935084076024,
+      "temperature_2m": 0.0710967343028343,
+      "wind_speed_10m": -0.07414272001724617,
+      "boundary_layer_height": -0.002663704340776043,
+      "relative_humidity_2m": -0.09219085511658476,
+      "is_weekend": -1.5651624446167267,
+      "es_domingo": 0.20701257260359812,
+      "es_invierno_estricto": 1.616784360677891
+    }
+  },
+  "PM10_out_d1": {
+    "rmse_v1": 3.9215,
+    "rmse_v2": 3.8988,
+    "improvement_pct": 0.58,
+    "r2_v2": 0.6158,
+    "coefficients": {
+      "pred_v1": 0.7152462792971432,
+      "error_lag_1d": 0.2831728284171611,
+      "error_roll_mean_7d": 0.161926807923223,
+      "temperature_2m": -0.004754218859903462,
+      "wind_speed_10m": -0.0804181560708274,
+      "boundary_layer_height": -0.0022242989236884113,
+      "relative_humidity_2m": -0.09547745562241906,
+      "is_weekend": -1.1592102907746544,
+      "es_domingo": 0.4752864969717955,
+      "es_invierno_estricto": 0.7165512450512497
+    }
+  },
+  "PM2.5_zbe_d1": {
+    "rmse_v1": 3.4721,
+    "rmse_v2": 3.3806,
+    "improvement_pct": 2.63,
+    "r2_v2": 0.6744,
+    "coefficients": {
+      "pred_v1": 0.7035246588195362,
+      "error_lag_1d": 0.3101159878995129,
+      "error_roll_mean_7d": 0.13645696989215564,
+      "temperature_2m": 0.044650300120372216,
+      "wind_speed_10m": -0.05090345610654473,
+      "boundary_layer_height": -0.0025049242494884893,
+      "relative_humidity_2m": -0.03218346841688305,
+      "is_weekend": -0.9442130275281907,
+      "es_domingo": 0.09418579747248802,
+      "es_invierno_estricto": 0.7209830336288657
+    }
+  },
+  "PM2.5_out_d1": {
+    "rmse_v1": 3.0201,
+    "rmse_v2": 2.813,
+    "improvement_pct": 6.86,
+    "r2_v2": 0.6706,
+    "coefficients": {
+      "pred_v1": 0.8083231236519339,
+      "error_lag_1d": 0.3179877990283389,
+      "error_roll_mean_7d": 0.259790871358932,
+      "temperature_2m": -0.011229787394719052,
+      "wind_speed_10m": -0.05603364801839404,
+      "boundary_layer_height": -0.0019360949954217947,
+      "relative_humidity_2m": -0.04767914544396236,
+      "is_weekend": -0.7591945688251508,
+      "es_domingo": 0.090877225888853,
+      "es_invierno_estricto": 0.2951582765861402
+    }
+  },
+  "ICA_zbe_d1": {
+    "rmse_v1": 9.6086,
+    "rmse_v2": 9.5388,
+    "improvement_pct": 0.73,
+    "r2_v2": 0.5759,
+    "coefficients": {
+      "pred_v1": 0.7223670905794588,
+      "error_lag_1d": 0.27190000702770056,
+      "error_roll_mean_7d": 0.08999039341353972,
+      "temperature_2m": 0.13110298143700508,
+      "wind_speed_10m": -0.08290606258310942,
+      "boundary_layer_height": -0.005318526905116945,
+      "relative_humidity_2m": -0.07554889258006921,
+      "is_weekend": -2.185536901032253,
+      "es_domingo": 0.4708105690643795,
+      "es_invierno_estricto": 1.9284441804364707
+    }
+  },
+  "ICA_out_d1": {
+    "rmse_v1": 7.3368,
+    "rmse_v2": 7.0726,
+    "improvement_pct": 3.6,
+    "r2_v2": 0.5778,
+    "coefficients": {
+      "pred_v1": 0.9050983897710401,
+      "error_lag_1d": 0.35412316621980094,
+      "error_roll_mean_7d": 0.15339784336855924,
+      "temperature_2m": -0.01458665047287253,
+      "wind_speed_10m": -0.10552205080828479,
+      "boundary_layer_height": -0.003955059082003359,
+      "relative_humidity_2m": -0.10560589009674111,
+      "is_weekend": -1.4965873685990994,
+      "es_domingo": 1.2822712150290607,
+      "es_invierno_estricto": 1.4616886219830807
+    }
+  }
+}

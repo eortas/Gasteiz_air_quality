@@ -15,6 +15,7 @@ Proiektuak hainbat datu-iturri (trafikoa, meteorologia, airearen kalitatea) egun
 - **Datuen xurgapena eta eraldaketa:** Trafiko, eguraldi eta airearen kalitate-metriken deskarga eta prozesatze automatizatua.
 - **Ezaugarrien ingeniaritza:** Ikaskuntza automatikoko eredularitzarako denbora- eta espazio-ezaugarriak eraikitzea.
 - **Eredu iragarleak (LightGBM):** NO₂, PM10 eta PM2.5 mailak doitasun handiz iragartzea egunero.
+- **Errore-zuzenketarako Meta-Eredua (Ridge Regression):** Iragarpen-geruza gehigarri bat, eredu nagusiaren alborapen sistematikoetatik ikasten duena eguneroko aurreikuspenak fintzeko.
 - **Azterketa Kausala:** EBE-aren eraginkortasuna ebaluatzeko maila akademikoko kausalitate-probak.
 - **Aginte-taula interaktiboa:** Iragarpenak, ereduen auditoretzak eta mapa-ikuspegiak erakusten dituen irakurketa-taula operatibo automatikoa.
 - **Trafiko-Mapa Berria:** Sentsore interaktiboak, eguneko bolumen-totalak eta **karga-gailurraren** ordua barne.
@@ -63,6 +64,7 @@ El proyecto integra múltiples fuentes de datos (tráfico, meteorología, calida
 - **Ingesta y Transformación de Datos:** Descarga y procesamiento automatizado de métricas de tráfico, meteorología y calidad del aire.
 - **Ingeniería de Características:** Construcción de variables temporales y espaciales para el modelado con aprendizaje automático.
 - **Modelado Predictivo (LightGBM):** Predicción diaria de alta precisión de los niveles de NO₂, PM10 y PM2.5.
+- **Meta-Modelo de Corrección de Errores (Ridge Regression):** Una capa predictiva adicional que aprende de los sesgos sistemáticos del modelo principal para refinar los pronósticos diarios.
 - **Análisis Causal:** Pruebas de causalidad de nivel académico para evaluar la efectividad de la política de la ZBE.
 - **Cuadro de Mando Interactivo:** Panel operativo autogenerado que muestra predicciones, auditorías de los modelos y vistas de mapa.
 - **Nuevo Mapa de Tráfico:** Mapa interactivo de sensores que incluye totales de volumen diario e identificación del **pico de carga** horaria.
@@ -83,6 +85,7 @@ The project integrates multiple data sources (traffic, meteorology, air quality)
 - **Data Ingestion & Transformation:** Automated download and processing of traffic, weather, and air quality metrics.
 - **Feature Engineering:** Construction of temporal and spatial features for machine learning models.
 - **Predictive Modeling (LightGBM):** High-precision daily forecasting of NO₂, PM10, and PM2.5 levels.
+- **Error-Correction Meta-Model (Ridge Regression):** An additional predictive layer that learns from the primary model's systematic biases to refine daily forecasts.
 - **Causal Analysis:** Academic-grade causality tests to evaluate the effectiveness of the ZBE policy.
 - **Interactive Dashboard:** Auto-generated operational dashboard displaying predictions, model audits, and map views.
 - **New Traffic Map:** Interactive sensor map with daily volume totals and **peak load hour** identification.
