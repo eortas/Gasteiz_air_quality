@@ -31,20 +31,7 @@ jobs:
           python-version: '3.11'
           cache: pip
 
-      # ── 3. Cache de Datos y Modelos ──────────────────────────────────────────
-      - name: Cache de datos y modelos
-        uses: actions/cache@v4
-        with:
-          path: |
-            data/raw
-            data/processed
-            models/*.pkl
-            models/*.json
-          key: ${{ runner.os }}-air-quality-data-${{ hashFiles('src/ingestion/*.py') }}
-          restore-keys: |
-            ${{ runner.os }}-air-quality-data-
-
-      # ── 4. Dependencias ──────────────────────────────────────────────────────
+      # ── 3. Dependencias ──────────────────────────────────────────────────────
       - name: Instalar dependencias del pipeline
         run: |
           pip install --upgrade pip

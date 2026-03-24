@@ -77,6 +77,25 @@ def compress_csvs(data_dirs: list[Path]):
     logger.success(f"[OK] Compresión - {compressed} archivo(s) comprimidos")
 
 
+def decompress_local_csvs(data_dirs: list[Path]):
+    """Descomprime los .csv.gz que existan si el .csv no existe."""
+    logger.info("> Descompresión - restaurando CSVs desde histórico Git")
+    restored = 0
+    for d in data_dirs:
+        if not d.exists():
+            continue
+        for gz_file in d.glob("*.csv.gz"):
+            csv_file = gz_file.with_suffix("") # quitar .gz
+            if csv_file.exists():
+                continue
+            with gzip.open(gz_file, "rb") as f_in, open(csv_file, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
+            restored += 1
+            logger.debug(f"  {gz_file.name} -> {csv_file.name}")
+    if restored > 0:
+        logger.success(f"[OK] Descompresión - {restored} archivo(s) restaurados")
+
+
 def find_station_daily_csv() -> Path | None:
     """Localiza el CSV de datos diarios por estación para el análisis v9."""
     candidates = [
@@ -107,7 +126,14 @@ def main():
         if not run_script("Download CSVs historicos", "src/ingestion/download_csv_storage.py", []):
             logger.warning("[WARN]  Fallo la descarga desde Storage. Puede faltar historico.")
     else:
-        logger.info("\n── FASE 0: Restore - OMITIDO (--local-only)")
+        logger.info("\n── FASE 0: Restore - OMITIDO (Supabase Storage)")
+    
+    # Restaura desde los .csv.gz que están en el repositorio (Git)
+    decompress_local_csvs([
+        ROOT_DIR / "data" / "raw" / "traffic",
+        ROOT_DIR / "data" / "raw" / "air",
+        ROOT_DIR / "data" / "raw" / "weather",
+    ])
 
     # ── 1. INGESTA (paralela) ─────────────────────────────────────────────────
     logger.info("\n── FASE 1: Ingesta")
