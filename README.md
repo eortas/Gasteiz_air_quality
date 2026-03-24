@@ -40,7 +40,7 @@ python run_pipeline.py
 
 #### Aukera gehigarriak
 
-- Ereduaren trebakuntza saihestu (lehendik dauden ereduak erabiliz):
+- Ereduaren trebakuntza saihestu (lehendik dauden ereduak erabiliz, baina meta-eredua eguneratuz):
   ```bash
   python run_pipeline.py --skip-training
   ```
