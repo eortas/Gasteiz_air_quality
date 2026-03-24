@@ -31,7 +31,20 @@ jobs:
           python-version: '3.11'
           cache: pip
 
-      # ── 3. Dependencias ──────────────────────────────────────────────────────
+      # ── 3. Cache de Datos y Modelos ──────────────────────────────────────────
+      - name: Cache de datos y modelos
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/raw
+            data/processed
+            models/*.pkl
+            models/*.json
+          key: ${{ runner.os }}-air-quality-data-${{ hashFiles('src/ingestion/*.py') }}
+          restore-keys: |
+            ${{ runner.os }}-air-quality-data-
+
+      # ── 4. Dependencias ──────────────────────────────────────────────────────
       - name: Instalar dependencias del pipeline
         run: |
           pip install --upgrade pip
@@ -47,8 +60,8 @@ jobs:
         run: playwright install chromium --with-deps
 
       # ── 4. Pipeline completo ─────────────────────────────────────────────────
-      - name: Ejecutar pipeline (ingesta → features → predicción usando modelos locales)
-        run: python run_pipeline.py --local-only --skip-training
+      - name: Ejecutar pipeline (ingesta → features → modelo → predicción)
+        run: python run_pipeline.py --local-only
 
       # ── 5. Generar dashboard HTML ────────────────────────────────────────────
       - name: Generar index.html
