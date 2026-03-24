@@ -47,8 +47,8 @@ jobs:
         run: playwright install chromium --with-deps
 
       # ── 4. Pipeline completo ─────────────────────────────────────────────────
-      - name: Ejecutar pipeline (ingesta → features → modelo → predicción)
-        run: python run_pipeline.py --local-only
+      - name: Ejecutar pipeline (ingesta → features → predicción usando modelos locales)
+        run: python run_pipeline.py --local-only --skip-training
 
       # ── 5. Generar dashboard HTML ────────────────────────────────────────────
       - name: Generar index.html
