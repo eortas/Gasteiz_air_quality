@@ -71,5 +71,7 @@ jobs:
           git add traffic_map.html || true
           git add *.png || true
           git add reports/plots/*.png || true
-          git diff --staged --quiet || git commit -m "dashboard: actualización automática $(date -u '+%Y-%m-%d')"
+          git add data/raw/**/*.csv.gz || true
+          git add data/raw/**/checkpoint_air.json || true
+          git diff --staged --quiet || git commit -m "dashboard + data: actualización automática $(date -u '+%Y-%m-%d')"
           git push
