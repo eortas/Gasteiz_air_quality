@@ -67,8 +67,10 @@ def compress_csvs(data_dirs: list[Path]):
     for d in data_dirs:
         for csv_file in d.glob("*.csv"):
             gz_file = csv_file.with_suffix(".csv.gz")
-            if gz_file.exists():
-                continue
+            # Siempre sobreescribimos para asegurar que los nuevos datos lleguen al .gz
+            # que es el archivo que realmente se sube al repositorio.
+            # if gz_file.exists():
+            #     continue
             with open(csv_file, "rb") as f_in, gzip.open(gz_file, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
             saved_mb = (csv_file.stat().st_size - gz_file.stat().st_size) / 1024 / 1024
@@ -137,9 +139,10 @@ def main():
 
     # ── 1. INGESTA (paralela) ─────────────────────────────────────────────────
     logger.info("\n── FASE 1: Ingesta")
+    # Nota: download_air_quality ya no acepta --local-only (se asume siempre local)
     ok = run_parallel([
         ("Ingesta - Tráfico",         "src/ingestion/download_traffic.py",     ingestion_args),
-        ("Ingesta - Calidad del aire", "src/ingestion/download_air_quality.py", ingestion_args),
+        ("Ingesta - Calidad del aire", "src/ingestion/download_air_quality.py", []), 
         ("Ingesta - Meteorología",     "src/ingestion/download_weather.py",     ingestion_args),
     ])
     if not ok:
