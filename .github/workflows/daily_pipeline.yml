@@ -71,7 +71,13 @@ jobs:
           git add traffic_map.html || true
           git add *.png || true
           git add reports/plots/*.png || true
-          git add data/raw/**/*.csv.gz || true
+          # Solo el fichero de tráfico del año en curso (los históricos son estáticos y >100MB)
+          YEAR=$(date -u '+%Y')
+          git add data/raw/traffic/trafico_${YEAR}.csv.gz || true
+          git add data/raw/air/*.csv.gz || true
+          git add data/raw/weather/*.csv.gz || true
           git add data/raw/**/checkpoint_air.json || true
           git diff --staged --quiet || git commit -m "dashboard + data: actualización automática $(date -u '+%Y-%m-%d')"
           git push
+
+
