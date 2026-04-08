@@ -61,22 +61,36 @@ def run_parallel(steps: list[tuple]) -> bool:
 
 
 def compress_csvs(data_dirs: list[Path]):
-    """Comprime en .gz los CSVs que aún no estén comprimidos."""
+    """Comprime en .gz los CSVs que aún no estén comprimidos.
+
+    Para los archivos de tráfico de años anteriores al actual, se omite la
+    re-compresión: esos archivos son históricos, no cambian, y ya están en el
+    repositorio. Re-comprimirlos cada día generaría un .gz modificado que
+    superaría el límite de 100 MB de GitHub.
+    """
     logger.info("> Compresión - comprimiendo CSVs locales")
     compressed = 0
+    current_year = str(datetime.now().year)
+    traffic_dir = next((d for d in data_dirs if "traffic" in str(d)), None)
+
     for d in data_dirs:
         for csv_file in d.glob("*.csv"):
             gz_file = csv_file.with_suffix(".csv.gz")
-            # Siempre sobreescribimos para asegurar que los nuevos datos lleguen al .gz
-            # que es el archivo que realmente se sube al repositorio.
-            # if gz_file.exists():
-            #     continue
+
+            # Para ficheros de tráfico: solo re-comprimir el año en curso.
+            # Los años pasados ya tienen su .gz estático en el repo.
+            if traffic_dir and d == traffic_dir and gz_file.exists():
+                if current_year not in csv_file.name:
+                    logger.debug(f"  {csv_file.name} → omitido (año histórico, .gz ya existe)")
+                    continue
+
             with open(csv_file, "rb") as f_in, gzip.open(gz_file, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
             saved_mb = (csv_file.stat().st_size - gz_file.stat().st_size) / 1024 / 1024
             logger.debug(f"  {csv_file.name} -> {gz_file.name}  ({saved_mb:+.1f} MB)")
             compressed += 1
     logger.success(f"[OK] Compresión - {compressed} archivo(s) comprimidos")
+
 
 
 def decompress_local_csvs(data_dirs: list[Path]):
