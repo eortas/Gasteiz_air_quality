@@ -11,6 +11,9 @@ data/raw/**
 !data/raw/**/
 !data/raw/**/*.csv.gz
 !data/raw/**/.gitkeep
+# Excluir archivos de tráfico grandes (>50MB, superan límite GitHub)
+data/raw/traffic/trafico_2024.csv.gz
+data/raw/traffic/trafico_2025.csv.gz
 data/processed/
 data/analytical/
 
