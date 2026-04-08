@@ -1,0 +1,337 @@
+=================================================================
+  FEATURE REPORT — Vitoria Air Quality (Daily, 7-day horizon)
+  2026-03-09 00:43
+=================================================================
+
+Días     : 722
+Columnas : 250
+Rango    : 2024-03-15 → 2026-03-06
+
+── Temporales (15) ──
+  day_of_week                                       
+  month                                             
+  day_of_year                                       
+  week_of_year                                      
+  is_weekend                                        
+  is_workday                                        
+  season                                            
+  dow_sin                                           
+  dow_cos                                           
+  month_sin                                         
+  month_cos                                         
+  doy_sin                                           
+  doy_cos                                           
+  is_post_zbe                                       
+  days_since_zbe                                    
+
+── Tráfico actual (12) ──
+  traffic_volume                                    
+  traffic_occupancy                                 
+  traffic_load                                      
+  traffic_sensors                                   
+  traffic_volume_lag_1d                             
+  traffic_occupancy_lag_1d                          
+  traffic_volume_lag_2d                             
+  traffic_occupancy_lag_2d                          
+  traffic_volume_lag_7d                             
+  traffic_occupancy_lag_7d                          
+  traffic_volume_lag_14d                              ⚠️  7 nulos (1.0%)
+  traffic_occupancy_lag_14d                           ⚠️  7 nulos (1.0%)
+
+── Tráfico esperado (14) ──
+  exp_traffic_volume_d1                             
+  exp_traffic_occupancy_d1                          
+  exp_traffic_volume_d2                             
+  exp_traffic_occupancy_d2                          
+  exp_traffic_volume_d3                             
+  exp_traffic_occupancy_d3                          
+  exp_traffic_volume_d4                             
+  exp_traffic_occupancy_d4                          
+  exp_traffic_volume_d5                             
+  exp_traffic_occupancy_d5                          
+  exp_traffic_volume_d6                             
+  exp_traffic_occupancy_d6                          
+  exp_traffic_volume_d7                             
+  exp_traffic_occupancy_d7                          
+
+── Meteorología (92) ──
+  temperatura                                       
+  temperature_2m                                    
+  precipitation                                     
+  rain                                              
+  snowfall                                          
+  wind_speed_10m                                    
+  wind_direction_10m                                
+  wind_gusts_10m                                    
+  cloud_cover                                       
+  relative_humidity_2m                              
+  boundary_layer_height                             
+  weather_code                                      
+  sunshine_duration                                 
+  wind_u                                            
+  wind_v                                            
+  fc_temperature_2m_d1                              
+  fc_precipitation_d1                               
+  fc_wind_speed_10m_d1                              
+  fc_wind_direction_10m_d1                          
+  fc_wind_gusts_10m_d1                              
+  fc_cloud_cover_d1                                 
+  fc_relative_humidity_2m_d1                        
+  fc_boundary_layer_height_d1                       
+  fc_sunshine_duration_d1                           
+  fc_wind_u_d1                                      
+  fc_wind_v_d1                                      
+  fc_temperature_2m_d2                                ⚠️  1 nulos (0.1%)
+  fc_precipitation_d2                                 ⚠️  1 nulos (0.1%)
+  fc_wind_speed_10m_d2                                ⚠️  1 nulos (0.1%)
+  fc_wind_direction_10m_d2                            ⚠️  1 nulos (0.1%)
+  fc_wind_gusts_10m_d2                                ⚠️  1 nulos (0.1%)
+  fc_cloud_cover_d2                                   ⚠️  1 nulos (0.1%)
+  fc_relative_humidity_2m_d2                          ⚠️  1 nulos (0.1%)
+  fc_boundary_layer_height_d2                         ⚠️  1 nulos (0.1%)
+  fc_sunshine_duration_d2                             ⚠️  1 nulos (0.1%)
+  fc_wind_u_d2                                        ⚠️  1 nulos (0.1%)
+  fc_wind_v_d2                                        ⚠️  1 nulos (0.1%)
+  fc_temperature_2m_d3                                ⚠️  2 nulos (0.3%)
+  fc_precipitation_d3                                 ⚠️  2 nulos (0.3%)
+  fc_wind_speed_10m_d3                                ⚠️  2 nulos (0.3%)
+  fc_wind_direction_10m_d3                            ⚠️  2 nulos (0.3%)
+  fc_wind_gusts_10m_d3                                ⚠️  2 nulos (0.3%)
+  fc_cloud_cover_d3                                   ⚠️  2 nulos (0.3%)
+  fc_relative_humidity_2m_d3                          ⚠️  2 nulos (0.3%)
+  fc_boundary_layer_height_d3                         ⚠️  2 nulos (0.3%)
+  fc_sunshine_duration_d3                             ⚠️  2 nulos (0.3%)
+  fc_wind_u_d3                                        ⚠️  2 nulos (0.3%)
+  fc_wind_v_d3                                        ⚠️  2 nulos (0.3%)
+  fc_temperature_2m_d4                                ⚠️  3 nulos (0.4%)
+  fc_precipitation_d4                                 ⚠️  3 nulos (0.4%)
+  fc_wind_speed_10m_d4                                ⚠️  3 nulos (0.4%)
+  fc_wind_direction_10m_d4                            ⚠️  3 nulos (0.4%)
+  fc_wind_gusts_10m_d4                                ⚠️  3 nulos (0.4%)
+  fc_cloud_cover_d4                                   ⚠️  3 nulos (0.4%)
+  fc_relative_humidity_2m_d4                          ⚠️  3 nulos (0.4%)
+  fc_boundary_layer_height_d4                         ⚠️  3 nulos (0.4%)
+  fc_sunshine_duration_d4                             ⚠️  3 nulos (0.4%)
+  fc_wind_u_d4                                        ⚠️  3 nulos (0.4%)
+  fc_wind_v_d4                                        ⚠️  3 nulos (0.4%)
+  fc_temperature_2m_d5                                ⚠️  4 nulos (0.6%)
+  fc_precipitation_d5                                 ⚠️  4 nulos (0.6%)
+  fc_wind_speed_10m_d5                                ⚠️  4 nulos (0.6%)
+  fc_wind_direction_10m_d5                            ⚠️  4 nulos (0.6%)
+  fc_wind_gusts_10m_d5                                ⚠️  4 nulos (0.6%)
+  fc_cloud_cover_d5                                   ⚠️  4 nulos (0.6%)
+  fc_relative_humidity_2m_d5                          ⚠️  4 nulos (0.6%)
+  fc_boundary_layer_height_d5                         ⚠️  4 nulos (0.6%)
+  fc_sunshine_duration_d5                             ⚠️  4 nulos (0.6%)
+  fc_wind_u_d5                                        ⚠️  4 nulos (0.6%)
+  fc_wind_v_d5                                        ⚠️  4 nulos (0.6%)
+  fc_temperature_2m_d6                                ⚠️  5 nulos (0.7%)
+  fc_precipitation_d6                                 ⚠️  5 nulos (0.7%)
+  fc_wind_speed_10m_d6                                ⚠️  5 nulos (0.7%)
+  fc_wind_direction_10m_d6                            ⚠️  5 nulos (0.7%)
+  fc_wind_gusts_10m_d6                                ⚠️  5 nulos (0.7%)
+  fc_cloud_cover_d6                                   ⚠️  5 nulos (0.7%)
+  fc_relative_humidity_2m_d6                          ⚠️  5 nulos (0.7%)
+  fc_boundary_layer_height_d6                         ⚠️  5 nulos (0.7%)
+  fc_sunshine_duration_d6                             ⚠️  5 nulos (0.7%)
+  fc_wind_u_d6                                        ⚠️  5 nulos (0.7%)
+  fc_wind_v_d6                                        ⚠️  5 nulos (0.7%)
+  fc_temperature_2m_d7                                ⚠️  6 nulos (0.8%)
+  fc_precipitation_d7                                 ⚠️  6 nulos (0.8%)
+  fc_wind_speed_10m_d7                                ⚠️  6 nulos (0.8%)
+  fc_wind_direction_10m_d7                            ⚠️  6 nulos (0.8%)
+  fc_wind_gusts_10m_d7                                ⚠️  6 nulos (0.8%)
+  fc_cloud_cover_d7                                   ⚠️  6 nulos (0.8%)
+  fc_relative_humidity_2m_d7                          ⚠️  6 nulos (0.8%)
+  fc_boundary_layer_height_d7                         ⚠️  6 nulos (0.8%)
+  fc_sunshine_duration_d7                             ⚠️  6 nulos (0.8%)
+  fc_wind_u_d7                                        ⚠️  6 nulos (0.8%)
+  fc_wind_v_d7                                        ⚠️  6 nulos (0.8%)
+
+── Lags aire (24) ──
+  NO2_lag_1d                                        
+  NO2_lag_2d                                        
+  NO2_lag_3d                                        
+  NO2_lag_7d                                        
+  NO2_lag_14d                                         ⚠️  7 nulos (1.0%)
+  NO2_lag_30d                                         ⚠️  23 nulos (3.2%)
+  PM10_lag_1d                                       
+  PM10_lag_2d                                       
+  PM10_lag_3d                                       
+  PM10_lag_7d                                       
+  PM10_lag_14d                                        ⚠️  7 nulos (1.0%)
+  PM10_lag_30d                                        ⚠️  23 nulos (3.2%)
+  PM2.5_lag_1d                                      
+  PM2.5_lag_2d                                      
+  PM2.5_lag_3d                                      
+  PM2.5_lag_7d                                      
+  PM2.5_lag_14d                                       ⚠️  7 nulos (1.0%)
+  PM2.5_lag_30d                                       ⚠️  23 nulos (3.2%)
+  ICA_lag_1d                                        
+  ICA_lag_2d                                        
+  ICA_lag_3d                                        
+  ICA_lag_7d                                        
+  ICA_lag_14d                                         ⚠️  7 nulos (1.0%)
+  ICA_lag_30d                                         ⚠️  23 nulos (3.2%)
+
+── Rolling aire (56) ──
+  NO2_roll_mean_3d                                  
+  NO2_roll_std_3d                                   
+  NO2_roll_max_3d                                   
+  NO2_roll_mean_7d                                  
+  NO2_roll_std_7d                                   
+  NO2_roll_max_7d                                   
+  NO2_roll_mean_14d                                 
+  NO2_roll_std_14d                                  
+  NO2_roll_max_14d                                  
+  NO2_roll_mean_30d                                 
+  NO2_roll_std_30d                                  
+  NO2_roll_max_30d                                  
+  NO2_diff_7d                                         ⚠️  1 nulos (0.1%)
+  NO2_diff_30d                                        ⚠️  24 nulos (3.3%)
+  PM10_roll_mean_3d                                 
+  PM10_roll_std_3d                                  
+  PM10_roll_max_3d                                  
+  PM10_roll_mean_7d                                 
+  PM10_roll_std_7d                                  
+  PM10_roll_max_7d                                  
+  PM10_roll_mean_14d                                
+  PM10_roll_std_14d                                 
+  PM10_roll_max_14d                                 
+  PM10_roll_mean_30d                                
+  PM10_roll_std_30d                                 
+  PM10_roll_max_30d                                 
+  PM10_diff_7d                                        ⚠️  1 nulos (0.1%)
+  PM10_diff_30d                                       ⚠️  24 nulos (3.3%)
+  PM2.5_roll_mean_3d                                
+  PM2.5_roll_std_3d                                 
+  PM2.5_roll_max_3d                                 
+  PM2.5_roll_mean_7d                                
+  PM2.5_roll_std_7d                                 
+  PM2.5_roll_max_7d                                 
+  PM2.5_roll_mean_14d                               
+  PM2.5_roll_std_14d                                
+  PM2.5_roll_max_14d                                
+  PM2.5_roll_mean_30d                               
+  PM2.5_roll_std_30d                                
+  PM2.5_roll_max_30d                                
+  PM2.5_diff_7d                                       ⚠️  1 nulos (0.1%)
+  PM2.5_diff_30d                                      ⚠️  24 nulos (3.3%)
+  ICA_roll_mean_3d                                  
+  ICA_roll_std_3d                                   
+  ICA_roll_max_3d                                   
+  ICA_roll_mean_7d                                  
+  ICA_roll_std_7d                                   
+  ICA_roll_max_7d                                   
+  ICA_roll_mean_14d                                 
+  ICA_roll_std_14d                                  
+  ICA_roll_max_14d                                  
+  ICA_roll_mean_30d                                 
+  ICA_roll_std_30d                                  
+  ICA_roll_max_30d                                  
+  ICA_diff_7d                                         ⚠️  1 nulos (0.1%)
+  ICA_diff_30d                                        ⚠️  24 nulos (3.3%)
+
+── Pronóstico meteo (77) ──
+  fc_temperature_2m_d1                              
+  fc_precipitation_d1                               
+  fc_wind_speed_10m_d1                              
+  fc_wind_direction_10m_d1                          
+  fc_wind_gusts_10m_d1                              
+  fc_cloud_cover_d1                                 
+  fc_relative_humidity_2m_d1                        
+  fc_boundary_layer_height_d1                       
+  fc_sunshine_duration_d1                           
+  fc_wind_u_d1                                      
+  fc_wind_v_d1                                      
+  fc_temperature_2m_d2                                ⚠️  1 nulos (0.1%)
+  fc_precipitation_d2                                 ⚠️  1 nulos (0.1%)
+  fc_wind_speed_10m_d2                                ⚠️  1 nulos (0.1%)
+  fc_wind_direction_10m_d2                            ⚠️  1 nulos (0.1%)
+  fc_wind_gusts_10m_d2                                ⚠️  1 nulos (0.1%)
+  fc_cloud_cover_d2                                   ⚠️  1 nulos (0.1%)
+  fc_relative_humidity_2m_d2                          ⚠️  1 nulos (0.1%)
+  fc_boundary_layer_height_d2                         ⚠️  1 nulos (0.1%)
+  fc_sunshine_duration_d2                             ⚠️  1 nulos (0.1%)
+  fc_wind_u_d2                                        ⚠️  1 nulos (0.1%)
+  fc_wind_v_d2                                        ⚠️  1 nulos (0.1%)
+  fc_temperature_2m_d3                                ⚠️  2 nulos (0.3%)
+  fc_precipitation_d3                                 ⚠️  2 nulos (0.3%)
+  fc_wind_speed_10m_d3                                ⚠️  2 nulos (0.3%)
+  fc_wind_direction_10m_d3                            ⚠️  2 nulos (0.3%)
+  fc_wind_gusts_10m_d3                                ⚠️  2 nulos (0.3%)
+  fc_cloud_cover_d3                                   ⚠️  2 nulos (0.3%)
+  fc_relative_humidity_2m_d3                          ⚠️  2 nulos (0.3%)
+  fc_boundary_layer_height_d3                         ⚠️  2 nulos (0.3%)
+  fc_sunshine_duration_d3                             ⚠️  2 nulos (0.3%)
+  fc_wind_u_d3                                        ⚠️  2 nulos (0.3%)
+  fc_wind_v_d3                                        ⚠️  2 nulos (0.3%)
+  fc_temperature_2m_d4                                ⚠️  3 nulos (0.4%)
+  fc_precipitation_d4                                 ⚠️  3 nulos (0.4%)
+  fc_wind_speed_10m_d4                                ⚠️  3 nulos (0.4%)
+  fc_wind_direction_10m_d4                            ⚠️  3 nulos (0.4%)
+  fc_wind_gusts_10m_d4                                ⚠️  3 nulos (0.4%)
+  fc_cloud_cover_d4                                   ⚠️  3 nulos (0.4%)
+  fc_relative_humidity_2m_d4                          ⚠️  3 nulos (0.4%)
+  fc_boundary_layer_height_d4                         ⚠️  3 nulos (0.4%)
+  fc_sunshine_duration_d4                             ⚠️  3 nulos (0.4%)
+  fc_wind_u_d4                                        ⚠️  3 nulos (0.4%)
+  fc_wind_v_d4                                        ⚠️  3 nulos (0.4%)
+  fc_temperature_2m_d5                                ⚠️  4 nulos (0.6%)
+  fc_precipitation_d5                                 ⚠️  4 nulos (0.6%)
+  fc_wind_speed_10m_d5                                ⚠️  4 nulos (0.6%)
+  fc_wind_direction_10m_d5                            ⚠️  4 nulos (0.6%)
+  fc_wind_gusts_10m_d5                                ⚠️  4 nulos (0.6%)
+  fc_cloud_cover_d5                                   ⚠️  4 nulos (0.6%)
+  fc_relative_humidity_2m_d5                          ⚠️  4 nulos (0.6%)
+  fc_boundary_layer_height_d5                         ⚠️  4 nulos (0.6%)
+  fc_sunshine_duration_d5                             ⚠️  4 nulos (0.6%)
+  fc_wind_u_d5                                        ⚠️  4 nulos (0.6%)
+  fc_wind_v_d5                                        ⚠️  4 nulos (0.6%)
+  fc_temperature_2m_d6                                ⚠️  5 nulos (0.7%)
+  fc_precipitation_d6                                 ⚠️  5 nulos (0.7%)
+  fc_wind_speed_10m_d6                                ⚠️  5 nulos (0.7%)
+  fc_wind_direction_10m_d6                            ⚠️  5 nulos (0.7%)
+  fc_wind_gusts_10m_d6                                ⚠️  5 nulos (0.7%)
+  fc_cloud_cover_d6                                   ⚠️  5 nulos (0.7%)
+  fc_relative_humidity_2m_d6                          ⚠️  5 nulos (0.7%)
+  fc_boundary_layer_height_d6                         ⚠️  5 nulos (0.7%)
+  fc_sunshine_duration_d6                             ⚠️  5 nulos (0.7%)
+  fc_wind_u_d6                                        ⚠️  5 nulos (0.7%)
+  fc_wind_v_d6                                        ⚠️  5 nulos (0.7%)
+  fc_temperature_2m_d7                                ⚠️  6 nulos (0.8%)
+  fc_precipitation_d7                                 ⚠️  6 nulos (0.8%)
+  fc_wind_speed_10m_d7                                ⚠️  6 nulos (0.8%)
+  fc_wind_direction_10m_d7                            ⚠️  6 nulos (0.8%)
+  fc_wind_gusts_10m_d7                                ⚠️  6 nulos (0.8%)
+  fc_cloud_cover_d7                                   ⚠️  6 nulos (0.8%)
+  fc_relative_humidity_2m_d7                          ⚠️  6 nulos (0.8%)
+  fc_boundary_layer_height_d7                         ⚠️  6 nulos (0.8%)
+  fc_sunshine_duration_d7                             ⚠️  6 nulos (0.8%)
+  fc_wind_u_d7                                        ⚠️  6 nulos (0.8%)
+  fc_wind_v_d7                                        ⚠️  6 nulos (0.8%)
+
+── TARGETS (28) ──
+  NO2: d1 → d7  (7 columnas)
+  PM10: d1 → d7  (7 columnas)
+  PM2.5: d1 → d7  (7 columnas)
+  ICA: d1 → d7  (7 columnas)
+
+── ESTADÍSTICAS TARGETS (d1) ──
+  NO2     : mean=12.15  std=6.55  min=0.42  max=37.84
+  PM10    : mean=11.09  std=5.50  min=2.05  max=49.16
+  PM2.5   : mean=7.19  std=4.21  min=1.13  max=24.79
+  ICA     : mean=20.22  std=9.86  min=4.61  max=65.35
+
+── SPLIT TEMPORAL SUGERIDO ──
+  Train (70%): 2024-03-15 → 2025-08-02  (505 días)
+  Val   (15%): 2025-08-02 → 2025-11-18  (108 días)
+  Test  (15%): 2025-11-18 → 2026-03-06  (109 días)
+
+  ⚠️  Usar SIEMPRE split temporal (nunca aleatorio) — evita data leakage.
+
+── SIGUIENTE PASO ──
+  python train_model.py
+  Algoritmo: LightGBM multioutput
+  Un modelo por target × horizonte = 28 modelos
+  (o MultiOutputRegressor wrapper para simplificar)

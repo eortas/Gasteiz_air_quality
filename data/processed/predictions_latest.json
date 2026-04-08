@@ -1,0 +1,71 @@
+{
+  "prediction_date": "2026-04-04",
+  "generated_at": "2026-04-03T19:08:20.017731+00:00",
+  "model_version": "v5",
+  "targets": {
+    "NO2_zbe_d1": {
+      "prediction_v1": 13.74,
+      "prediction": 12.29,
+      "lower": 7.27,
+      "upper": 17.3,
+      "rmse_cv": 3.915,
+      "correction": -1.45
+    },
+    "NO2_out_d1": {
+      "prediction_v1": 13.25,
+      "prediction": 13.24,
+      "lower": 7.49,
+      "upper": 18.98,
+      "rmse_cv": 4.49,
+      "correction": -0.01
+    },
+    "PM10_zbe_d1": {
+      "prediction_v1": 14.58,
+      "prediction": 18.45,
+      "lower": 13.02,
+      "upper": 23.87,
+      "rmse_cv": 4.239,
+      "correction": 3.87
+    },
+    "PM10_out_d1": {
+      "prediction_v1": 12.63,
+      "prediction": 18.15,
+      "lower": 12.76,
+      "upper": 23.53,
+      "rmse_cv": 4.208,
+      "correction": 5.52
+    },
+    "PM2.5_zbe_d1": {
+      "prediction_v1": 8.73,
+      "prediction": 10.19,
+      "lower": 6.76,
+      "upper": 13.62,
+      "rmse_cv": 2.68,
+      "correction": 1.46
+    },
+    "PM2.5_out_d1": {
+      "prediction_v1": 7.78,
+      "prediction": 11.4,
+      "lower": 7.41,
+      "upper": 15.38,
+      "rmse_cv": 3.111,
+      "correction": 3.62
+    },
+    "ICA_zbe_d1": {
+      "prediction_v1": 27.13,
+      "prediction": 30.75,
+      "lower": 22.15,
+      "upper": 39.35,
+      "rmse_cv": 6.722,
+      "correction": 3.62
+    },
+    "ICA_out_d1": {
+      "prediction_v1": 21.5,
+      "prediction": 30.57,
+      "lower": 20.35,
+      "upper": 40.79,
+      "rmse_cv": 7.987,
+      "correction": 9.07
+    }
+  }
+}
