@@ -1184,7 +1184,7 @@ function updateV9Images() {
   imgEs.nextElementSibling.style.display = 'none';
   imgSc.style.display = 'block'; imgEs.style.display = 'block'; 
   
-  const basePath = "";
+  const basePath = "__IMG_BASE_PATH__";
   console.log("Loading V9 Images from:", basePath);
   
   imgSc.src = `${basePath}synthetic_control_${contName}_${currentStationV9}.png`; 
