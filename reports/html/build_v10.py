@@ -290,6 +290,18 @@ except Exception as e:
 stations_json_str = json.dumps(stations_data)
 
 # ==============================================================================
+# 5b. DATOS TRÁFICO YOY
+# ==============================================================================
+try:
+    with open(ROOT_DIR / "reports" / "peripheral_traffic_yoy.json", "r", encoding="utf-8") as f:
+        traffic_yoy_data = json.load(f)
+    traffic_yoy_json_str = json.dumps(traffic_yoy_data)
+    print("  OK Datos de tráfico YoY cargados.")
+except Exception as e:
+    print(f"  WARN No se pudo cargar peripheral_traffic_yoy.json: {e}")
+    traffic_yoy_json_str = "[]"
+
+# ==============================================================================
 # 6. PLANTILLA HTML
 # ==============================================================================
 html_template = """<!DOCTYPE html>
@@ -684,7 +696,20 @@ html_template = """<!DOCTYPE html>
 </div>
 
 <div id="view-traffic" class="view-container">
-  <div class="traffic-iframe-container">
+  <div class="charts-section">
+    <div class="fig-block">
+      <div class="fig-header">
+        <div class="fig-title" data-i18n="trafficYoYTitle"><strong>Estudio de Impacto:</strong> Evolución del Tráfico Perimetral (YoY)</div>
+      </div>
+      <div class="subtitle" style="margin-bottom: 20px;" data-i18n="trafficYoYSubtitle">
+        Comparativa entre el tráfico actual y el mismo periodo del año anterior (alineado por día de la semana).
+      </div>
+      <div class="chart-wrap" style="height: 400px;">
+        <canvas id="trafficYoYChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="traffic-iframe-container" style="height: 600px; border-top: 1px solid var(--border); margin-top: 40px;">
     <iframe id="trafficIframe" src="traffic_map.html" title="Mapa de Tráfico"></iframe>
   </div>
 </div>
@@ -739,6 +764,7 @@ let stationsData = __STATIONS_DATA_PLACEHOLDER__;
 let targetsData = __TARGETS_DATA_PLACEHOLDER__;
 const v9Stats = __V9_DATA_PLACEHOLDER__;
 const metaData = __META_DATA_PLACEHOLDER__;
+const trafficYoyData = __TRAFFIC_YOY_DATA_PLACEHOLDER__;
 
 let currentTheme = 'light';
 let mapInstance = null;
@@ -798,6 +824,11 @@ const translations = {
     backtestTitle: "<strong>Validación de Ayer</strong> — Backtesting de Precisión",
     colParam: "Parametro",
     colPred: "Predicción Ayer (v8)",
+    trafficYoYTitle: "Estudio de Impacto: Evolución del Tráfico Perimetral (YoY)",
+    trafficYoYSubtitle: "Comparativa entre el tráfico actual y el mismo periodo del año anterior (alineado por día de la semana).",
+    trafficCurrent: "Tráfico Actual (ZBE)",
+    trafficPrevious: "Año Anterior (Pre-ZBE)",
+    trafficVolume: "Vehículos/Día (Media Perímetro)",
     colReal: "Medición Real",
     colDev: "Desviación",
     colStatus: "Estado",
@@ -894,6 +925,11 @@ const translations = {
     v10Calculating: "KALKULATZEN...",
     auditTitle: "<strong>Ereduaren Ikuskapena:</strong> Aurreikusitakoa vs Erreala (Azken 7 egunak)",
     backtestTitle: "<strong>Atzoko Baliozkotzea</strong> — Doitasunaren Backtestinga",
+    trafficYoYTitle: "Eraginaren Azterketa: Perimetroko Trafikoaren Bilakaera (YoY)",
+    trafficYoYSubtitle: "Gaur egungo trafikoaren eta aurreko urteko epe beraren arteko alderaketa (asteko egunaren arabera lerrokatuta).",
+    trafficCurrent: "Gaur egungo Trafikoa (ZBE)",
+    trafficPrevious: "Aurreko Urtea (ZBE Aurretik)",
+    trafficVolume: "Ibilgailuak/Eguna (Perimetroko batez bestekoa)",
     colParam: "Parametroa",
     colPred: "Atzoko Aurreikuspena (v8)",
     colReal: "Neurketa Erreala",
@@ -1034,6 +1070,7 @@ function toggleLang() {
   renderDidTable();
   renderV9Cards();
   renderMetricsTable();
+  renderTrafficYoY();
   if (document.getElementById('view-v10').classList.contains('active')) renderDashboard3();
 }
 // ── NAVEGACIÓN Y THEME ──
@@ -1058,6 +1095,12 @@ function switchMainView(view, btn) {
     }, 100);
   }
   if (view === 'map') { setTimeout(() => initMap(), 100); }
+  if (view === 'traffic') { 
+    setTimeout(() => {
+        renderTrafficYoY();
+        window.dispatchEvent(new Event('resize'));
+    }, 400);
+  }
 }
 
 function toggleTheme() {
@@ -1499,6 +1542,84 @@ function selectZoneFs(zone, btn) { currentZoneFs = zone; document.querySelectorA
 
 // End Foresight Block
 
+// ── TRAFFIC YOY CHART ──────────────────────────────────────────────────────
+let trafficYoYChartInstance = null;
+function renderTrafficYoY() {
+  const ctx = document.getElementById('trafficYoYChart');
+  if (!ctx || trafficYoyData.length === 0) return;
+
+  const labels = trafficYoyData.map(d => {
+    const date = new Date(d.date);
+    return date.toLocaleDateString(currentLang === 'es' ? 'es-ES' : 'eu-ES', { day: 'numeric', month: 'short' });
+  });
+  
+  const currentSeries = trafficYoyData.map(d => d.current);
+  const previousSeries = trafficYoyData.map(d => d.previous);
+
+  // Aplicar media móvil para suavizar (7 días)
+  const currentSmooth = movingAvg(currentSeries, 7);
+  const previousSmooth = movingAvg(previousSeries, 7);
+
+  if (trafficYoYChartInstance) trafficYoYChartInstance.destroy();
+
+  Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+  
+  trafficYoYChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: translations[currentLang].trafficCurrent,
+          data: currentSmooth,
+          borderColor: getCssVar('--observed'),
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.3
+        },
+        {
+          label: translations[currentLang].trafficPrevious,
+          data: previousSmooth,
+          borderColor: getCssVar('--muted'),
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          tension: 0.3,
+          alpha: 0.5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { color: getCssVar('--text'), font: { size: 11 } } },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} veh/día`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: getCssVar('--muted'), font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
+        y: { 
+          title: { display: true, text: translations[currentLang].trafficVolume, color: getCssVar('--muted'), font: { size: 10 } },
+          grid: { color: getCssVar('--border'), drawBorder: false }, 
+          ticks: { color: getCssVar('--muted'), font: { size: 10 } } 
+        }
+      }
+    }
+  });
+}
+
+// End Traffic YoY Block
+
 // ── INIT ───────────────────────────────────────────────────────────────────
 window.onload = function() {
   updateI18n();
@@ -1519,6 +1640,7 @@ window.onload = function() {
   renderMetricsTable();
   renderV9Cards();
   renderForesight();
+  renderTrafficYoY();
   updateV9Images();
   
   // Si estamos en la pestaña de tráfico, sincronizar lenguaje
@@ -1543,6 +1665,7 @@ content = content.replace('__V9_DATA_PLACEHOLDER__', v9_json_str)
 content = content.replace('__META_DATA_PLACEHOLDER__', meta_json_str)
 content = content.replace('__SUMMARY_DATA_PLACEHOLDER__', sum_json_str)
 content = content.replace('__DID_DATA_PLACEHOLDER__', did_json_str)
+content = content.replace('__TRAFFIC_YOY_DATA_PLACEHOLDER__', traffic_yoy_json_str)
 content = content.replace('__IMG_BASE_PATH__', img_base_path)
 content = content.replace('__PRED_DATE_PLACEHOLDER__', prediction_date_str)
 
