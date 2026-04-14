@@ -1,6 +1,6 @@
 {
   "prediction_date": "2026-04-04",
-  "generated_at": "2026-04-14T11:55:07.358337+00:00",
+  "generated_at": "2026-04-14T14:15:25.851124+00:00",
   "model_version": "v5",
   "targets": {
     "NO2_zbe_d1": {
@@ -56,7 +56,7 @@
             "value": -0.28
           }
         ],
-        "narrative": "Predicción de 14.219664767609018 frente al valor base 10.842915488894123. Subidas por: NO2_zbe, fc_temperature_2m_d1. Bajadas por: exp_traffic_volume_d1, fc_wind_direction_10m_d1."
+        "narrative": "El nivel de contaminación por NO2 en la zona ZBE para mañana se espera que sea de 14.2 µg/m³, lo que supera el valor medio habitual de 10.8 µg/m³. Esto se debe a varios factores, entre los que destacan la temperatura alta, que contribuye con un aumento de 1.01 µg/m³, y la acumulación reciente de NO2, que aporta un aumento adicional de 0.98 µg/m³.\n\nAdemás, se espera un aumento de 1.22 µg/m³ debido a la contaminación NO2 en la zona ZBE. Es importante tener en cuenta que estos factores pueden variar y afectar la calidad del aire en la zona."
       }
     },
     "NO2_out_d1": {
@@ -168,7 +168,7 @@
             "value": -0.25
           }
         ],
-        "narrative": "Predicción de 13.99131877411448 frente al valor base 11.654911333741776. Subidas por: relative_humidity_2m, fc_boundary_layer_height_d3. Bajadas por: ICA_zbe, ICA_out."
+        "narrative": "La predicción del contaminante PM10 para mañana en la zona ZBE es de 14.0 µg/m³, lo que supera el valor medio habitual de 11.7 µg/m³. Esto se debe a varios factores que empujan la contaminación en aumento. El aumento de la humedad relativa y la reducción de la altura de la capa límite atmosférica contribuyen a la acumulación de partículas en el aire.\n\nAdemás, el aumento de la velocidad del viento es otro factor que contribuye a la subida de la contaminación. La velocidad del viento es importante porque ayuda a dispersar las partículas en el aire, pero en este caso, parece que no está teniendo ese efecto. Por el contrario, la actividad industrial y la insolación disminuyen, lo que también contribuye a la subida de la contaminación."
       }
     },
     "PM10_out_d1": {
@@ -280,7 +280,7 @@
             "value": -0.24
           }
         ],
-        "narrative": "Predicción de 8.742521507773992 frente al valor base 7.364895194923076. Subidas por: fc_boundary_layer_height_d3, PM10_zbe_lag_2d. Bajadas por: ICA_out, ICA_zbe."
+        "narrative": "La predicción del PM2.5 para mañana en la zona ZBE es de 8.7 µg/m³, lo que es un poco más alto que el valor medio habitual de 7.4 µg/m³. Esto se debe principalmente a la reducción de la altura de la capa límite del aire, que ha aumentado en un 0.67, lo que permite que los contaminantes se concentren en la atmósfera.\n\nAdemás, la cantidad de partículas PM10 en la zona ha aumentado en un 0.49, lo que también contribuye a la contaminación. Por otro lado, la concentración de partículas PM2.5 en la zona también ha aumentado, lo que es un factor negativo. Sin embargo, la influencia de estos factores positivos es mayor que la influencia negativa de la reducción de la concentración de partículas PM2.5 en la zona."
       }
     },
     "PM2.5_out_d1": {
@@ -392,7 +392,7 @@
             "value": -0.43
           }
         ],
-        "narrative": "Predicción de 26.466215669801265 frente al valor base 20.215221467721086. Subidas por: fc_boundary_layer_height_d3, fc_wind_speed_10m_d1. Bajadas por: ICA_zbe, ICA_out."
+        "narrative": "La predicción del contaminante ICA para mañana en la zona ZBE es de 26.5 µg/m³, lo que supera el valor medio habitual de 20.2 µg/m³. Esto se debe a varios factores que empujan la contaminación al alza, como la altura de la capa límite del terreno (+1.73), la velocidad del viento (+1.27) y la concentración de contaminantes en la zona ZBE con un retraso de 30 días (+0.99).\n\nEs importante destacar que no todos los factores influyen en la misma dirección, por lo que es necesario analizarlos cuidadosamente. En este caso, la altura de la capa límite y la velocidad del viento contribuyen a aumentar la contaminación, mientras que la concentración de contaminantes en la zona ZBE con un retraso de 30 días tiende a disminuirla. Sin embargo, la influencia de estos últimos factores es menor en comparación con los primeros."
       }
     },
     "ICA_out_d1": {
