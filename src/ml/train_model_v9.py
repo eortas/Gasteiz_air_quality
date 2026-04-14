@@ -249,7 +249,9 @@ def trigger_plots():
     script_path = str(ROOT_DIR / "src" / "ml" / "plot_causal_v9.py")
     ret = call([sys.executable, script_path])
     if ret != 0:
-        print("  WARN Hubo un error al generar los graficos (plot_causal_v9.py)")
+        print(f"  [ERROR] Falló la generación de gráficos (plot_causal_v9.py) con código: {ret}")
+    else:
+        print("  [OK] Gráficos generados correctamente.")
 
 
 # --- MAIN ---------------------------------------------------------------------
