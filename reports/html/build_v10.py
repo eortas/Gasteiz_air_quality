@@ -126,10 +126,13 @@ try:
             else:
                 manana_data[zone][cont] = 0
 
+    targets_json_str = json.dumps(targets)
+
     print(f"  OK Predicciones para {prediction_date_str} cargadas (usando refinamiento v2 si disponible).")
 
 except Exception as e:
     print(f"  WARN No se pudo leer predictions_latest.json: {e}")
+    targets_json_str = "{}"
     for z in ['zbe', 'out']:
         for c in ['NO2', 'PM10', 'PM2.5', 'ICA']:
             manana_data[z][c] = 0
@@ -497,6 +500,7 @@ html_template = """<!DOCTYPE html>
     <button class="top-nav-btn" onclick="switchMainView('v9', this)" data-i18n="nav3">3. Validación Causal</button>
     <button class="top-nav-btn" onclick="switchMainView('map', this)" data-i18n="nav4">4. Mapa de Estaciones</button>
     <button class="top-nav-btn" onclick="switchMainView('traffic', this)" data-i18n="nav5">5. Mapa de Tráfico</button>
+    <button class="top-nav-btn" onclick="switchMainView('foresight', this)">6. Foresight AI</button>
   </div>
 </div>
 
@@ -685,6 +689,45 @@ html_template = """<!DOCTYPE html>
   </div>
 </div>
 
+<div id="view-foresight" class="view-container">
+  <div class="header">
+    <div class="header-left">
+      <div class="label-tag">XAI — EXPLAINABLE AI</div>
+      <h1>Foresight <span>AI</span></h1>
+      <p class="subtitle">Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para mañana (SHAP Values).</p>
+    </div>
+  </div>
+  
+  <div class="controls">
+    <span class="controls-label">Contaminante</span>
+    <div class="tab-group" id="contTabsForesight">
+      <button class="tab active" onclick="selectContFs('NO2', this)">NO₂</button>
+      <button class="tab" onclick="selectContFs('PM10', this)">PM10</button>
+      <button class="tab" onclick="selectContFs('PM2.5', this)">PM2.5</button>
+      <button class="tab" onclick="selectContFs('ICA', this)">ICA</button>
+    </div>
+    <div class="sep"></div>
+    <span class="controls-label">ZONA</span>
+    <div class="tab-group" id="zoneTabsForesight">
+      <button class="tab active" onclick="selectZoneFs('zbe', this)">ZBE</button>
+      <button class="tab" onclick="selectZoneFs('out', this)">FUERA DE ZBE</button>
+    </div>
+  </div>
+
+  <div class="charts-section" style="display: grid; grid-template-columns: minmax(300px, 1.2fr) minmax(300px, 1.8fr); gap: 40px;">
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 30px;">
+      <h3 style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent); letter-spacing:1px; margin-bottom:16px; text-transform:uppercase;">Síntesis Narrativa (LLM)</h3>
+      <div id="fs-narrative" style="font-size:15px; line-height:1.7; color:var(--text); white-space: pre-line;">Cargando narrativa...</div>
+    </div>
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 30px; display: flex; flex-direction: column;">
+      <h3 style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); letter-spacing:1px; margin-bottom:12px; text-transform:uppercase;">Top Factores de Impacto (SHAP)</h3>
+      <div style="flex: 1; min-height: 300px; position: relative;">
+        <canvas id="fsChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===========================================================================
 // INYECCIÓN DE DATOS Y VARIABLES GLOBALES
@@ -694,6 +737,7 @@ let perfStats = __PERF_DATA_PLACEHOLDER__;
 let manana = __MANANA_DATA_PLACEHOLDER__;
 let metricsData = __METRICS_DATA_PLACEHOLDER__;
 let stationsData = __STATIONS_DATA_PLACEHOLDER__;
+let targetsData = __TARGETS_DATA_PLACEHOLDER__;
 const v9Stats = __V9_DATA_PLACEHOLDER__;
 const metaData = __META_DATA_PLACEHOLDER__;
 
@@ -1390,6 +1434,72 @@ function initMap() {
   setTimeout(() => mapInstance.invalidateSize(), 100);
 }
 
+// ── FORESIGHT AI (SHAP & LLM) ──────────────────────────────────────────────
+let currentContFs = 'NO2', currentZoneFs = 'zbe', fsChart = null;
+
+function renderForesight() {
+  const key = `${currentContFs}_${currentZoneFs}_d1`;
+  const tData = targetsData[key] || {};
+  const fs = tData.foresight || null;
+  
+  const narrativeDiv = document.getElementById('fs-narrative');
+  if (!fs) {
+    narrativeDiv.innerHTML = "<span style='color:var(--muted)'>No hay análisis disponible para esta selección.</span>";
+    if (fsChart) { fsChart.destroy(); fsChart = null; }
+    return;
+  }
+  
+  let narrativeText = fs.narrative || "Este modelo no ha generado narrativa LLM (posiblemente porque no es el target principal o falla la API).";
+  if (!narrativeText && fs.error) {
+    narrativeText = `Error al calcular SHAP: ${fs.error}`;
+  }
+  narrativeDiv.textContent = narrativeText;
+  
+  const posTop = fs.positive_top || [];
+  const negTop = fs.negative_top || [];
+  let factors = [...posTop, ...negTop].sort((a,b) => Math.abs(b.value) - Math.abs(a.value));
+  factors = factors.slice(0, 8); // Top 8 features
+  
+  const ctx = document.getElementById('fsChart').getContext('2d');
+  if (fsChart) fsChart.destroy();
+  
+  const labels = factors.map(f => f.feature.length > 22 ? f.feature.slice(0, 22) + '...' : f.feature);
+  const values = factors.map(f => f.value);
+  const colors = factors.map(f => f.value > 0 ? getCssVar('--red') : getCssVar('--green'));
+  
+  const text = getCssVar('--text'); const muted = getCssVar('--muted'); const grid = getCssVar('--border');
+  
+  fsChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Impacto en µg/m³',
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { ticks: { color: muted }, grid: { color: grid } },
+        y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function selectContFs(cont, btn) { currentContFs = cont; document.querySelectorAll('#contTabsForesight .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderForesight(); }
+function selectZoneFs(zone, btn) { currentZoneFs = zone; document.querySelectorAll('#zoneTabsForesight .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderForesight(); }
+
+// End Foresight Block
+
 // ── INIT ───────────────────────────────────────────────────────────────────
 window.onload = function() {
   updateI18n();
@@ -1409,6 +1519,7 @@ window.onload = function() {
   renderDashboard3();
   renderMetricsTable();
   renderV9Cards();
+  renderForesight();
   updateV9Images();
   
   // Si estamos en la pestaña de tráfico, sincronizar lenguaje
@@ -1428,6 +1539,7 @@ content = content.replace('__PERF_DATA_PLACEHOLDER__', perf_json_str)
 content = content.replace('__MANANA_DATA_PLACEHOLDER__', manana_json_str)
 content = content.replace('__METRICS_DATA_PLACEHOLDER__', metrics_json_str)
 content = content.replace('__STATIONS_DATA_PLACEHOLDER__', stations_json_str)
+content = content.replace('__TARGETS_DATA_PLACEHOLDER__', targets_json_str)
 content = content.replace('__V9_DATA_PLACEHOLDER__', v9_json_str)
 content = content.replace('__META_DATA_PLACEHOLDER__', meta_json_str)
 content = content.replace('__SUMMARY_DATA_PLACEHOLDER__', sum_json_str)

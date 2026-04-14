@@ -2,7 +2,7 @@ name: Pipeline diario + Dashboard
 
 on:
   schedule:
-    - cron: '0 2 * * *'   # 2:00 AM UTC (3:00 AM hora española en invierno)
+    - cron: '0 1 * * *'   # 2:00 AM UTC (3:00 AM hora española en invierno)
   workflow_dispatch:        # permite lanzarlo manualmente desde GitHub
 
 permissions:
@@ -16,6 +16,7 @@ jobs:
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
 
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────────────────
