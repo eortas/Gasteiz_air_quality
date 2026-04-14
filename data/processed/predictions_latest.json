@@ -1,71 +1,455 @@
 {
   "prediction_date": "2026-04-04",
-  "generated_at": "2026-04-03T19:08:20.017731+00:00",
+  "generated_at": "2026-04-14T11:55:07.358337+00:00",
   "model_version": "v5",
   "targets": {
     "NO2_zbe_d1": {
-      "prediction_v1": 13.74,
-      "prediction": 12.29,
-      "lower": 7.27,
-      "upper": 17.3,
+      "prediction_v1": 14.22,
+      "prediction": 12.66,
+      "lower": 7.64,
+      "upper": 17.67,
       "rmse_cv": 3.915,
-      "correction": -1.45
+      "correction": -1.56,
+      "foresight": {
+        "base_value": 10.84,
+        "positive_top": [
+          {
+            "feature": "NO2_zbe",
+            "value": 1.22
+          },
+          {
+            "feature": "fc_temperature_2m_d1",
+            "value": 1.01
+          },
+          {
+            "feature": "NO2_zbe_roll_mean_7d",
+            "value": 0.98
+          },
+          {
+            "feature": "fc_wind_gusts_10m_d1",
+            "value": 0.94
+          },
+          {
+            "feature": "exp_traffic_volume_d3",
+            "value": 0.57
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "exp_traffic_volume_d1",
+            "value": -1.26
+          },
+          {
+            "feature": "fc_wind_direction_10m_d1",
+            "value": -0.35
+          },
+          {
+            "feature": "PM10_zbe_roll_mean_14d",
+            "value": -0.35
+          },
+          {
+            "feature": "PM2.5_zbe_lag_2d",
+            "value": -0.31
+          },
+          {
+            "feature": "fc_HDD_d1",
+            "value": -0.28
+          }
+        ],
+        "narrative": "Predicción de 14.219664767609018 frente al valor base 10.842915488894123. Subidas por: NO2_zbe, fc_temperature_2m_d1. Bajadas por: exp_traffic_volume_d1, fc_wind_direction_10m_d1."
+      }
     },
     "NO2_out_d1": {
-      "prediction_v1": 13.25,
-      "prediction": 13.24,
-      "lower": 7.49,
-      "upper": 18.98,
+      "prediction_v1": 13.38,
+      "prediction": 13.34,
+      "lower": 7.6,
+      "upper": 19.09,
       "rmse_cv": 4.49,
-      "correction": -0.01
+      "correction": -0.04,
+      "foresight": {
+        "base_value": 12.45,
+        "positive_top": [
+          {
+            "feature": "NO2_out",
+            "value": 1.45
+          },
+          {
+            "feature": "fc_temperature_2m_d1",
+            "value": 0.73
+          },
+          {
+            "feature": "fc_wind_gusts_10m_d1",
+            "value": 0.36
+          },
+          {
+            "feature": "fc_wind_v_d1",
+            "value": 0.28
+          },
+          {
+            "feature": "traffic_volume_lag_1d",
+            "value": 0.19
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "exp_traffic_volume_d1",
+            "value": -1.26
+          },
+          {
+            "feature": "fc_HDD_d1",
+            "value": -0.76
+          },
+          {
+            "feature": "PM10_zbe_roll_std_14d",
+            "value": -0.38
+          },
+          {
+            "feature": "PM2.5_zbe_roll_mean_30d",
+            "value": -0.16
+          },
+          {
+            "feature": "ICA_out_roll_std_30d",
+            "value": -0.14
+          }
+        ],
+        "narrative": ""
+      }
     },
     "PM10_zbe_d1": {
-      "prediction_v1": 14.58,
-      "prediction": 18.45,
-      "lower": 13.02,
-      "upper": 23.87,
+      "prediction_v1": 13.99,
+      "prediction": 18.04,
+      "lower": 12.61,
+      "upper": 23.46,
       "rmse_cv": 4.239,
-      "correction": 3.87
+      "correction": 4.05,
+      "foresight": {
+        "base_value": 11.65,
+        "positive_top": [
+          {
+            "feature": "relative_humidity_2m",
+            "value": 2.37
+          },
+          {
+            "feature": "fc_boundary_layer_height_d3",
+            "value": 0.98
+          },
+          {
+            "feature": "fc_wind_speed_10m_d1",
+            "value": 0.53
+          },
+          {
+            "feature": "boundary_layer_height",
+            "value": 0.52
+          },
+          {
+            "feature": "PM10_zbe_lag_2d",
+            "value": 0.32
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "ICA_zbe",
+            "value": -1.46
+          },
+          {
+            "feature": "ICA_out",
+            "value": -0.54
+          },
+          {
+            "feature": "fc_sunshine_duration_d1",
+            "value": -0.53
+          },
+          {
+            "feature": "HDD_acum_7d",
+            "value": -0.31
+          },
+          {
+            "feature": "PM2.5_zbe",
+            "value": -0.25
+          }
+        ],
+        "narrative": "Predicción de 13.99131877411448 frente al valor base 11.654911333741776. Subidas por: relative_humidity_2m, fc_boundary_layer_height_d3. Bajadas por: ICA_zbe, ICA_out."
+      }
     },
     "PM10_out_d1": {
-      "prediction_v1": 12.63,
-      "prediction": 18.15,
-      "lower": 12.76,
-      "upper": 23.53,
+      "prediction_v1": 12.76,
+      "prediction": 18.24,
+      "lower": 12.85,
+      "upper": 23.62,
       "rmse_cv": 4.208,
-      "correction": 5.52
+      "correction": 5.48,
+      "foresight": {
+        "base_value": 10.85,
+        "positive_top": [
+          {
+            "feature": "relative_humidity_2m",
+            "value": 2.0
+          },
+          {
+            "feature": "fc_boundary_layer_height_d3",
+            "value": 0.7
+          },
+          {
+            "feature": "fc_sunshine_duration_d2",
+            "value": 0.45
+          },
+          {
+            "feature": "fc_wind_speed_10m_d1",
+            "value": 0.39
+          },
+          {
+            "feature": "fc_precipitation_d1",
+            "value": 0.24
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "ICA_out",
+            "value": -1.26
+          },
+          {
+            "feature": "PM2.5_out",
+            "value": -1.05
+          },
+          {
+            "feature": "PM10_out",
+            "value": -0.92
+          },
+          {
+            "feature": "temp_range",
+            "value": -0.24
+          },
+          {
+            "feature": "PM10_zbe",
+            "value": -0.11
+          }
+        ],
+        "narrative": ""
+      }
     },
     "PM2.5_zbe_d1": {
-      "prediction_v1": 8.73,
-      "prediction": 10.19,
-      "lower": 6.76,
-      "upper": 13.62,
+      "prediction_v1": 8.74,
+      "prediction": 10.2,
+      "lower": 6.77,
+      "upper": 13.63,
       "rmse_cv": 2.68,
-      "correction": 1.46
+      "correction": 1.46,
+      "foresight": {
+        "base_value": 7.36,
+        "positive_top": [
+          {
+            "feature": "fc_boundary_layer_height_d3",
+            "value": 0.67
+          },
+          {
+            "feature": "PM10_zbe_lag_2d",
+            "value": 0.49
+          },
+          {
+            "feature": "boundary_layer_height",
+            "value": 0.48
+          },
+          {
+            "feature": "fc_wind_speed_10m_d1",
+            "value": 0.45
+          },
+          {
+            "feature": "weather_code",
+            "value": 0.33
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "ICA_out",
+            "value": -0.75
+          },
+          {
+            "feature": "ICA_zbe",
+            "value": -0.69
+          },
+          {
+            "feature": "PM2.5_zbe",
+            "value": -0.58
+          },
+          {
+            "feature": "sunshine_duration",
+            "value": -0.31
+          },
+          {
+            "feature": "fc_relative_humidity_2m_d1",
+            "value": -0.24
+          }
+        ],
+        "narrative": "Predicción de 8.742521507773992 frente al valor base 7.364895194923076. Subidas por: fc_boundary_layer_height_d3, PM10_zbe_lag_2d. Bajadas por: ICA_out, ICA_zbe."
+      }
     },
     "PM2.5_out_d1": {
-      "prediction_v1": 7.78,
-      "prediction": 11.4,
-      "lower": 7.41,
-      "upper": 15.38,
+      "prediction_v1": 7.66,
+      "prediction": 11.31,
+      "lower": 7.32,
+      "upper": 15.29,
       "rmse_cv": 3.111,
-      "correction": 3.62
+      "correction": 3.65,
+      "foresight": {
+        "base_value": 7.25,
+        "positive_top": [
+          {
+            "feature": "fc_wind_speed_10m_d1",
+            "value": 1.16
+          },
+          {
+            "feature": "fc_boundary_layer_height_d3",
+            "value": 0.61
+          },
+          {
+            "feature": "fc_sunshine_duration_d2",
+            "value": 0.31
+          },
+          {
+            "feature": "weather_code",
+            "value": 0.3
+          },
+          {
+            "feature": "traffic_volume_lag_1d",
+            "value": 0.3
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "PM2.5_out",
+            "value": -1.21
+          },
+          {
+            "feature": "ICA_out",
+            "value": -0.87
+          },
+          {
+            "feature": "sunshine_duration",
+            "value": -0.42
+          },
+          {
+            "feature": "PM2.5_zbe",
+            "value": -0.27
+          },
+          {
+            "feature": "fc_boundary_layer_height_d2",
+            "value": -0.2
+          }
+        ],
+        "narrative": ""
+      }
     },
     "ICA_zbe_d1": {
-      "prediction_v1": 27.13,
-      "prediction": 30.75,
-      "lower": 22.15,
-      "upper": 39.35,
+      "prediction_v1": 26.47,
+      "prediction": 30.25,
+      "lower": 21.65,
+      "upper": 38.85,
       "rmse_cv": 6.722,
-      "correction": 3.62
+      "correction": 3.78,
+      "foresight": {
+        "base_value": 20.22,
+        "positive_top": [
+          {
+            "feature": "fc_boundary_layer_height_d3",
+            "value": 1.73
+          },
+          {
+            "feature": "fc_wind_speed_10m_d1",
+            "value": 1.27
+          },
+          {
+            "feature": "ICA_zbe_lag_30d",
+            "value": 0.99
+          },
+          {
+            "feature": "relative_humidity_2m",
+            "value": 0.85
+          },
+          {
+            "feature": "fc_wind_gusts_10m_d1",
+            "value": 0.83
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "ICA_zbe",
+            "value": -2.19
+          },
+          {
+            "feature": "ICA_out",
+            "value": -0.95
+          },
+          {
+            "feature": "wind_v",
+            "value": -0.47
+          },
+          {
+            "feature": "PM10_zbe",
+            "value": -0.46
+          },
+          {
+            "feature": "PM2.5_out",
+            "value": -0.43
+          }
+        ],
+        "narrative": "Predicción de 26.466215669801265 frente al valor base 20.215221467721086. Subidas por: fc_boundary_layer_height_d3, fc_wind_speed_10m_d1. Bajadas por: ICA_zbe, ICA_out."
+      }
     },
     "ICA_out_d1": {
-      "prediction_v1": 21.5,
-      "prediction": 30.57,
-      "lower": 20.35,
-      "upper": 40.79,
+      "prediction_v1": 21.93,
+      "prediction": 30.89,
+      "lower": 20.67,
+      "upper": 41.12,
       "rmse_cv": 7.987,
-      "correction": 9.07
+      "correction": 8.96,
+      "foresight": {
+        "base_value": 20.24,
+        "positive_top": [
+          {
+            "feature": "fc_wind_speed_10m_d1",
+            "value": 1.93
+          },
+          {
+            "feature": "fc_boundary_layer_height_d3",
+            "value": 1.03
+          },
+          {
+            "feature": "traffic_volume_lag_1d",
+            "value": 1.01
+          },
+          {
+            "feature": "ICA_zbe_lag_30d",
+            "value": 0.8
+          },
+          {
+            "feature": "fc_sunshine_duration_d2",
+            "value": 0.35
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "ICA_out",
+            "value": -4.23
+          },
+          {
+            "feature": "PM2.5_out",
+            "value": -2.26
+          },
+          {
+            "feature": "exp_traffic_volume_d1",
+            "value": -0.43
+          },
+          {
+            "feature": "sunshine_duration",
+            "value": -0.42
+          },
+          {
+            "feature": "temp_range",
+            "value": -0.26
+          }
+        ],
+        "narrative": ""
+      }
     }
   }
 }

@@ -24,6 +24,7 @@ Uso:
 
 import sys
 import json
+import os
 import warnings
 from pathlib import Path
 from datetime import datetime, timezone
@@ -34,10 +35,17 @@ import joblib
 
 warnings.filterwarnings("ignore")
 
-# ??? RUTAS ????????????????????????????????????????????????????????????????????
 ROOT_DIR      = Path(__file__).parent.parent.parent
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 MODELS_DIR    = ROOT_DIR / "models"
+
+# Cargar variables de entorno
+env_path = ROOT_DIR / ".env"
+if env_path.exists():
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        if '=' in line and not line.strip().startswith('#'):
+            k, v = line.split('=', 1)
+            os.environ.setdefault(k.strip(), v.strip())
 
 DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
 STATION_DAILY_PATH = PROCESSED_DIR / "station_daily.csv"
@@ -325,11 +333,72 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
                 "rmse_cv":       r["rmse_cv"],
                 "correction":    round(pred_v2 - r["prediction"], 2)
             }
+            if "foresight" in r:
+                refined_results[target]["foresight"] = r["foresight"]
         except Exception as e:
             log(f"  [WARN] Fallo en meta-modelo {target}: {e}")
             refined_results[target] = r
             
     return refined_results
+
+
+def generate_llm_narrative(target: str, pred_val: float, base_val: float, positive_feats: list, negative_feats: list) -> str:
+    """Generate a narrative using Groq LLM based on SHAP contributions."""
+    import os
+    import requests
+
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        # Fallback si no hay API key
+        return f"Predicción de {pred_val} frente al valor base {base_val}. Subidas por: {', '.join([f[0] for f in positive_feats[:2]])}. Bajadas por: {', '.join([f[0] for f in negative_feats[:2]])}."
+
+    # Mapeo simple para que el prompt incluya nombres más legibles
+    feat_map = {
+        "fc_temperature_2m_d1": "Temperatura alta",
+        "fc_wind_speed_10m_d1": "Velocidad del viento",
+        "fc_wind_gusts_10m_d1": "Ráfagas de viento",
+        "traffic_volume_lag_1d": "Tráfico reciente",
+        "NO2_zbe_roll_mean_7d": "Acumulación reciente de NO2",
+        "PM10_zbe_roll_mean_14d": "Acumulación reciente de PM10",
+        "is_weekend": "Día del fin de semana",
+        "es_domingo": "Domingo",
+        "fc_precipitation_d1": "Precipitación prevista",
+    }
+    
+    pos_str = ", ".join([f"{feat_map.get(f[0], f[0])} (+{round(f[1], 2)})" for f in positive_feats[:3]])
+    neg_str = ", ".join([f"{feat_map.get(f[0], f[0])} ({round(f[1], 2)})" for f in negative_feats[:3]])
+
+    prompt = (
+        f"La predicción del contaminante {target.split('_')[0]} para mañana en la zona {target.split('_')[1].upper()} "
+        f"es de {round(pred_val, 1)} µg/m³. "
+        f"El valor medio habitual (base) es {round(base_val, 1)} µg/m³.\n"
+        f"Los principales factores que empujan la contaminación AL ALZA son: {pos_str}.\n"
+        f"Los factores que empujan la contaminación A LA BAJA son: {neg_str}.\n\n"
+        f"Actúa como un experto ambiental. Escribe un breve análisis (2 párrafos muy cortos de máximo 3 líneas cada uno) "
+        f"explicando a los ciudadanos de forma directa, sin saludos ni introducciones largas, por qué sube o baja este contaminante."
+    )
+
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama3-8b-8192",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.5,
+                "max_tokens": 300
+            },
+            timeout=10
+        )
+        if response.status_code == 200:
+            return response.json()["choices"][0]["message"]["content"].strip()
+        else:
+            return f"Error API Groq: {response.text}"
+    except Exception as e:
+        return f"Error conectando al LLM: {str(e)}"
 
 
 # ??? 4. PREDECIR ??????????????????????????????????????????????????????????????
@@ -360,6 +429,32 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
         X = row.reindex(columns=features, fill_value=0).fillna(0)
         pred = float(model.predict(X)[0])
         pred = max(0.0, pred)  # los contaminantes no pueden ser negativos
+        
+        # Calcular SHAP / Feature Contributions
+        try:
+            contribs = model.predict(X, pred_contrib=True)
+            base_value = float(contribs[0, -1])
+            feats_impact = list(zip(features, contribs[0, :-1]))
+            # Ordenar por magnitud de impacto
+            feats_impact.sort(key=lambda x: abs(x[1]), reverse=True)
+            
+            # Separar positivos y negativos
+            positive_feats = [f for f in feats_impact if f[1] > 0]
+            negative_feats = [f for f in feats_impact if f[1] < 0]
+            
+            # Generar narrativa solo si es un target de la ZBE (por rendimiento)
+            narrative = ""
+            if "_zbe_" in target:
+                narrative = generate_llm_narrative(target, pred, base_value, positive_feats, negative_feats)
+                
+            foresight = {
+                "base_value": round(base_value, 2),
+                "positive_top": [{"feature": f[0], "value": round(float(f[1]), 2)} for f in positive_feats[:5]],
+                "negative_top": [{"feature": f[0], "value": round(float(f[1]), 2)} for f in negative_feats[:5]],
+                "narrative": narrative
+            }
+        except Exception as e:
+            foresight = {"error": str(e)}
 
         rmse_cv = CV_RMSE.get(target, 0)
         results[target] = {
@@ -367,6 +462,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
             "lower":      round(max(0, pred - 1.28 * rmse_cv), 2),  # ~90% CI
             "upper":      round(pred + 1.28 * rmse_cv, 2),
             "rmse_cv":    rmse_cv,
+            "foresight":  foresight
         }
 
     return results
