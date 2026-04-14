@@ -704,7 +704,6 @@ html_template = """<!DOCTYPE html>
       <button class="tab active" onclick="selectContFs('NO2', this)">NO₂</button>
       <button class="tab" onclick="selectContFs('PM10', this)">PM10</button>
       <button class="tab" onclick="selectContFs('PM2.5', this)">PM2.5</button>
-      <button class="tab" onclick="selectContFs('ICA', this)">ICA</button>
     </div>
     <div class="sep"></div>
     <span class="controls-label">ZONA</span>

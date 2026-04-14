@@ -1,6 +1,6 @@
 {
   "prediction_date": "2026-04-04",
-  "generated_at": "2026-04-14T14:15:25.851124+00:00",
+  "generated_at": "2026-04-14T18:40:13.757584+00:00",
   "model_version": "v5",
   "targets": {
     "NO2_zbe_d1": {
@@ -56,7 +56,7 @@
             "value": -0.28
           }
         ],
-        "narrative": "El nivel de contaminación por NO2 en la zona ZBE para mañana se espera que sea de 14.2 µg/m³, lo que supera el valor medio habitual de 10.8 µg/m³. Esto se debe a varios factores, entre los que destacan la temperatura alta, que contribuye con un aumento de 1.01 µg/m³, y la acumulación reciente de NO2, que aporta un aumento adicional de 0.98 µg/m³.\n\nAdemás, se espera un aumento de 1.22 µg/m³ debido a la contaminación NO2 en la zona ZBE. Es importante tener en cuenta que estos factores pueden variar y afectar la calidad del aire en la zona."
+        "narrative": "La concentración de NO2 en la zona ZBE se espera que aumente mañana debido a varios factores. La alta temperatura y la acumulación reciente de NO2 contribuyen a este aumento, lo que significa que el calor y la contaminación existente se acumulan en el aire.\n\nSin embargo, también hay factores que podrían mitigar este aumento, como el descenso del tráfico y la dirección del viento, que podrían ayudar a disminuir la contaminación. Pero en este momento, los factores que aumentan la contaminación parecen tener más peso."
       }
     },
     "NO2_out_d1": {
@@ -112,7 +112,7 @@
             "value": -0.14
           }
         ],
-        "narrative": ""
+        "narrative": "La predicción de NO2 para mañana en la zona OUT es de 13.4 µg/m³, lo que supone un aumento con respecto al valor medio habitual de 12.5 µg/m³. Esto se debe a varios factores, entre los que destacan las ráfagas de viento, la temperatura alta y la emisión de NO2 en la zona OUT, que aumentan la contaminación.\n\nSin embargo, debemos tener en cuenta que otros factores, como el tráfico, la temperatura y la concentración de partículas finas (PM10), pueden ayudar a reducir la contaminación. En este caso, parece que estos factores no están teniendo un impacto significativo en la reducción de la contaminación de NO2."
       }
     },
     "PM10_zbe_d1": {
@@ -168,7 +168,7 @@
             "value": -0.25
           }
         ],
-        "narrative": "La predicción del contaminante PM10 para mañana en la zona ZBE es de 14.0 µg/m³, lo que supera el valor medio habitual de 11.7 µg/m³. Esto se debe a varios factores que empujan la contaminación en aumento. El aumento de la humedad relativa y la reducción de la altura de la capa límite atmosférica contribuyen a la acumulación de partículas en el aire.\n\nAdemás, el aumento de la velocidad del viento es otro factor que contribuye a la subida de la contaminación. La velocidad del viento es importante porque ayuda a dispersar las partículas en el aire, pero en este caso, parece que no está teniendo ese efecto. Por el contrario, la actividad industrial y la insolación disminuyen, lo que también contribuye a la subida de la contaminación."
+        "narrative": "La contaminación del PM10 para mañana en la zona ZBE se espera que aumente debido a varios factores. La humedad relativa en la superficie del suelo (+2.37) y la altura del estrato de capa frontera (+0.98) contribuyen a que el contaminante se acumule en la atmósfera. Además, un viento más rápido (+0.53) facilita el transporte de partículas contaminantes.\n\nPor otro lado, factores como la inestabilidad atmosférica en la zona ZBE (-1.46) y fuera de la zona ZBE (-0.54) ayudan a dispersar las partículas contaminantes, lo que reduce la contaminación. También, una menor duración de la luz solar (-0.53) contribuye a disminuir la formación de partículas contaminantes."
       }
     },
     "PM10_out_d1": {
@@ -224,7 +224,7 @@
             "value": -0.11
           }
         ],
-        "narrative": ""
+        "narrative": "La predicción del contaminante PM10 para mañana en la zona OUT es de 12.8 µg/m³, lo que es un aumento con respecto al valor medio habitual de 10.8 µg/m³. Esto se debe a varios factores, como la humedad relativa que aumenta la concentración de partículas en el aire, la reducción de la altura de la capa de mezcla que hace que las partículas se acumulen más cerca del suelo y la reducción de la duración del sol que puede ayudar a eliminar las partículas del aire.\n\nSin embargo, hay algunos factores que trabajan en contra de la contaminación, como la reducción de la concentración de partículas PM2.5 y PM10 en el aire, lo que sugiere que hay menos emisiones de partículas en el área. Es importante tener en cuenta que la contaminación es un proceso complejo y que estos factores pueden interactuar entre sí de manera compleja."
       }
     },
     "PM2.5_zbe_d1": {
@@ -280,7 +280,7 @@
             "value": -0.24
           }
         ],
-        "narrative": "La predicción del PM2.5 para mañana en la zona ZBE es de 8.7 µg/m³, lo que es un poco más alto que el valor medio habitual de 7.4 µg/m³. Esto se debe principalmente a la reducción de la altura de la capa límite del aire, que ha aumentado en un 0.67, lo que permite que los contaminantes se concentren en la atmósfera.\n\nAdemás, la cantidad de partículas PM10 en la zona ha aumentado en un 0.49, lo que también contribuye a la contaminación. Por otro lado, la concentración de partículas PM2.5 en la zona también ha aumentado, lo que es un factor negativo. Sin embargo, la influencia de estos factores positivos es mayor que la influencia negativa de la reducción de la concentración de partículas PM2.5 en la zona."
+        "narrative": "La predicción del contaminante PM2.5 para mañana en la zona ZBE es de 8.7 µg/m³, lo que supone un aumento de 1.3 µg/m³ con respecto al valor medio habitual. Esto se debe principalmente a factores que empujan la contaminación al alza, como la altura de la capa limitante del aire (+0.67), la concentración de PM10 en la zona ZBE con un retraso de 2 días (+0.49) y la altura de la capa limitante del aire (+0.48).\n\nEstos factores indican que la contaminación en la zona ZBE se ve influenciada por la estabilidad del aire y la acumulación de partículas finas, lo que puede ser debido a la estagnación del aire en la zona. Es importante tomar medidas para reducir la emisión de partículas finas y promover la circulación del aire para mejorar la calidad del aire en la zona."
       }
     },
     "PM2.5_out_d1": {
@@ -336,7 +336,7 @@
             "value": -0.2
           }
         ],
-        "narrative": ""
+        "narrative": "La predicción de PM2.5 para mañana en la zona OUT es de 7.7 µg/m³, lo que supone un aumento en comparación con el valor medio habitual de 7.3 µg/m³. Esto se debe principalmente a la velocidad del viento, que ha aumentado, lo que permite que los contaminantes se dispersen menos. Además, el tiempo de sol ha sido mayor.\n\nSin embargo, también hay factores que podrían estar contribuyendo a la disminución de la contaminación, como la mayor cantidad de partículas PM2.5 en la zona OUT, que ha disminuido la cantidad de contaminantes en la atmósfera. El tiempo de sol ha sido mayor, lo que podría haber ayudado a reducir la cantidad de contaminantes."
       }
     },
     "ICA_zbe_d1": {
@@ -392,7 +392,7 @@
             "value": -0.43
           }
         ],
-        "narrative": "La predicción del contaminante ICA para mañana en la zona ZBE es de 26.5 µg/m³, lo que supera el valor medio habitual de 20.2 µg/m³. Esto se debe a varios factores que empujan la contaminación al alza, como la altura de la capa límite del terreno (+1.73), la velocidad del viento (+1.27) y la concentración de contaminantes en la zona ZBE con un retraso de 30 días (+0.99).\n\nEs importante destacar que no todos los factores influyen en la misma dirección, por lo que es necesario analizarlos cuidadosamente. En este caso, la altura de la capa límite y la velocidad del viento contribuyen a aumentar la contaminación, mientras que la concentración de contaminantes en la zona ZBE con un retraso de 30 días tiende a disminuirla. Sin embargo, la influencia de estos últimos factores es menor en comparación con los primeros."
+        "narrative": "La contaminación está subiendo debido a varios factores. El aumento en la altura de la capa de mezcla atmosférica (+1.73) y la velocidad del viento (+1.27) están contribuyendo a llevar el contaminante hacia la zona, mientras que la tendencia a largo plazo de la contaminación en la zona ZBE también está aumentando (+0.99).\n\nSin embargo, la contaminación en la zona ZBE misma está disminuyendo (-2.19), lo que podría parecer contradictorio. Pero es importante tener en cuenta que la tendencia a largo plazo es solo una parte del cuadro, y los factores mencionados anteriormente están teniendo un impacto mayor en la contaminación actual."
       }
     },
     "ICA_out_d1": {
@@ -448,7 +448,7 @@
             "value": -0.26
           }
         ],
-        "narrative": ""
+        "narrative": "El contaminante ICA está subiendo debido a varios factores. La velocidad del viento es alta, lo que permite que las partículas contaminantes se dispersen menos, y por lo tanto, aumentan los niveles de contaminación. Además, el tráfico reciente ha aumentado la cantidad de partículas emitidas.\n\nSin embargo, hay un factor que podría mitigar este aumento: el valor medio habitual (base) es de 20.2 µg/m³, lo que significa que la contaminación ICA está ligeramente por encima de lo normal. Pero el factor que más impacta negativamente es ICA_out, que empuja la contaminación a la baja."
       }
     }
   }
