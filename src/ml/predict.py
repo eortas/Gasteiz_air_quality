@@ -442,10 +442,8 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
             positive_feats = [f for f in feats_impact if f[1] > 0]
             negative_feats = [f for f in feats_impact if f[1] < 0]
             
-            # Generar narrativa solo si es un target de la ZBE (por rendimiento)
-            narrative = ""
-            if "_zbe_" in target:
-                narrative = generate_llm_narrative(target, pred, base_value, positive_feats, negative_feats)
+            # Generar narrativa para todos los targets
+            narrative = generate_llm_narrative(target, pred, base_value, positive_feats, negative_feats)
                 
             foresight = {
                 "base_value": round(base_value, 2),
