@@ -77,7 +77,8 @@ jobs:
           git add data/raw/air/*.csv.gz || true
           git add data/raw/weather/*.csv.gz || true
           git add data/raw/**/checkpoint_air.json || true
-          git diff --staged --quiet || git commit -m "dashboard + data: actualización automática $(date -u '+%Y-%m-%d')"
+          git add data/processed/predictions_latest.json || true
+          git diff --staged --quiet || git commit -m "dashboard + data + bot: actualización automática $(date -u '+%Y-%m-%d')"
           git push
 
 
