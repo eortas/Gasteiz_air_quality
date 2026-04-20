@@ -79,6 +79,7 @@ jobs:
           git add data/raw/**/checkpoint_air.json || true
           git add data/processed/predictions_latest.json || true
           git add data/processed/station_daily.csv || true
+          git add models/synthetic_control_v9.json || true
           git diff --staged --quiet || git commit -m "dashboard + data + bot: actualización automática $(date -u '+%Y-%m-%d')"
           git push
 

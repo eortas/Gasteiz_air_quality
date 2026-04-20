@@ -75,6 +75,48 @@ def get_historical_data_for_date(date_str: str) -> dict:
             
     return None
 
+def get_synthetic_summary() -> dict:
+    """Extrae un resumen de los datos contrafactuales de los últimos 7 días."""
+    url = "https://raw.githubusercontent.com/eortas/Gasteiz_air_quality/main/models/synthetic_control_v9.json"
+    try:
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:
+        logger.warning(f"No se pudo descargar synthetic_control de GitHub ({e}). Usando local...")
+        json_path = ROOT_DIR / "models" / "synthetic_control_v9.json"
+        if not json_path.exists():
+            return None
+        data = json.loads(json_path.read_text(encoding="utf-8"))
+
+    summary = {}
+    station_map = {
+        "NO2": ["PAUL", "FUEROS"],
+        "PM10": ["PAUL", "FUEROS"],
+        "PM2.5": ["PAUL", "FUEROS"]
+    }
+    
+    for contaminante, est_list in station_map.items():
+        if contaminante not in data:
+            continue
+        for est in est_list:
+            if est in data[contaminante]:
+                series = data[contaminante][est]["series"]
+                last_7_obs = series["observed"][-7:]
+                last_7_syn = series["synthetic"][-7:]
+                
+                avg_obs = sum(last_7_obs) / len(last_7_obs) if last_7_obs else 0
+                avg_syn = sum(last_7_syn) / len(last_7_syn) if last_7_syn else 0
+                
+                if contaminante not in summary:
+                    summary[contaminante] = {}
+                summary[contaminante][est] = {
+                    "observado_con_zbe": round(avg_obs, 2),
+                    "sintetico_sin_zbe": round(avg_syn, 2),
+                    "diferencia": round(avg_obs - avg_syn, 2)
+                }
+    return summary
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = (
         "¡Hola! Soy *VitoriaAirBot* 🌍☁️\n\n"
@@ -124,15 +166,33 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
         
     date_match = re.search(r'(\d{4})[-/](\d{2})[-/](\d{2})', user_msg)
+    counterfactual_match = re.search(r'(?i)(si no hubiera|sin\s?zbe|counterfactual|contrafactual|qué\s?habría)', user_msg)
+    
     target_date = ""
     historical_data = None
+    syn_summary = None
     
-    if date_match:
+    if counterfactual_match:
+        logger.info("Intención contrafactual detectada.")
+        syn_summary = get_synthetic_summary()
+    elif date_match:
         target_date = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
         logger.info(f"Fecha detectada en la pregunta: {target_date}")
         historical_data = get_historical_data_for_date(target_date)
         
-    if historical_data:
+    if syn_summary:
+        system_prompt = (
+            "Eres un analista ambiental experto en evaluación de impacto de Vitoria-Gasteiz.\n"
+            "El usuario te pregunta QUÉ HABRÍA PASADO o CÓMO ESTARÍAMOS SI NO EXISTIERA LA ZBE.\n"
+            "Tienes a tu disposición los promedios de la última semana de nuestro modelo de Control Sintético:\n"
+            f"{json.dumps(syn_summary, indent=2)}\n\n"
+            "Reglas para ti:\n"
+            "- Explica la diferencia entre lo 'observado_con_zbe' (la realidad actual) y lo 'sintetico_sin_zbe' (el gemelo virtual contrafactual).\n"
+            "- Un valor 'diferencia' negativo significa que la contaminación real es menor (es decir, HA BAJADO gracias a la ZBE).\n"
+            "- Sé divulgativo, claro y responde en no más de 2 párrafos.\n"
+            "- Usa lenguaje asertivo, como 'nuestros modelos contrafactuales indican que...'"
+        )
+    elif historical_data:
         system_prompt = (
             "Eres un analista ambiental amigable de Vitoria-Gasteiz.\n"
             f"El usuario pregunta por la calidad del aire del pasado: {target_date}.\n"
