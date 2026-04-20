@@ -28,13 +28,24 @@ logger = logging.getLogger(__name__)
 
 def get_latest_predictions() -> dict:
     """Extrae el JSON de la última predicción del pipeline."""
+    # En producción (Render), lo bajamos directo de GitHub para tener siempre el más reciente
+    # asumiendo que el repositorio es público y se llama eortas/Gasteiz_air_quality
+    url = "https://raw.githubusercontent.com/eortas/Gasteiz_air_quality/main/data/processed/predictions_latest.json"
+    try:
+        r = requests.get(url, timeout=10)
+        if r.status_code == 200:
+            return r.json()
+    except Exception as e:
+        logger.warning(f"No se pudo descargar JSON de GitHub ({e}). Usando fallback local...")
+
+    # Fallback local para pruebas
     json_path = PROCESSED_DIR / "predictions_latest.json"
     if not json_path.exists():
         return None
     try:
         return json.loads(json_path.read_text(encoding="utf-8"))
     except Exception as e:
-        logger.error(f"Error leyendo predicciones: {e}")
+        logger.error(f"Error leyendo predicciones locales: {e}")
         return None
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -155,8 +166,20 @@ def main():
     app.add_handler(CommandHandler("prevision", prevision_command))
     app.add_handler(MessageHandler(filters.TEXT & ~(filters.COMMAND), chat_handler))
     
-    logger.info("Iniciando VitoriaAirBot en modo polling...")
-    app.run_polling()
+    # Soporte para Webhooks en Render (Web Service) o Polling local
+    webhook_url = os.environ.get("RENDER_EXTERNAL_URL") or os.environ.get("WEBHOOK_URL")
+    
+    if webhook_url:
+        port = int(os.environ.get("PORT", "10000"))
+        logger.info(f"Iniciando VitoriaAirBot en modo WEBHOOK en port {port}...")
+        app.run_webhook(
+            listen="0.0.0.0",
+            port=port,
+            webhook_url=webhook_url
+        )
+    else:
+        logger.info("Iniciando VitoriaAirBot en modo polling (desarrollo local)...")
+        app.run_polling()
 
 if __name__ == "__main__":
     main()
