@@ -3,6 +3,7 @@ import json
 import logging
 from pathlib import Path
 import requests
+import re
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -47,6 +48,32 @@ def get_latest_predictions() -> dict:
     except Exception as e:
         logger.error(f"Error leyendo predicciones locales: {e}")
         return None
+
+def get_historical_data_for_date(date_str: str) -> dict:
+    """Busca los datos empíricos de una fecha específica en station_daily.csv"""
+    url = "https://raw.githubusercontent.com/eortas/Gasteiz_air_quality/main/data/processed/station_daily.csv"
+    try:
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        lines = r.text.strip().split('\n')
+    except Exception as e:
+        logger.warning(f"No se pudo descargar CSV de GitHub ({e}). Usando fallback local...")
+        csv_path = PROCESSED_DIR / "station_daily.csv"
+        if not csv_path.exists():
+            return None
+        lines = csv_path.read_text(encoding="utf-8").strip().split('\n')
+
+    if not lines:
+        return None
+
+    header = lines[0].split(',')
+    
+    for line in lines[1:]:
+        if line.startswith(date_str):
+            values = line.split(',')
+            return dict(zip(header, values))
+            
+    return None
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = (
@@ -96,34 +123,57 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text("Error: GROQ_API_KEY no está configurada. No puedo procesar tu lenguaje.")
         return
         
-    preds = get_latest_predictions()
-    if not preds:
-        await update.message.reply_text("No tengo datos de previsiones activos para poder responderte.")
-        return
+    date_match = re.search(r'(\d{4})[-/](\d{2})[-/](\d{2})', user_msg)
+    target_date = ""
+    historical_data = None
+    
+    if date_match:
+        target_date = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
+        logger.info(f"Fecha detectada en la pregunta: {target_date}")
+        historical_data = get_historical_data_for_date(target_date)
         
-    date = preds.get("prediction_date", "desconocida")
-    targs = preds.get("targets", {})
-    
-    # Construir el contexto numérico de los targets
-    context_data = []
-    for k, v in targs.items():
-        val = v.get("prediction", 0)
-        context_data.append(f"{k}: {val:.1f} µg/m³")
-    context_str = ", ".join(context_data)
-    
-    # Prompt de sistema que será la personalidad del bot
-    system_prompt = (
-        "Eres un asistente amigable y experto ambiental que responde a los ciudadanos de Vitoria-Gasteiz. "
-        "Tomas decisiones sobre si es bueno salir en bici, pasear o hacer deporte "
-        "basándote EXCLUSIVAMENTE en los datos predictivos.\n\n"
-        f"Día de la predicción: {date}\n"
-        f"Datos del modelo Predictivo:\n{context_str}\n\n"
-        "Reglas para ti:\n"
-        "- Sé extremadamente breve y directo en tu consejo (1-2 párrafos).\n"
-        "- Usa un lenguaje cotidiano, asertivo y añade algunos emojis para dar color.\n"
-        "- Si te preguntan si pueden ir en bici o salir, tienes que valorar esto: NO2 > 25 (malo), PM10 > 45 (malo), PM2.5 > 15 (malo). Si los datos son inferiores a esos umbrales, anímalos con efusividad a salir.\n"
-        "- Recuerda que 'zbe' es la zona centro (Zona de Bajas Emisiones) y 'out' son las afueras."
-    )
+    if historical_data:
+        system_prompt = (
+            "Eres un analista ambiental amigable de Vitoria-Gasteiz.\n"
+            f"El usuario pregunta por la calidad del aire del pasado: {target_date}.\n"
+            f"Datos medidos ese día (vacíos significan sin medición):\n{json.dumps(historical_data, indent=2)}\n\n"
+            "Reglas para ti:\n"
+            "- Habla en pasado, analizando los datos empíricos de ese día (enfócate en NO2 y PM10/2.5).\n"
+            "- Sé breve, amigable y divulgativo (1-2 párrafos).\n"
+            "- Las estaciones acaban en _ICA, _NO2, _PM10.\n"
+            "- Valora si ese día **fue** bueno para salir o no.\n"
+        )
+    else:
+        if date_match and not historical_data:
+            await update.message.reply_text(f"Lo siento, he buscado en el archivo histórico y no tengo datos registrados para el día {target_date}.")
+            return
+            
+        preds = get_latest_predictions()
+        if not preds:
+            await update.message.reply_text("No tengo datos de previsiones activos para poder responderte.")
+            return
+            
+        date = preds.get("prediction_date", "desconocida")
+        targs = preds.get("targets", {})
+        
+        context_data = []
+        for k, v in targs.items():
+            val = v.get("prediction", 0)
+            context_data.append(f"{k}: {val:.1f} µg/m³")
+        context_str = ", ".join(context_data)
+        
+        system_prompt = (
+            "Eres un asistente amigable y experto ambiental que responde a los ciudadanos de Vitoria-Gasteiz. "
+            "Tomas decisiones sobre si es bueno salir en bici, pasear o hacer deporte "
+            "basándote EXCLUSIVAMENTE en los datos predictivos.\n\n"
+            f"Día de la predicción: {date}\n"
+            f"Datos del modelo Predictivo:\n{context_str}\n\n"
+            "Reglas para ti:\n"
+            "- Sé extremadamente breve y directo en tu consejo (1-2 párrafos).\n"
+            "- Usa un lenguaje cotidiano, asertivo y añade algunos emojis para dar color.\n"
+            "- Valora esto: NO2 > 25 (malo), PM10 > 45 (malo), PM2.5 > 15 (malo). Si los datos son menores, anímalos a salir.\n"
+            "- Recuerda que 'zbe' es la zona centro y 'out' las afueras."
+        )
     
     # Llamar a la API de Groq
     try:
