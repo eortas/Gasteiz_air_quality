@@ -151,13 +151,21 @@ async def prevision_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             val = targs[key].get("prediction", 0)
             msg += f"👉 *{label}:* {val:.1f} µg/m³\n"
             
-    # Añadir el comentario pre-generado por LLM si el ICA_zbe tiene uno
+    try:
+        await update.message.reply_text(msg, parse_mode="Markdown")
+    except Exception as e:
+        logger.error(f"Error enviando stats con markdown: {e}")
+        await update.message.reply_text(msg) # Fallback sin markdown
+            
+    # Añadir el comentario pre-generado por LLM en un mensaje separado (sin Markdown estricto)
     if "ICA_zbe_d1" in targs and "foresight" in targs["ICA_zbe_d1"]:
         narrative = targs["ICA_zbe_d1"]["foresight"].get("narrative", "")
         if narrative:
-            msg += f"\n💡 *Análisis General:*\n{narrative}\n"
-            
-    await update.message.reply_text(msg, parse_mode="Markdown")
+            narrative_msg = f"💡 Análisis General:\n{narrative}"
+            try:
+                await update.message.reply_text(narrative_msg)
+            except Exception as e:
+                logger.error(f"Error enviando narrativa: {e}")
 
 async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_msg = update.message.text
