@@ -438,9 +438,14 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
             # Ordenar por magnitud de impacto
             feats_impact.sort(key=lambda x: abs(x[1]), reverse=True)
             
-            # Separar positivos y negativos
-            positive_feats = [f for f in feats_impact if f[1] > 0]
+            # Asegurarnos de tener al menos las top features para el gráfico
+            # incluso si el impacto es casi cero, para evitar gráficos vacíos
+            positive_feats = [f for f in feats_impact if f[1] >= 0]
             negative_feats = [f for f in feats_impact if f[1] < 0]
+            
+            # Si no hay ninguna negativa, incluimos las más cercanas a cero
+            if not negative_feats:
+                negative_feats = [f for f in feats_impact if f[1] <= 0]
             
             # Generar narrativa para todos los targets
             narrative = generate_llm_narrative(target, pred, base_value, positive_feats, negative_feats)

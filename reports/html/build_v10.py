@@ -119,10 +119,9 @@ try:
         for zone in ["zbe", "out"]:
             key = f"{cont}_{zone}_d1"
             if key in targets:
-                # Prioridad a 'refined' (v2), si no 'prediction' (v1)
-                val_v2 = targets[key].get("refined")
-                val_v1 = targets[key].get("prediction", 0)
-                manana_data[zone][cont] = val_v2 if val_v2 is not None else val_v1
+                # El script predict.py guarda la predicción final (v2 si existe) en 'prediction'
+                val = targets[key].get("prediction", 0)
+                manana_data[zone][cont] = val
             else:
                 manana_data[zone][cont] = 0
 
@@ -201,13 +200,12 @@ try:
         raise ValueError("El DataFrame de features está vacío.")
 
 except Exception as e:
-    print(f"  WARN No se encontro parquet o error general en backtesting: {e}")
+    print(f"  WARN Error en backtesting: {e}")
     for z in ['zbe', 'out']:
-        perf_data[z] = {"labels": ["1", "2", "3", "4", "5", "6", "Ayer"]}
+        perf_data[z] = {"labels": ["D-6", "D-5", "D-4", "D-3", "D-2", "D-1", "Ayer"]}
         for c in ['NO2', 'PM10', 'PM2.5']:
             perf_data[z][c] = {"real": [0]*7, "pred": [0]*7}
-            if z in manana_data and c in manana_data[z]:
-                manana_data[z][c] = 0
+            # Quitamos la sobrescritura de manana_data que causaba problemas
 
 perf_json_str = json.dumps(perf_data)
 manana_json_str = json.dumps(manana_data)
