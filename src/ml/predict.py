@@ -310,16 +310,16 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
                 "pred_v1": float(r["prediction"]),
                 "error_lag_1d": float(error_lag_1d),
                 "error_roll_mean_7d": float(error_roll_7d),
-                "temperature_2m": float(row["temperature_2m"].fillna(0).iloc[0]),
-                "wind_speed_10m": float(row["wind_speed_10m"].fillna(0).iloc[0]),
-                "boundary_layer_height": float(row["boundary_layer_height"].fillna(0).iloc[0]),
-                "relative_humidity_2m": float(row["relative_humidity_2m"].fillna(0).iloc[0]),
-                "is_weekend": float(row["is_weekend"].fillna(0).iloc[0]),
-                "es_domingo": float(row["es_domingo"].fillna(0).iloc[0]),
-                "es_invierno_estricto": float(row["es_invierno_estricto"].fillna(0).iloc[0]),
+                "temperature_2m": float(pd.to_numeric(row["temperature_2m"], errors='coerce').fillna(0).iloc[0]),
+                "wind_speed_10m": float(pd.to_numeric(row["wind_speed_10m"], errors='coerce').fillna(0).iloc[0]),
+                "boundary_layer_height": float(pd.to_numeric(row["boundary_layer_height"], errors='coerce').fillna(0).iloc[0]),
+                "relative_humidity_2m": float(pd.to_numeric(row["relative_humidity_2m"], errors='coerce').fillna(0).iloc[0]),
+                "is_weekend": float(pd.to_numeric(row["is_weekend"], errors='coerce').fillna(0).iloc[0]),
+                "es_domingo": float(pd.to_numeric(row["es_domingo"], errors='coerce').fillna(0).iloc[0]),
+                "es_invierno_estricto": float(pd.to_numeric(row["es_invierno_estricto"], errors='coerce').fillna(0).iloc[0]),
             }
             
-            X_meta = pd.DataFrame([meta_input])
+            X_meta = pd.DataFrame([meta_input]).astype(float)
             pred_v2 = float(meta_model.predict(X_meta)[0])
             pred_v2 = max(0.0, pred_v2)
             
