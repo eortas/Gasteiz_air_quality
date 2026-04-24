@@ -262,12 +262,12 @@ def main():
         logger.warning("[WARN]  La generación del dashboard falló.")
     else:
         logger.info(f"  -> reports/html/{dated_name}")
-        # Copiar a index.html para que la web se actualice
+        # Copiar a index.html para que la web (Vercel/Pages) se actualice
         try:
-            shutil.copy2(dashboard_dir / dated_name, dashboard_dir / "index.html")
-            logger.success("  [OK] Dashboard copiado a index.html")
+            shutil.copy2(dashboard_dir / dated_name, ROOT_DIR / "index.html")
+            logger.success("  [OK] Dashboard copiado a la raíz (index.html)")
         except Exception as e:
-            logger.error(f"  [ERROR] No se pudo copiar a index.html: {e}")
+            logger.error(f"  [ERROR] No se pudo copiar a la raíz: {e}")
 
     # 9b. Dashboard de Tráfico (Mapa de Sensores)
     if not run_script(
