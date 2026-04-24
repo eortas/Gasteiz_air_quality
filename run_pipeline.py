@@ -126,11 +126,11 @@ def main():
 
     # ── 0. RESTORE DESDE STORAGE ──────────────────────────────────────────────
     if not local_only:
-        logger.info("\n── FASE 0: Restore desde Supabase Storage")
-        if not run_script("Download CSVs historicos", "src/ingestion/download_csv_storage.py", []):
-            logger.warning("[WARN]  Fallo la descarga desde Storage. Puede faltar historico.")
+        logger.info("\n── FASE 0: Restore desde GitHub Releases")
+        if not run_script("Download CSVs historicos", "src/ingestion/download_releases.py", []):
+            logger.warning("[WARN]  Fallo la descarga desde Releases. Puede faltar historico.")
     else:
-        logger.info("\n── FASE 0: Restore - OMITIDO (Supabase Storage)")
+        logger.info("\n── FASE 0: Restore - OMITIDO (GitHub Releases)")
     
     # Restaura desde los .csv.gz que están en el repositorio (Git)
     decompress_local_csvs([
