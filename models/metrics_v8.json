@@ -1,58 +1,58 @@
 {
   "target_NO2_zbe_d1": {
-    "cv_rmse": 3.3513,
-    "cv_mae": 2.6271,
-    "cv_r2": 0.4269,
-    "cv_mape": 22.99,
+    "cv_rmse": 3.3202,
+    "cv_mae": 2.6069,
+    "cv_r2": 0.4116,
+    "cv_mape": 23.15,
     "n_features": 88
   },
   "target_NO2_out_d1": {
-    "cv_rmse": 4.2492,
-    "cv_mae": 3.3976,
-    "cv_r2": 0.4617,
-    "cv_mape": 26.55,
-    "n_features": 67
+    "cv_rmse": 4.2345,
+    "cv_mae": 3.3314,
+    "cv_r2": 0.4459,
+    "cv_mape": 26.41,
+    "n_features": 88
   },
   "target_PM10_zbe_d1": {
-    "cv_rmse": 4.4088,
-    "cv_mae": 3.2793,
-    "cv_r2": 0.451,
-    "cv_mape": 26.25,
-    "n_features": 91
+    "cv_rmse": 4.5893,
+    "cv_mae": 3.4294,
+    "cv_r2": 0.4462,
+    "cv_mape": 26.2,
+    "n_features": 89
   },
   "target_PM10_out_d1": {
-    "cv_rmse": 4.0403,
-    "cv_mae": 2.9686,
-    "cv_r2": 0.4553,
-    "cv_mape": 23.82,
-    "n_features": 92
-  },
-  "target_PM2.5_zbe_d1": {
-    "cv_rmse": 2.8074,
-    "cv_mae": 2.0642,
-    "cv_r2": 0.5821,
-    "cv_mape": 22.28,
-    "n_features": 92
-  },
-  "target_PM2.5_out_d1": {
-    "cv_rmse": 3.0233,
-    "cv_mae": 2.22,
-    "cv_r2": 0.4944,
-    "cv_mape": 24.6,
-    "n_features": 92
-  },
-  "target_ICA_zbe_d1": {
-    "cv_rmse": 7.4538,
-    "cv_mae": 5.4176,
-    "cv_r2": 0.4977,
-    "cv_mape": 27.68,
+    "cv_rmse": 3.8974,
+    "cv_mae": 2.8216,
+    "cv_r2": 0.4806,
+    "cv_mape": 22.81,
     "n_features": 91
   },
+  "target_PM2.5_zbe_d1": {
+    "cv_rmse": 2.8985,
+    "cv_mae": 2.1155,
+    "cv_r2": 0.5498,
+    "cv_mape": 23.14,
+    "n_features": 91
+  },
+  "target_PM2.5_out_d1": {
+    "cv_rmse": 3.0387,
+    "cv_mae": 2.1822,
+    "cv_r2": 0.4698,
+    "cv_mape": 24.64,
+    "n_features": 91
+  },
+  "target_ICA_zbe_d1": {
+    "cv_rmse": 7.4138,
+    "cv_mae": 5.329,
+    "cv_r2": 0.5211,
+    "cv_mape": 26.38,
+    "n_features": 90
+  },
   "target_ICA_out_d1": {
-    "cv_rmse": 7.6127,
-    "cv_mae": 5.417,
-    "cv_r2": 0.4285,
-    "cv_mape": 27.36,
-    "n_features": 92
+    "cv_rmse": 7.6995,
+    "cv_mae": 5.372,
+    "cv_r2": 0.3882,
+    "cv_mape": 26.59,
+    "n_features": 91
   }
 }

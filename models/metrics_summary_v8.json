@@ -1,54 +1,54 @@
 {
   "NO2": {
-    "avg_cv_rmse": 3.8002,
-    "avg_cv_r2": 0.4443
+    "avg_cv_rmse": 3.7774,
+    "avg_cv_r2": 0.4288
   },
   "PM10": {
-    "avg_cv_rmse": 4.2246,
-    "avg_cv_r2": 0.4532
+    "avg_cv_rmse": 4.2433,
+    "avg_cv_r2": 0.4634
   },
   "PM2.5": {
-    "avg_cv_rmse": 2.9154,
-    "avg_cv_r2": 0.5382
+    "avg_cv_rmse": 2.9686,
+    "avg_cv_r2": 0.5098
   },
   "ICA": {
-    "avg_cv_rmse": 7.5332,
-    "avg_cv_r2": 0.4631
+    "avg_cv_rmse": 7.5566,
+    "avg_cv_r2": 0.4546
   },
   "did_v8": {
     "NO2": {
-      "beta3": -0.6051,
-      "pvalue": 0.0216,
-      "ci_low": -1.1214,
-      "ci_high": -0.0888,
-      "r2": 0.6784,
-      "n_obs": 1480,
+      "beta3": -0.6426,
+      "pvalue": 0.0094,
+      "ci_low": -1.1278,
+      "ci_high": -0.1573,
+      "r2": 0.6791,
+      "n_obs": 1540,
       "significant": true,
-      "fe_dummies": 25,
+      "fe_dummies": 26,
       "se_type": "clustered_by_date",
       "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
     },
     "PM10": {
-      "beta3": 3.1622,
+      "beta3": 3.7601,
       "pvalue": 0.0,
-      "ci_low": 2.6148,
-      "ci_high": 3.7096,
-      "r2": 0.3224,
-      "n_obs": 1480,
+      "ci_low": 3.1971,
+      "ci_high": 4.3231,
+      "r2": 0.3409,
+      "n_obs": 1540,
       "significant": true,
-      "fe_dummies": 25,
+      "fe_dummies": 26,
       "se_type": "clustered_by_date",
       "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
     },
     "PM2.5": {
-      "beta3": 0.8447,
+      "beta3": 0.9063,
       "pvalue": 0.0,
-      "ci_low": 0.6192,
-      "ci_high": 1.0701,
-      "r2": 0.3438,
-      "n_obs": 1480,
+      "ci_low": 0.6987,
+      "ci_high": 1.1138,
+      "r2": 0.3557,
+      "n_obs": 1540,
       "significant": true,
-      "fe_dummies": 25,
+      "fe_dummies": 26,
       "se_type": "clustered_by_date",
       "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
     }
