@@ -451,10 +451,10 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
             narrative = generate_llm_narrative(target, pred, base_value, positive_feats, negative_feats)
                 
             foresight = {
-                "base_value": round(base_value, 2),
-                "positive_top": [{"feature": f[0], "value": round(float(f[1]), 2)} for f in positive_feats[:5]],
-                "negative_top": [{"feature": f[0], "value": round(float(f[1]), 2)} for f in negative_feats[:5]],
-                "narrative": narrative
+                "base_value": round(float(base_value), 2),
+                "positive_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in positive_feats[:5]],
+                "negative_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in negative_feats[:5]],
+                "narrative": str(narrative)
             }
         except Exception as e:
             foresight = {"error": str(e)}
