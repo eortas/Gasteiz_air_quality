@@ -68,6 +68,7 @@ jobs:
           git add index.html
           git add traffic_map.html || true
           git add "**/*.png" || true
+          git add data/processed/*.json || true
           git add data/raw/traffic/*.csv.gz || true
           git add data/raw/air/*.csv.gz || true
           git add data/raw/weather/*.csv.gz || true
