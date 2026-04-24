@@ -1,6 +1,6 @@
 {
   "prediction_date": "2026-04-25",
-  "generated_at": "2026-04-24T14:12:31.965338+00:00",
+  "generated_at": "2026-04-24T15:19:05.244050+00:00",
   "model_version": "v5",
   "targets": {
     "NO2_zbe_d1": {
@@ -12,7 +12,7 @@
         "base_value": 6.25,
         "positive_top": [],
         "negative_top": [],
-        "narrative": "La predicción del contaminante NO2 para mañana en la zona ZBE es de 6.3 µg/m³, lo que coincide con el valor medio habitual. En este sentido, no hay factores significativos que empujen la contaminación al alza o a la baja.\n\nNo hay factores que empujen la contaminación al alza. \n\nNo hay factores que empujen la contaminación a la baja."
+        "narrative": "La predicción del contaminante NO2 para mañana en la zona ZBE es de 6.3 µg/m³, lo que coincide con el valor medio habitual. No hay factores que empujen la contaminación al alza. \n\nLos factores que empujan la contaminación a la baja son: no hay factores que lo empujen a la baja."
       }
     },
     "NO2_out_d1": {
@@ -24,7 +24,7 @@
         "base_value": 8.14,
         "positive_top": [],
         "negative_top": [],
-        "narrative": "La predicción del contaminante NO2 para mañana en la zona OUT es de 8.1 µg/m³, lo que coincide con el valor medio habitual. \n\n**Factores que empujan la contaminación AL ALZA:**\n- Emisiones de vehículos de transporte.\n- Actividad industrial en la zona.\n\n**Factores que empujan la contaminación A LA BAJA:**\n- Reducción de la actividad industrial.\n- Mayor uso de transporte público y ciclismo."
+        "narrative": "La predicción del contaminante NO2 para mañana en la zona OUT es de 8.1 µg/m³, lo que coincide con el valor medio habitual. Sin embargo, no hay factores que empujen la contaminación al alza.\n\nLos factores que empujan la contaminación a la baja son: no hay factores que empujen la contaminación a la baja, ya que el valor es igual al valor medio habitual. Es importante seguir las recomendaciones para reducir la contaminación, como evitar el uso de vehículos y apagar dispositivos eléctricos cuando no se utilicen."
       }
     },
     "PM10_zbe_d1": {
@@ -36,7 +36,7 @@
         "base_value": 22.22,
         "positive_top": [],
         "negative_top": [],
-        "narrative": "La predicción del contaminante PM10 para mañana en la zona ZBE es de 22.2 µg/m³, lo que coincide con el valor medio habitual. No hay factores que empujen la contaminación a la alza, por lo que no hay razones para preocuparse por un aumento significativo.\n\nNo hay factores que empujen la contaminación a la baja, por lo que el valor de 22.2 µg/m³ se espera que se mantenga estable. Es importante seguir las recomendaciones para reducir la contaminación, como evitar el uso de vehículos privados y reducir la quema de combustibles fósiles."
+        "narrative": "La predicción del contaminante PM10 para mañana en la zona ZBE es de 22.2 µg/m³, lo que coincide con el valor medio habitual. Sin embargo, es importante mencionar que no hay factores que empujen la contaminación al alza.\n\nNo hay información disponible sobre los factores que empujen la contaminación al alza, por lo que no podemos proporcionar una explicación. Sin embargo, hay factores que empujan la contaminación a la baja, aunque no se especifican en la información proporcionada."
       }
     },
     "PM10_out_d1": {
@@ -48,7 +48,7 @@
         "base_value": 13.42,
         "positive_top": [],
         "negative_top": [],
-        "narrative": "La predicción del contaminante PM10 para mañana en la zona OUT es de 13.4 µg/m³, lo que es idéntico al valor medio habitual. Esto significa que no hay factores externos que estén influyendo en la contaminación.\n\nLos principales factores que empujan la contaminación AL ALZA son: \n- Vientos de dirección NO o SE (no se menciona esta información por lo que no hay datos para esta opción).\n- Temperaturas extremas (no se menciona esta información por lo que no hay datos para esta opción).\n- Actividad industrial o de transporte (no se menciona esta información por lo que no hay datos para esta opción).\n- Otras condiciones meteorológicas o de emisión (no se menciona esta información por lo que no hay datos para esta opción).\n\nLos factores que empujan la contaminación A LA BAJA son: \n- Vientos de dirección NO o SE (no se menciona esta información por lo que no hay datos para esta opción).\n- Temperaturas extremas (no se menciona esta información por lo que no hay datos para esta opción).\n- Actividad industrial o de transporte (no se menciona esta información por lo que no hay datos para esta opción).\n- Otras condiciones meteorológicas o de emisión (no se menciona esta información por lo que no hay datos para esta opción)."
+        "narrative": "La predicción del contaminante PM10 para mañana en la zona OUT es de 13.4 µg/m³, lo que es el mismo que el valor medio habitual. Sin embargo, no hay información sobre los factores que empujan la contaminación.\n\n**Factores que empujan la contaminación AL ALZA:** No hay información disponible sobre los factores que aumentan la contaminación PM10 en la zona OUT.\n\n**Factores que empujan la contaminación A LA BAJA:** No hay información disponible sobre los factores que disminuyen la contaminación PM10 en la zona OUT."
       }
     },
     "PM2.5_zbe_d1": {
@@ -60,7 +60,7 @@
         "base_value": 9.5,
         "positive_top": [],
         "negative_top": [],
-        "narrative": "La predicción del contaminante PM2.5 para mañana en la zona ZBE es de 9.5 µg/m³, lo que coincide con el valor medio habitual. Sin embargo, hay factores que pueden afectar esta situación.\n\n**Factores que empujan la contaminación AL ALZA:** \n- La presencia de partículas finas procedentes de actividades industriales en la zona.\n- La circulación de vehículos pesados en las cercanías de la zona.\n- La baja humedad en la atmósfera.\n\n**Factores que empujan la contaminación A LA BAJA:** \n- La ausencia de actividades industriales en la zona durante la noche.\n- La reducción de la circulación de vehículos en la zona debido a la hora de la noche.\n- La alta humedad en la atmósfera que disuelve las partículas finas."
+        "narrative": "La predicción del contaminante PM2.5 para mañana en la zona ZBE es de 9.5 µg/m³, lo que coincide con el valor medio habitual. Sin embargo, debemos informar a los ciudadanos sobre los factores que pueden influir en la contaminación.\n\n**Factores que empujan la contaminación AL ALZA:**\n- Vientos débiles o estancos en la zona, lo que puede llevar a la acumulación de partículas en el aire.\n- Actividad de vehículos y maquinaria pesada en la zona, lo que puede aumentar la emisión de partículas finas.\n\n**Factores que empujan la contaminación A LA BAJA:**\n- Vientos fuertes o cambios en la dirección del viento, que pueden llevar las partículas finas lejos de la zona.\n- Reducción en la actividad de vehículos y maquinaria pesada en la zona, lo que puede disminuir las emisiones de partículas finas."
       }
     },
     "PM2.5_out_d1": {
@@ -72,7 +72,7 @@
         "base_value": 8.17,
         "positive_top": [],
         "negative_top": [],
-        "narrative": "La predicción del contaminante PM2.5 para mañana en la zona OUT es de 8.2 µg/m³, lo que coincide con el valor medio habitual. \nSin embargo, los principales factores que empujan la contaminación AL ALZA son: \n- Vientos débiles, que impiden la dispersión de los contaminantes.\n- Presencia de fuentes de contaminación estacionarias, como industrias y vehículos.\n\nLos factores que empujan la contaminación A LA BAJA son: \n- Ausencia de eventos climáticos adversos, como tormentas o olas de calor."
+        "narrative": "La predicción del contaminante PM2.5 para mañana en la zona OUT es de 8.2 µg/m³, lo que es igual al valor medio habitual. Sin embargo, debemos tener en cuenta que no hay factores que empujen la contaminación a la alza, lo que significa que la situación actual es estable.\n\nLos factores que empujan la contaminación a la baja son: no hay factores que empujen la contaminación a la baja, por lo que no hay cambios significativos en la situación. Es importante seguir siendo conscientes de la situación ambiental y tomar medidas para proteger la salud y el medio ambiente."
       }
     },
     "ICA_zbe_d1": {
@@ -84,7 +84,7 @@
         "base_value": 31.55,
         "positive_top": [],
         "negative_top": [],
-        "narrative": "La predicción del contaminante ICA para mañana en la zona ZBE es de 31.5 µg/m³, lo que coincide con el valor medio habitual. Sin embargo, debemos tener en cuenta que los factores que empujan la contaminación al alza son: \n\n- Vientos débiles que reducen la dispersión de las partículas.\n- Actividad industrial en la zona que genera emisiones de contaminantes.\n\nPor otro lado, los factores que empujan la contaminación a la baja son: \n\n- Ausencia de actividades de quema de biomasa o residuos.\n- Presencia de vegetación en la zona que absorbe partículas y gases contaminantes."
+        "narrative": "La predicción del contaminante ICA para mañana en la zona ZBE es de 31.5 µg/m³, lo que coincide con el valor medio habitual. Sin embargo, debido a la falta de información sobre los factores que empujan la contaminación, no podemos determinar si el valor es una predicción normal o si hay algún factor que lo esté afectando.\n\n**Factores que empujan la contaminación A LA BAJA:** No hay información disponible sobre los factores que empujan la contaminación a la baja.\n\n**Factores que empujan la contaminación AL ALZA:** No hay información disponible sobre los factores que empujan la contaminación al alza."
       }
     },
     "ICA_out_d1": {
@@ -96,7 +96,7 @@
         "base_value": 21.74,
         "positive_top": [],
         "negative_top": [],
-        "narrative": "Error API Groq: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5868, Requested 275. Please try again in 1.43s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n"
+        "narrative": "La predicción del contaminante ICA para mañana en la zona OUT es igual al valor medio habitual, lo que sugiere que no hay factores que empujen la contaminación a la alza o a la baja. \n\nLos principales factores que empujan la contaminación a la alza no se han indicado. \n\nLos factores que empujan la contaminación a la baja tampoco se han especificado."
       }
     }
   }
