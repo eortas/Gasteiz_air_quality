@@ -30,3 +30,5 @@ outputs/
 # IDE
 .vscode/
 .idea/
+
+*.csv.gz
