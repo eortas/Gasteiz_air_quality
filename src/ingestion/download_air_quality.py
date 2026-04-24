@@ -196,13 +196,33 @@ def generar_rangos(start: datetime, end: datetime) -> list:
 
 # ─── GESTION CHECKPOINT ───────────────────────────────────────────────────────
 def get_local_checkpoint() -> datetime:
+    """Intenta obtener el checkpoint del archivo JSON, y si no existe, escanea los CSVs locales."""
+    # 1. Intentar con el JSON
     if CHECKPOINT.exists():
         try:
             with open(CHECKPOINT, "r") as f:
                 data = json.load(f)
                 return datetime.fromisoformat(data["last_completed_month"])
-        except json.JSONDecodeError:
+        except:
             pass
+    
+    # 2. Si no hay JSON, mirar el CSV del año más reciente
+    current_year = datetime.now().year
+    for year in range(current_year, START_DATE.year - 1, -1):
+        csv_path = DATA_DIR / f"kunak_{year}.csv"
+        if csv_path.exists():
+            try:
+                # Leer solo la última fila para ser eficientes
+                df_last = pd.read_csv(csv_path, usecols=["timestamp"]).tail(1)
+                if not df_last.empty:
+                    last_ts = pd.to_datetime(df_last["timestamp"].iloc[0])
+                    # Devolvemos el primer día de ese mes para asegurar que el mes en curso se complete
+                    checkpoint = last_ts.replace(day=1, hour=0, minute=0, second=0).to_pydatetime()
+                    print(f"  Checkpoint detectado desde {csv_path.name}: {checkpoint.date()}")
+                    return checkpoint
+            except:
+                continue
+                
     return START_DATE
 
 def update_local_checkpoint(mes_dt: datetime):

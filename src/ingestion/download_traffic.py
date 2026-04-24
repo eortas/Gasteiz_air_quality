@@ -194,13 +194,32 @@ def get_sensors(client) -> pd.DataFrame:
 
 # ─── CHECKPOINT ───────────────────────────────────────────────────────────────
 def load_checkpoint(client) -> datetime:
+    # 1. Intentar con el JSON local
     if CHECKPOINT.exists():
         data = json.loads(CHECKPOINT.read_text(encoding="utf-8"))
         last = datetime.fromisoformat(data["last_completed"])
         next_day = last + timedelta(days=1)
-        print(f"  Reanudando desde {next_day.date()} (checkpoint local)")
+        print(f"  Reanudando desde {next_day.date()} (checkpoint local JSON)")
         return next_day
 
+    # 2. Si no hay JSON, mirar el CSV del año más reciente
+    current_year = datetime.now().year
+    for year in range(current_year, START_DATE.year - 1, -1):
+        csv_path = DATA_DIR / f"trafico_{year}.csv"
+        if csv_path.exists():
+            try:
+                # Leer solo la última fila para ser eficientes
+                df_last = pd.read_csv(csv_path, usecols=["start_date"]).tail(1)
+                if not df_last.empty:
+                    last_ts = pd.to_datetime(df_last["start_date"].iloc[0])
+                    # No sumamos un día aquí para asegurar que el último día se completó si la descarga se cortó
+                    checkpoint = last_ts.replace(hour=0, minute=0, second=0).to_pydatetime()
+                    print(f"  Checkpoint detectado desde {csv_path.name}: {checkpoint.date()}")
+                    return checkpoint
+            except:
+                continue
+
+    # 3. Intentar con Supabase como fallback
     supabase_last = get_supabase_checkpoint(client)
     if supabase_last:
         next_day = supabase_last.replace(hour=0, minute=0, second=0) + timedelta(days=1)
