@@ -52,17 +52,13 @@ jobs:
       - name: Ejecutar pipeline (ingesta → features → modelo → predicción)
         run: python run_pipeline.py --local-only
 
-      # ── 5. Generar dashboard HTML ────────────────────────────────────────────
-      - name: Generar index.html
-        run: python reports/html/build_v10.py --output index.html
-
-      # ── 6. Verificar y asegurar archivos en raíz ─────────────────────────────
-      - name: Asegurar archivos en raíz
+      # ── 5. Asegurar archivos para la web ─────────────────────────────────────
+      - name: Sincronizar archivos para la web
         run: |
-          cp reports/html/*.png . || true
+          cp reports/html/index.html . || true
           cp reports/html/traffic_map.html . || true
-          ls -lh *.png || true
-          ls -lh traffic_map.html || true
+          cp reports/html/*.png . || true
+          ls -lh index.html || true
 
       # ── 7. Commit y push ─────────────────────────────────────────────────────
       - name: Publicar dashboard en GitHub Pages
