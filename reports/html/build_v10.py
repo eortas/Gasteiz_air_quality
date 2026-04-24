@@ -291,7 +291,7 @@ stations_json_str = json.dumps(stations_data)
 # 5b. DATOS TRÁFICO YOY
 # ==============================================================================
 try:
-    with open(ROOT_DIR / "reports" / "peripheral_traffic_yoy.json", "r", encoding="utf-8") as f:
+    with open(PROCESSED_DIR / "peripheral_traffic_yoy.json", "r", encoding="utf-8") as f:
         traffic_yoy_data = json.load(f)
     traffic_yoy_json_str = json.dumps(traffic_yoy_data)
     print("  OK Datos de tráfico YoY cargados.")

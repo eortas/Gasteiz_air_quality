@@ -67,7 +67,7 @@ def generate_yoy():
             "previous": round(float(prev_val), 1) if prev_val is not None else None
         })
         
-    output_path = REPORTS_DIR / "peripheral_traffic_yoy.json"
+    output_path = ROOT_DIR / "data" / "processed" / "peripheral_traffic_yoy.json"
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
         
