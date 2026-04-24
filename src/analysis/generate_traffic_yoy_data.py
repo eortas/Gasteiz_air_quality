@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 
 # Configuración
-ROOT_DIR = Path("c:/Users/ortas/OneDrive/Documentos/Vitoria_AG")
-TRAFFIC_DIR = ROOT_DIR / "data/raw/traffic"
+ROOT_DIR = Path(__file__).parent.parent.parent
+TRAFFIC_DIR = ROOT_DIR / "data" / "raw" / "traffic"
 REPORTS_DIR = ROOT_DIR / "reports"
 ZBE_DATE = "2025-09-01"
 

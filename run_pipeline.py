@@ -243,6 +243,11 @@ def main():
             logger.info("Aplicando meta-modelos actualizados a la predicción...")
             run_script("Refinar predicción con meta-modelo", "src/ml/predict.py", ["--with-forecast"])
 
+    # ── 8c. ANÁLISIS TRÁFICO YOY ─────────────────────────────────────────────
+    logger.info("\n── FASE 8c: Análisis de tráfico YoY")
+    if not run_script("Generar datos tráfico YoY", "src/analysis/generate_traffic_yoy_data.py"):
+        logger.warning("[WARN]  La generación de datos de tráfico YoY falló.")
+
     # ── 9. DASHBOARD HTML ─────────────────────────────────────────────────────
     logger.info("\n── FASE 9: Dashboard")
     dated_name    = f"dashboard_{datetime.now().strftime('%Y-%m-%d')}.html"
