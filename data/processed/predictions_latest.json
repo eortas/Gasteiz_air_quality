@@ -1,6 +1,6 @@
 {
   "prediction_date": "2026-04-27",
-  "generated_at": "2026-04-26T05:20:45.071604+00:00",
+  "generated_at": "2026-04-26T14:01:06.814547+00:00",
   "model_version": "v5",
   "targets": {
     "NO2_zbe_d1": {
@@ -12,49 +12,49 @@
         "base_value": 6.36,
         "positive_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
         "negative_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
-        "narrative": "La predicción del contaminante NO2 para mañana en la zona ZBE es de 6.4 µg/m³, lo que coincide con el valor medio habitual. No hay factores que empujen la contaminación al alza, por lo que no hay razones para preocuparse por un aumento en la contaminación.\n\nNo hay factores que empujen la contaminación a la baja, por lo que no hay razones para preocuparse por un descenso en la contaminación. El valor predicho es estándar y coincide con el valor medio habitual, lo que sugiere un ambiente limpio y seguro."
+        "narrative": "La predicción del contaminante NO2 para mañana en la zona ZBE es de 6.4 µg/m³, lo que coincide con el valor medio habitual. Esto sugiere que no hay factores específicos que estén empujando la contaminación a la alza o a la baja.\n\nEn este caso, los factores que habitualmente influyen en la contaminación NO2, como la velocidad del viento y las temperaturas, no están mostrando valores extremos que puedan explicar un aumento o disminución en la contaminación."
       }
     },
     "NO2_out_d1": {
@@ -66,49 +66,49 @@
         "base_value": 8.13,
         "positive_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
         "negative_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
-        "narrative": "La predicción de NO2 para mañana en la zona OUT es de 8.1 µg/m³, lo que es igual al valor medio habitual. Esto sugiere que no hay factores externos que estén afectando la contaminación.\n\nNo hay factores que estén empujando la contaminación al alza, como el tráfico, ya que los valores de ocupación y volumen de tráfico a corto y largo plazo son neutros. Por lo tanto, podemos esperar niveles de contaminación similares a los normales."
+        "narrative": "El nivel de contaminante NO2 en la zona OUT para mañana se espera que sea de 8.1 µg/m³, lo que coincide con el valor medio habitual. \n\nLa contaminación NO2 no se ve afectada por factores que la empujen a la subida o la bajada, ya que los factores que normalmente lo hacen (como la velocidad del viento o el índice de días fríos) están en cero."
       }
     },
     "PM10_zbe_d1": {
@@ -120,49 +120,49 @@
         "base_value": 22.78,
         "positive_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
         "negative_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
-        "narrative": "El nivel de contaminante PM10 en la zona ZBE para mañana se mantiene estable en 22.8 µg/m³, lo que coincide con el valor medio habitual. Esto sugiere que no hay factores significativos que estén influenciando la contaminación en este momento.\n\nSin embargo, es importante destacar que la ausencia de factores que empujen la contaminación al alza o a la baja no significa que la situación sea ideal. Es importante seguir vigilante y tomar medidas para reducir la contaminación, especialmente aquellos factores como el tráfico que pueden tener un impacto significativo en la calidad del aire."
+        "narrative": "La predicción del contaminante PM10 para mañana en la zona ZBE es de 22.8 µg/m³, lo que es igual al valor medio habitual. Sin embargo, hay factores que podrían influir en la contaminación. \n\nEn este caso, no hay factores que empujen la contaminación a la alza, ya que los valores de fc_wind_v_d3, fc_wind_u_d3 y fc_HDD_d3 son 0.0. Por lo tanto, no hay cambios significativos en la contaminación esperados para mañana."
       }
     },
     "PM10_out_d1": {
@@ -174,49 +174,49 @@
         "base_value": 13.48,
         "positive_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
         "negative_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
-        "narrative": "La predicción del contaminante PM10 para mañana en la zona OUT es de 13.5 µg/m³, lo mismo que el valor medio habitual. Esto significa que no hay factores que empujen la contaminación a la alza o a la baja.\n\nSin embargo, es importante tener en cuenta que los factores que empujan la contaminación a la alza, como el tráfico, no están teniendo un impacto significativo en este momento. Por lo tanto, es probable que la contaminación permanezca estable."
+        "narrative": "La predicción del contaminante PM10 para mañana en la zona OUT es de 13.5 µg/m³, lo que es igual al valor medio habitual. Esto significa que no hay factores que empujen la contaminación hacia arriba o hacia abajo.\n\nNo hay factores que empujen la contaminación hacia arriba, ya que los valores de fc_wind_v_d3, fc_wind_u_d3 y fc_HDD_d3 son iguales a 0.0. Por lo tanto, no hay motivos para preocuparse por un aumento de la contaminación."
       }
     },
     "PM2.5_zbe_d1": {
@@ -228,49 +228,49 @@
         "base_value": 9.49,
         "positive_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
         "negative_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
-        "narrative": "El contaminante PM2.5 sube mañana en la zona ZBE debido a la ausencia de factores que lo empujen a la baja. En realidad, no hay factores que empujen la contaminación a la baja, pero si consideramos los factores que empujan la contaminación a la alza, estos son iguales a cero. Esto sugiere que la subida se debe a otros factores no mencionados.\n\nNo hay información disponible sobre los factores que empujan la contaminación a la baja. Sin embargo, es importante tener en cuenta que la predicción de contaminación puede variar dependiendo de múltiples factores, como el clima, la topografía y la actividad humana. Es importante seguir las recomendaciones de las autoridades locales para proteger la salud y el medio ambiente."
+        "narrative": "La predicción del contaminante PM2.5 para mañana en la zona ZBE es de 9.5 µg/m³, lo que coincide con el valor medio habitual. No hay factores que empujen la contaminación al alza, por lo que podemos esperar un día con niveles de contaminación dentro de los límites normales.\n\nNo hay cambios significativos en los factores que influyen en la contaminación, por lo que no hay motivos para preocuparse por un aumento en los niveles de PM2.5. Puedes disfrutar del aire con confianza."
       }
     },
     "PM2.5_out_d1": {
@@ -282,49 +282,49 @@
         "base_value": 8.16,
         "positive_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
         "negative_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
-        "narrative": "La contaminante PM2.5 en la zona OUT se mantiene estable mañana, con una predicción de 8.2 µg/m³, lo que es igual al valor medio habitual. Esto se debe a que los principales factores que empujan la contaminación al alza, como la ocupación y el volumen de tráfico, no han experimentado cambios significativos en los últimos 14 días.\n\nNo hay factores que empujen la contaminación a la baja, lo que sugiere que no hay condiciones que reduzcan la concentración de PM2.5 en la zona. Por lo tanto, se puede esperar que la contaminación se mantenga estable en los niveles actuales."
+        "narrative": "La predicción del contaminante PM2.5 para mañana en la zona OUT es de 8.2 µg/m³, lo que coincide con el valor medio habitual. Sin embargo, es importante destacar que no hay factores que empujen la contaminación al alza, ya que los valores de fc_wind_v_d3, fc_wind_u_d3 y fc_HDD_d3 son todos 0.0.\n\nEn este sentido, no hay razones para preocuparse por un aumento significativo de la contaminación PM2.5 en la zona OUT para mañana. El valor predecido es el mismo que el valor medio habitual, lo que sugiere que las condiciones ambientales serán similares a las promedio."
       }
     },
     "ICA_zbe_d1": {
@@ -336,49 +336,49 @@
         "base_value": 32.13,
         "positive_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
         "negative_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
-        "narrative": "El contaminante ICA está previsto que suba mañana en la zona ZBE a 32.1 µg/m³. Esto se debe a que los factores que empujan la contaminación al alza, como el tráfico de ocupación con un retraso de 14 días y 7 días, no han tenido cambios significativos (+0.0).\n\nNo se espera que haya factores que empujen la contaminación a la baja, ya que los valores de tráfico de ocupación y volumen con un retraso de 14 días y 7 días son cero. Esto sugiere que la situación actual no es favorable para una disminución de la contaminación."
+        "narrative": "La contaminación del contaminante ICA en la zona ZBE para mañana se espera que siga siendo estable, ya que los factores que empujan su aumento (velocidad del viento y horas de enfriamiento diarias) no han experimentado cambios significativos. Por lo tanto, no se espera una subida en la contaminación.\n\nLa estabilidad en la contaminación se debe a que los factores que empujan su disminución (también la velocidad del viento y horas de enfriamiento diarias) también han permanecido sin cambios, lo que mantiene el equilibrio y evita una disminución en la contaminación."
       }
     },
     "ICA_out_d1": {
@@ -390,49 +390,49 @@
         "base_value": 21.67,
         "positive_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
         "negative_top": [
           {
-            "feature": "traffic_occupancy_lag_14d",
+            "feature": "fc_wind_v_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_14d",
+            "feature": "fc_wind_u_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "fc_HDD_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_volume_lag_7d",
+            "feature": "fc_sunshine_duration_d3",
             "value": 0.0
           },
           {
-            "feature": "traffic_occupancy_lag_2d",
+            "feature": "fc_boundary_layer_height_d3",
             "value": 0.0
           }
         ],
-        "narrative": "Error API Groq: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5810, Requested 373. Please try again in 1.83s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n"
+        "narrative": "La predicción del contaminante ICA para mañana en la zona OUT es de 21.7 µg/m³, que coincide con el valor medio habitual. Esto significa que no hay factores que empujen la contaminación a la alza o a la baja, por lo que podemos esperar un día con niveles de contaminación normales.\n\nEs importante recordar que la contaminación puede variar en función de varios factores, como el viento, la temperatura y otros factores meteorológicos. En este caso, no hay factores que indiquen un aumento o disminución de la contaminación, por lo que podemos esperar un día tranquilo en términos de contaminación."
       }
     }
   }
