@@ -55,7 +55,6 @@ jobs:
       # ── 5. Asegurar archivos para la web ─────────────────────────────────────
       - name: Sincronizar archivos para la web
         run: |
-          cp reports/html/index.html . || true
           cp reports/html/traffic_map.html . || true
           cp reports/html/*.png . || true
           ls -lh index.html || true

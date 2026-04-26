@@ -510,7 +510,7 @@ html_template = """<!DOCTYPE html>
     <button class="top-nav-btn" onclick="switchMainView('v9', this)" data-i18n="nav3">3. Validación Causal</button>
     <button class="top-nav-btn" onclick="switchMainView('map', this)" data-i18n="nav4">4. Mapa de Estaciones</button>
     <button class="top-nav-btn" onclick="switchMainView('traffic', this)" data-i18n="nav5">5. Mapa de Tráfico</button>
-    <button class="top-nav-btn" onclick="switchMainView('foresight', this)">6. Foresight AI</button>
+    <button class="top-nav-btn" onclick="switchMainView('foresight', this)" data-i18n="nav6">6. Foresight AI</button>
   </div>
 </div>
 
@@ -715,34 +715,34 @@ html_template = """<!DOCTYPE html>
 <div id="view-foresight" class="view-container">
   <div class="header">
     <div class="header-left">
-      <div class="label-tag">Explicación de la predicción</div>
-      <h1>Foresight <span> con IA</span></h1>
-      <p class="subtitle">Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para mañana (SHAP Values).</p>
+      <div class="label-tag" data-i18n="fsTag">Explicación de la predicción</div>
+      <h1 data-i18n="fsTitle">Foresight <span> con IA</span></h1>
+      <p class="subtitle" data-i18n="fsSubtitle">Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para mañana (SHAP Values).</p>
     </div>
   </div>
   
   <div class="controls">
-    <span class="controls-label">Contaminante</span>
+    <span class="controls-label" data-i18n="contaminant">Contaminante</span>
     <div class="tab-group" id="contTabsForesight">
       <button class="tab active" onclick="selectContFs('NO2', this)">NO₂</button>
       <button class="tab" onclick="selectContFs('PM10', this)">PM10</button>
       <button class="tab" onclick="selectContFs('PM2.5', this)">PM2.5</button>
     </div>
     <div class="sep"></div>
-    <span class="controls-label">ZONA</span>
+    <span class="controls-label" data-i18n="zone">ZONA</span>
     <div class="tab-group" id="zoneTabsForesight">
-      <button class="tab active" onclick="selectZoneFs('zbe', this)">ZBE</button>
-      <button class="tab" onclick="selectZoneFs('out', this)">FUERA DE ZBE</button>
+      <button class="tab active" onclick="selectZoneFs('zbe', this)" data-i18n="zoneIn">ZBE</button>
+      <button class="tab" onclick="selectZoneFs('out', this)" data-i18n="zoneOut">FUERA DE ZBE</button>
     </div>
   </div>
 
   <div class="charts-section" style="display: grid; grid-template-columns: minmax(300px, 1.2fr) minmax(300px, 1.8fr); gap: 40px;">
     <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 30px;">
-      <h3 style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent); letter-spacing:1px; margin-bottom:16px; text-transform:uppercase;">Explicación de la predicción</h3>
-      <div id="fs-narrative" style="font-size:15px; line-height:1.7; color:var(--text); white-space: pre-line;">Cargando narrativa...</div>
+      <h3 style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent); letter-spacing:1px; margin-bottom:16px; text-transform:uppercase;" data-i18n="fsNarrativeTitle">Explicación de la predicción</h3>
+      <div id="fs-narrative" style="font-size:15px; line-height:1.7; color:var(--text); white-space: pre-line;" data-i18n="fsLoading">Cargando narrativa...</div>
     </div>
     <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 30px; display: flex; flex-direction: column;">
-      <h3 style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); letter-spacing:1px; margin-bottom:12px; text-transform:uppercase;">Top Factores de Impacto (SHAP)</h3>
+      <h3 style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); letter-spacing:1px; margin-bottom:12px; text-transform:uppercase;" data-i18n="fsShapTitle">Top Factores de Impacto (SHAP)</h3>
       <div style="flex: 1; min-height: 300px; position: relative;">
         <canvas id="fsChart"></canvas>
       </div>
@@ -797,6 +797,7 @@ const translations = {
     nav3: "3. Validación Causal",
     nav4: "4. Mapa de Estaciones",
     nav5: "5. Mapa de Tráfico",
+    nav6: "6. Foresight AI",
     themeDark: "Modo Oscuro",
     themeLight: "Modo Claro",
     v8Tag: "Análisis Causal — ZBE Vitoria-Gasteiz",
@@ -892,6 +893,15 @@ const translations = {
     colRMSE: "RMSE (µg/m³)",
     colMAE: "MAE (µg/m³)",
     colMAPE: "MAPE %",
+    fsTag: "Explicación de la predicción",
+    fsTitle: "Foresight <span> con IA</span>",
+    fsSubtitle: "Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para mañana (SHAP Values).",
+    fsNarrativeTitle: "Explicación de la predicción",
+    fsShapTitle: "Top Factores de Impacto (SHAP)",
+    fsLoading: "Cargando narrativa...",
+    fsNoData: "No hay análisis disponible para esta selección.",
+    fsNoNarrative: "Este modelo no ha generado narrativa LLM (posiblemente porque no es el target principal o falla la API).",
+    fsImpactLabel: "Impacto en µg/m³",
   },
   eu: {
     mainTitle: "Vitoria-Gasteiz — Airearen Kalitatearen eta EGEaren Analisia",
@@ -900,6 +910,7 @@ const translations = {
     nav3: "3. Baliozkotze Kausala",
     nav4: "4. Estazioen Mapa",
     nav5: "5. Trafikoaren Mapa",
+    nav6: "6. Foresight AI",
     themeDark: "Modu Iluna",
     themeLight: "Modu Argia",
     v8Tag: "Analisi Kausala — Gasteizko EGE",
@@ -1001,7 +1012,16 @@ const translations = {
     didRel: "Eragin Erlatiboa",
     didSig: "Signifikatiboa",
     didYes: "Bai (p<0.05)",
-    didNo: "Ez"
+    didNo: "Ez",
+    fsTag: "Aurreikuspenaren azalpena",
+    fsTitle: "Foresight <span> AIarekin</span>",
+    fsSubtitle: "Biharko ereduaren aurreikuspenean eragina duten faktore meteorologikoen eta testuingurukoen analisi aurreratua (SHAP balioak).",
+    fsNarrativeTitle: "Aurreikuspenaren azalpena",
+    fsShapTitle: "Eragin-faktore nagusiak (SHAP)",
+    fsLoading: "Narratiba kargatzen...",
+    fsNoData: "Ez dago analisirik erabilgarri hautapen honetarako.",
+    fsNoNarrative: "Eredu honek ez du LLM narratibarik sortu (ziurrenik ez delako helburu nagusia edo APIak huts egin duelako).",
+    fsImpactLabel: "Eragina µg/m³-tan",
   }
 };
 
@@ -1481,15 +1501,16 @@ function renderForesight() {
   const key = `${currentContFs}_${currentZoneFs}_d1`;
   const tData = targetsData[key] || {};
   const fs = tData.foresight || null;
+  const t = translations[currentLang];
   
   const narrativeDiv = document.getElementById('fs-narrative');
   if (!fs) {
-    narrativeDiv.innerHTML = "<span style='color:var(--muted)'>No hay análisis disponible para esta selección.</span>";
+    narrativeDiv.innerHTML = `<span style='color:var(--muted)'>${t.fsNoData}</span>`;
     if (fsChart) { fsChart.destroy(); fsChart = null; }
     return;
   }
   
-  let narrativeText = fs.narrative || "Este modelo no ha generado narrativa LLM (posiblemente porque no es el target principal o falla la API).";
+  let narrativeText = fs.narrative || t.fsNoNarrative;
   if (!narrativeText && fs.error) {
     narrativeText = `Error al calcular SHAP: ${fs.error}`;
   }
@@ -1514,7 +1535,7 @@ function renderForesight() {
     data: {
       labels: labels,
       datasets: [{
-        label: 'Impacto en µg/m³',
+        label: t.fsImpactLabel,
         data: values,
         backgroundColor: colors,
         borderRadius: 4
