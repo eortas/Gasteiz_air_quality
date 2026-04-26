@@ -155,15 +155,44 @@ try:
                 df_feat = df_latest
 
     if not df_feat.empty:
+        # Ajuste de fechas para el backtest (7 días terminando ayer)
+        # El DataFrame suele tener la fila de "Mañana" al final
         df_feat = df_feat.sort_values("date").reset_index(drop=True)
-        last_rows = df_feat.tail(9).copy()
-        inputs_backtest  = last_rows.iloc[0:7]
-        targets_backtest = last_rows.iloc[1:8]
+        
+        # Buscamos el índice de "Ayer" (último día con datos reales probables)
+        # Normalmente es la penúltima o antepenúltima fila si ya se generó la de hoy/mañana
+        last_date = df_feat['date'].iloc[-1]
+        
+        # Tomamos suficientes filas para el backtest
+        last_rows = df_feat.tail(12).copy()
+        
+        # Definimos 'Ayer' como el último día que tiene medición real (no NaN) en el contaminante principal
+        # O simplemente iloc[-3] si asumimos que -1 es Mañana y -2 es Hoy.
+        # Para ser robustos, buscamos la última fila donde PM10_out no sea NaN
+        valid_indices = last_rows.index[last_rows['PM10_out'].notna()].tolist()
+        if not valid_indices:
+            # Fallback si no hay datos reales recientes
+            targets_backtest = last_rows.iloc[-8:-1]
+            inputs_backtest  = last_rows.iloc[-9:-2]
+        else:
+            last_real_idx_pos = last_rows.index.get_loc(valid_indices[-1])
+            # Queremos 7 targets terminando en el último real
+            targets_backtest = last_rows.iloc[max(0, last_real_idx_pos-6) : last_real_idx_pos+1]
+            # Sus inputs son los del día anterior (modelo d1)
+            inputs_backtest  = last_rows.iloc[max(0, last_real_idx_pos-7) : last_real_idx_pos]
         
         fechas = targets_backtest['date'].dt.strftime('%d %b').tolist()
         if len(fechas) > 0:
             fechas[-1] = "Ayer"
         
+        # Cargar meta-modelos para refinamiento V2 si existen
+        meta_models = {}
+        meta_path = MODELS_DIR / "meta_metrics.json"
+        if meta_path.exists():
+            try:
+                meta_models = json.loads(meta_path.read_text(encoding="utf-8"))
+            except: pass
+
         for zone in ['zbe', 'out']:
             perf_data[zone]["labels"] = fechas
             for cont in ['NO2', 'PM10', 'PM2.5']:
@@ -176,26 +205,47 @@ try:
                     features = json.loads(feat_path.read_text(encoding="utf-8"))
                     
                     X_backtest = inputs_backtest.reindex(columns=features, fill_value=0).fillna(0)
-                    preds_7d = model.predict(X_backtest)
+                    preds_v1 = model.predict(X_backtest)
+                    
+                    # Aplicar Refinamiento V2 (Meta-Modelo)
+                    preds_v2 = []
+                    meta_key = f"{cont}_{zone}"
+                    if meta_key in meta_models:
+                        coeffs = meta_models[meta_key].get("coefficients", {})
+                        intercept = meta_models[meta_key].get("intercept", 0)
+                        
+                        for i in range(len(preds_v1)):
+                            p = coeffs.get("base_prediction", 1.0) * preds_v1[i] + intercept
+                            # Sumar efectos de otras features si están en los coeficientes
+                            for f_name, f_coeff in coeffs.items():
+                                if f_name != "base_prediction" and f_name in inputs_backtest.columns:
+                                    val = inputs_backtest.iloc[i][f_name]
+                                    if not pd.isna(val):
+                                        p += f_coeff * val
+                            preds_v2.append(max(0, p))
+                    else:
+                        preds_v2 = preds_v1
                     
                     contam_col = f"{cont}_{zone}"
                     if contam_col in targets_backtest.columns:
                         real_vals = [None if pd.isna(v) else round(v, 1) for v in targets_backtest[contam_col]]
                     else:
-                        real_vals = [None] * 7
+                        real_vals = [None] * len(targets_backtest)
                         
-                    while len(real_vals) < 7:
-                        real_vals.insert(0, None)
+                    # Asegurar longitud 7
+                    while len(real_vals) < 7: real_vals.insert(0, None)
+                    preds_final = [round(p, 1) for p in preds_v2]
+                    while len(preds_final) < 7: preds_final.insert(0, 0)
                     
                     perf_data[zone][cont] = {
-                        "real": real_vals,
-                        "pred": [round(max(0, p), 1) for p in preds_7d]
+                        "real": real_vals[-7:],
+                        "pred": preds_final[-7:]
                     }
                     
                 except Exception as e:
                     perf_data[zone][cont] = {"real": [None]*7, "pred": [0]*7}
 
-        print("  OK Predicciones y Backtest listos.")
+        print("  OK Predicciones y Backtest (V2 Refined) listos.")
     else:
         raise ValueError("El DataFrame de features está vacío.")
 
@@ -205,7 +255,6 @@ except Exception as e:
         perf_data[z] = {"labels": ["D-6", "D-5", "D-4", "D-3", "D-2", "D-1", "Ayer"]}
         for c in ['NO2', 'PM10', 'PM2.5']:
             perf_data[z][c] = {"real": [0]*7, "pred": [0]*7}
-            # Quitamos la sobrescritura de manana_data que causaba problemas
 
 perf_json_str = json.dumps(perf_data)
 manana_json_str = json.dumps(manana_data)
