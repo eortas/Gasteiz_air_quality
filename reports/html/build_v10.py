@@ -788,7 +788,7 @@ html_template = """<!DOCTYPE html>
   <div class="charts-section" style="display: grid; grid-template-columns: minmax(300px, 1.2fr) minmax(300px, 1.8fr); gap: 40px;">
     <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 30px;">
       <h3 style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent); letter-spacing:1px; margin-bottom:16px; text-transform:uppercase;" data-i18n="fsNarrativeTitle">Explicación de la predicción</h3>
-      <div id="fs-narrative" style="font-size:15px; line-height:1.7; color:var(--text); white-space: pre-line;" data-i18n="fsLoading">Cargando narrativa...</div>
+      <div id="fs-narrative" style="font-size:15px; line-height:1.7; color:var(--text); white-space: pre-line;">Cargando narrativa...</div>
     </div>
     <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 30px; display: flex; flex-direction: column;">
       <h3 style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); letter-spacing:1px; margin-bottom:12px; text-transform:uppercase;" data-i18n="fsShapTitle">Top Factores de Impacto (SHAP)</h3>
@@ -1138,6 +1138,7 @@ function toggleLang() {
   renderV9Cards();
   renderMetricsTable();
   renderTrafficYoY();
+  renderForesight();
   if (document.getElementById('view-v10').classList.contains('active')) renderDashboard3();
 }
 // ── NAVEGACIÓN Y THEME ──
