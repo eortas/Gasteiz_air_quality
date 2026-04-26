@@ -1545,6 +1545,76 @@ function initMap() {
 }
 
 // ── FORESIGHT AI (SHAP & LLM) ──────────────────────────────────────────────
+const featureNames = {
+  es: {
+    'traffic_occupancy': 'Ocupación Tráfico',
+    'traffic_volume': 'Volumen Tráfico',
+    'fc_temperature_2m': 'Temperatura',
+    'fc_relative_humidity_2m': 'Humedad Relativa',
+    'fc_precipitation': 'Precipitación',
+    'fc_wind_speed_10m': 'Velocidad Viento',
+    'fc_cloud_cover': 'Nubosidad',
+    'fc_surface_pressure': 'Presión Atmosférica',
+    'fc_sunshine_duration': 'Horas de Sol',
+    'lag_': 'hace ',
+    'd': ' días',
+    'roll_mean_': 'Media móvil ',
+    'roll_std_': 'Volatilidad ',
+    'NO2': 'Dióxido Nitrógeno',
+    'PM10': 'Partículas PM10',
+    'PM2.5': 'Partículas PM2.5',
+    'ICA': 'Índice Calidad Aire',
+    'zbe': 'ZBE',
+    'out': 'Zona Exterior'
+  },
+  eu: {
+    'traffic_occupancy': 'Trafiko Okupazioa',
+    'traffic_volume': 'Trafiko Bolumena',
+    'fc_temperature_2m': 'Tenperatura',
+    'fc_relative_humidity_2m': 'Hezetasun Erlatiboa',
+    'fc_precipitation': 'Prezipitazioa',
+    'fc_wind_speed_10m': 'Haizearen Abiadura',
+    'fc_cloud_cover': 'Hodeitza',
+    'fc_surface_pressure': 'Presio Atmosferikoa',
+    'fc_sunshine_duration': 'Eguzki Orduak',
+    'lag_': 'duela ',
+    'd': ' egun',
+    'roll_mean_': 'Batez besteko mugikorra ',
+    'roll_std_': 'Hegakorritasuna ',
+    'NO2': 'Nitrogeno Dioxidoa',
+    'PM10': 'PM10 Partikulak',
+    'PM2.5': 'PM2.5 Partikulak',
+    'ICA': 'Aire Kalitatearen Indizea',
+    'zbe': 'EGE',
+    'out': 'Kanpoko Eremua'
+  }
+};
+
+function getFeatureLabel(feat) {
+  const lang = currentLang || 'es';
+  const dict = featureNames[lang];
+  let label = feat;
+
+  // Intentar traducción directa o por partes
+  for (const [key, val] of Object.entries(dict)) {
+    if (label.includes(key)) {
+      label = label.replace(key, val);
+    }
+  }
+
+  // Limpiar guiones bajos y formatear lags
+  label = label.replace(/_/g, ' ');
+  if (label.includes('lag')) {
+    const match = label.match(/lag (\d+)d/);
+    if (match) {
+      const days = match[1];
+      label = label.replace(match[0], dict['lag_'] + days + dict['d']);
+    }
+  }
+  
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 let currentContFs = 'NO2', currentZoneFs = 'zbe', fsChart = null;
 
 function renderForesight() {
@@ -1574,7 +1644,10 @@ function renderForesight() {
   const ctx = document.getElementById('fsChart').getContext('2d');
   if (fsChart) fsChart.destroy();
   
-  const labels = factors.map(f => f.feature.length > 22 ? f.feature.slice(0, 22) + '...' : f.feature);
+  const labels = factors.map(f => {
+    const friendly = getFeatureLabel(f.feature);
+    return friendly.length > 35 ? friendly.slice(0, 35) + '...' : friendly;
+  });
   const values = factors.map(f => f.value);
   const colors = factors.map(f => f.value > 0 ? getCssVar('--red') : getCssVar('--green'));
   
