@@ -342,17 +342,19 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
     return refined_results
 
 
-def generate_llm_narrative(target: str, pred_val: float, base_val: float, positive_feats: list, negative_feats: list) -> str:
-    """Generate a narrative using Groq LLM based on SHAP contributions."""
+def generate_llm_narrative(target: str, pred_val: float, base_val: float, positive_feats: list, negative_feats: list) -> dict:
+    """Generate bilingual narratives using Groq LLM based on SHAP contributions."""
     import os
     import requests
+    import json
 
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        # Fallback si no hay API key
-        return f"Predicción de {pred_val} frente al valor base {base_val}. Subidas por: {', '.join([f[0] for f in positive_feats[:2]])}. Bajadas por: {', '.join([f[0] for f in negative_feats[:2]])}."
+        return {
+            "es": f"Predicción de {pred_val} µg/m³. Subidas por: {', '.join([f[0] for f in positive_feats[:2]])}.",
+            "eu": f"{pred_val} µg/m³-ko iragarpena. Igoerak: {', '.join([f[0] for f in positive_feats[:2]])}."
+        }
 
-    # Mapeo simple para que el prompt incluya nombres más legibles
     feat_map = {
         "fc_temperature_2m_d1": "Temperatura alta",
         "fc_wind_speed_10m_d1": "Velocidad del viento",
@@ -369,13 +371,12 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
     neg_str = ", ".join([f"{feat_map.get(f[0], f[0])} ({round(f[1], 2)})" for f in negative_feats[:3]])
 
     prompt = (
-        f"La predicción del contaminante {target.split('_')[0]} para mañana en la zona {target.split('_')[1].upper()} "
-        f"es de {round(pred_val, 1)} µg/m³. "
-        f"El valor medio habitual (base) es {round(base_val, 1)} µg/m³.\n"
-        f"Los principales factores que empujan la contaminación AL ALZA son: {pos_str}.\n"
-        f"Los factores que empujan la contaminación A LA BAJA son: {neg_str}.\n\n"
-        f"Actúa como un experto ambiental. Escribe un breve análisis (2 párrafos muy cortos de máximo 3 líneas cada uno) "
-        f"explicando a los ciudadanos de forma directa, sin saludos ni introducciones largas, por qué sube o baja este contaminante."
+        f"Contaminante: {target.split('_')[0]} | Zona: {target.split('_')[1].upper()} | Predicción: {round(pred_val, 1)} µg/m³ | Base: {round(base_val, 1)}\n"
+        f"Factores ALZA: {pos_str}\n"
+        f"Factores BAJA: {neg_str}\n\n"
+        f"Genera un análisis ambiental breve (2 párrafos cortos) en CASTELLANO y en EUSKERA.\n"
+        f"Devuelve ÚNICAMENTE un objeto JSON con las claves 'es' y 'eu'.\n"
+        f"Ejemplo: {{\"es\": \"texto en castellano\", \"eu\": \"euskarazko testua\"}}"
     )
 
     try:
@@ -387,18 +388,23 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
             },
             json={
                 "model": "llama-3.1-8b-instant",
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.5,
-                "max_tokens": 300
+                "messages": [
+                    {"role": "system", "content": "Eres un experto en calidad del aire en Vitoria-Gasteiz. Responde siempre en formato JSON bilingüe."},
+                    {"role": "user", "content": prompt}
+                ],
+                "response_format": {"type": "json_object"},
+                "temperature": 0.4,
+                "max_tokens": 600
             },
-            timeout=10
+            timeout=15
         )
         if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"].strip()
+            res_json = response.json()["choices"][0]["message"]["content"]
+            return json.loads(res_json)
         else:
-            return f"Error API Groq: {response.text}"
+            return {"es": f"Error API: {response.text}", "eu": "API errorea"}
     except Exception as e:
-        return f"Error conectando al LLM: {str(e)}"
+        return {"es": f"Error: {str(e)}", "eu": "Errorea"}
 
 
 # ??? 4. PREDECIR ??????????????????????????????????????????????????????????????
@@ -454,7 +460,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
                 "base_value": round(float(base_value), 2),
                 "positive_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in positive_feats[:5]],
                 "negative_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in negative_feats[:5]],
-                "narrative": str(narrative)
+                "narrative": narrative
             }
         except Exception as e:
             foresight = {"error": str(e)}

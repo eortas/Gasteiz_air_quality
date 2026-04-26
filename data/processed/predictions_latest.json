@@ -1,15 +1,15 @@
 {
   "prediction_date": "2026-04-27",
-  "generated_at": "2026-04-26T14:53:30.945553+00:00",
+  "generated_at": "2026-04-26T15:02:26.684631+00:00",
   "model_version": "v5",
   "targets": {
     "NO2_zbe_d1": {
       "prediction_v1": 6.27,
-      "prediction": 7.4,
-      "lower": 2.39,
-      "upper": 12.41,
+      "prediction": 7.64,
+      "lower": 2.63,
+      "upper": 12.65,
       "rmse_cv": 3.915,
-      "correction": 1.13,
+      "correction": 1.37,
       "foresight": {
         "base_value": 11.1,
         "positive_top": [
@@ -56,7 +56,10 @@
             "value": -0.33
           }
         ],
-        "narrative": "La predicción de NO2 para mañana en la zona ZBE es de 6,3 µg/m³, lo que es significativamente menor que el valor medio habitual de 11,1 µg/m³. Esto se debe a que los factores que empujan la contaminación a la baja están teniendo un impacto más fuerte que los que la empujan a la alza.\n\nLa bajada en la contaminación se debe principalmente a la presencia de NO2_zbe, que tiene un impacto negativo de -2,56, y a la Acumulación reciente de NO2, que también tiene un impacto negativo de -1,11. Estos factores están compensando la influencia de los factores que empujan la contaminación a la alza, como las ráfagas de viento y el tráfico."
+        "narrative": {
+          "es": "La predicción del nivel de NO2 en la zona ZBE de Vitoria-Gasteiz es de 6.3 µg/m³, lo que supone un aumento de 11.1 en comparación con la base. Los factores que contribuyen a este aumento son las ráfagas de viento, el tráfico ocupado y la velocidad del viento.",
+          "eu": "ZBEko eremuan NO2 maila 6.3 µg/m³koa da, 11.1koa da basearekin alderatuta handitzea. Hori dela eta, haizearen galdutzea, trafikoaren okupazioa eta haizearen abiadura dira faktore nagusiak."
+        }
       }
     },
     "NO2_out_d1": {
@@ -112,16 +115,19 @@
             "value": -0.27
           }
         ],
-        "narrative": "La contaminación por NO2 sube mañana en la zona OUT debido a varios factores. El viento es débil, lo que permite que los contaminantes se concentren en el aire, y el tráfico es más alto que la media, lo que aumenta la cantidad de gases de escape. Además, la temperatura mínima del día es más alta de lo habitual.\n\nSin embargo, también hay factores que podrían mitigar esta situación. La concentración de NO2 en la zona OUT es baja comparada con la media, lo que podría ayudar a reducir la contaminación. Además, la temperatura mínima del día es alta, lo que podría reducir la formación de smog."
+        "narrative": {
+          "es": "La predicción del nivel de NO2 en la zona exterior de Vitoria-Gasteiz es de 7,5 µg/m³, lo que es un poco por debajo de la base de 12,6 µg/m³. Los factores que contribuyen a este nivel son la velocidad del viento, la ocupación del tráfico y la temperatura mínima diaria, que aumentan el nivel de NO2, mientras que la concentración de NO2 exterior, el índice de días fríos y el volumen de tráfico disminuyen el nivel.",
+          "eu": "Vitoria-Gasteizeko kanpoko eremuan NO2 maila 7,5 µg/m³ izango da, 12,6 µg/m³ko oinarriaren azpitik. NO2 maila hazi dute haizearen abiadura, trafikoaren okupazioa eta eguneko tenperatura minimoa, baina NO2 kanpoko konzentrazioa, egun epeeldunak eta trafikoaren bolumena maila jaisteko eragin dute."
+        }
       }
     },
     "PM10_zbe_d1": {
       "prediction_v1": 24.18,
-      "prediction": 23.51,
-      "lower": 18.09,
-      "upper": 28.94,
+      "prediction": 23.5,
+      "lower": 18.08,
+      "upper": 28.93,
       "rmse_cv": 4.239,
-      "correction": -0.67,
+      "correction": -0.68,
       "foresight": {
         "base_value": 11.74,
         "positive_top": [
@@ -168,7 +174,10 @@
             "value": -0.12
           }
         ],
-        "narrative": "La predicción del contaminante PM10 para mañana en la zona ZBE es de 24.2 µg/m³, lo que supera el valor medio habitual de 11.7 µg/m³. Esto se debe a varios factores que empujan la contaminación al alza.\n\nEntre los principales factores que contribuyen a este aumento están la actividad de PM10 en la zona ZBE (+4.41), la intensidad de la circulación aérea en la zona ZBE (+3.06) y la humedad relativa en el nivel de 2 metros (+2.37). Estos factores combinados provocan un aumento en la concentración de partículas finas en el aire."
+        "narrative": {
+          "es": "El análisis de calidad del aire en la zona ZBE de Vitoria-Gasteiz muestra un valor de predicción de PM10 de 24.2 µg/m³, lo que supera el valor base de 11.7 µg/m³. Los factores que contribuyen a este aumento son el aumento de la concentración de PM10 en la zona ZBE, la humedad relativa y la ocupación del tráfico.",
+          "eu": "Vitoria-Gasteizeko ZBE eremuko airearen kalitatearen analisian, PM10ren aurreikuspena 24,2 µg/m³koa da, 11,7 µg/m³koa zen basearen gainetik. Aipagarriak dira PM10ren konzentrazioa handitzea ZBE eremuan, elur-muturra eta trafikoaren okupazioa."
+        }
       }
     },
     "PM10_out_d1": {
@@ -224,16 +233,19 @@
             "value": -0.14
           }
         ],
-        "narrative": "La contaminación por PM10 en la zona OUT se espera que suba mañana debido a varios factores. El aumento de la humedad relativa y la actividad industrial en la zona (ICA_out) están contribuyendo a este aumento, mientras que la precipitación prevista y la temperatura no están teniendo un efecto significativo en la reducción de la contaminación.\n\nEs importante tener en cuenta que la actividad industrial y la humedad relativa están teniendo un impacto más significativo en este aumento de contaminación. Es fundamental tomar medidas para reducir nuestra huella de carbono y minimizar nuestras emisiones para ayudar a mejorar la calidad del aire en nuestra zona."
+        "narrative": {
+          "es": "La calidad del aire en la zona exterior de Vitoria-Gasteiz se espera que sea moderadamente baja debido a la predicción de un nivel de PM10 de 19,8 µg/m³, que supera la base de 10,8 µg/m³. Los factores que contribuyen a esta situación son la alta humedad relativa y la actividad industrial en la zona.",
+          "eu": "Vitoria-Gasteizeko kanpoaldeko aire kalitatea 19,8 µg/m³ PM10 maila predikzioarekin moderatuan beherantz egongo da, 10,8 µg/m³eko oinarriaren gainetik. Humiditatea altua eta ICAren aktibitatea faktore horiek dira hori eragiten dutenak."
+        }
       }
     },
     "PM2.5_zbe_d1": {
       "prediction_v1": 14.03,
-      "prediction": 14.7,
-      "lower": 11.27,
-      "upper": 18.13,
+      "prediction": 14.69,
+      "lower": 11.25,
+      "upper": 18.12,
       "rmse_cv": 2.68,
-      "correction": 0.67,
+      "correction": 0.66,
       "foresight": {
         "base_value": 7.41,
         "positive_top": [
@@ -280,7 +292,10 @@
             "value": -0.08
           }
         ],
-        "narrative": "La contaminación por PM2.5 en la zona ZBE se espera que aumente mañana debido a varios factores. El principal impulsor es la propia contaminación por PM2.5 en la zona, que sube un 29%. Además, también se espera un aumento en la contaminación por PM10 y la actividad industrial.\n\nSin embargo, hay factores que podrían mitigar esta tendencia. El aumento de la nubosidad y la disminución de la ocupación de tráfico podrían ayudar a reducir la contaminación. Además, un mayor índice de industria a lo largo del mes pasado también podría contribuir a una menor contaminación."
+        "narrative": {
+          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz predice un nivel de PM2.5 de 14.0 µg/m³, un aumento con respecto a la base de 7.4 µg/m³. Esto se debe a factores como el aumento de la concentración de PM10 y PM2.5 en la zona, así como la intensidad del tráfico.",
+          "eu": "Vitoria-Gasteizeneko ZBE eremuan airearen kalitatearen egoera PM2.5 14.0 µg/m³koa da, 7.4 µg/m³koa zen basearekin aldatu egiten da. Hau PM10 eta PM2.5 konzentrazioaren igoerarekin eta trafikoaren intensitatearekin lotuta dago."
+        }
       }
     },
     "PM2.5_out_d1": {
@@ -336,16 +351,19 @@
             "value": -0.07
           }
         ],
-        "narrative": "La predicción de PM2.5 para mañana en la zona OUT es de 12.2 µg/m³, lo que supera el valor medio habitual de 7.2 µg/m³. La contaminación está aumentando debido a la influencia de factores como la actividad industrial (ICA_out), la concentración de partículas PM2.5 y PM10, que empeoran la calidad del aire.\n\nAunque hay factores que empeoran la contaminación, también hay algunos que la ayudan a mejorar. La ocupación del tráfico disminuye la contaminación, así como la precipitación prevista y la duración del sol. Sin embargo, en este caso, estos factores no tienen un impacto significativo en la predicción de PM2.5 para mañana."
+        "narrative": {
+          "es": "La calidad del aire en Vitoria-Gasteiz se encuentra en una situación moderada. La predicción de PM2.5 para la zona exterior es de 12.2 µg/m³, lo que supera ligeramente la base de 7.2 µg/m³. Los factores que contribuyen a un aumento de la contaminación son la intensidad del tráfico, la concentración de PM2.5 en la zona exterior y la concentración de PM10 en la zona de baja emisión.",
+          "eu": "Gasteizko airearen kalitatea egoera moderatuan dago. Zerbitzu kanpaleko PM2.5aren aurreikuspena 12.2 µg/m³koa da, hau 7.2 µg/m³koa den oinarriaren gainetik. Kontzentrazioa handitzeko faktoreak, trafiikoa, PM2.5 kanpalekoa eta PM10 behe-emisio eremukoak dira."
+        }
       }
     },
     "ICA_zbe_d1": {
       "prediction_v1": 47.08,
-      "prediction": 43.24,
-      "lower": 34.63,
-      "upper": 51.84,
+      "prediction": 43.04,
+      "lower": 34.44,
+      "upper": 51.65,
       "rmse_cv": 6.722,
-      "correction": -3.84,
+      "correction": -4.04,
       "foresight": {
         "base_value": 20.36,
         "positive_top": [
@@ -392,7 +410,10 @@
             "value": -0.13
           }
         ],
-        "narrative": "La contaminación por ICA en la zona ZBE está aumentando debido a varios factores. El aumento en la concentración de ICA en la zona (ICA_zbe) es el factor principal, con un impacto de +7.41, lo que significa que es el factor que más contribuye al aumento de la contaminación. Además, también se están produciendo aumentos en la concentración de PM10 en la zona y en la concentración de ICA en la zona exterior.\n\nSin embargo, hay factores que ayudan a frenar este aumento de la contaminación. La humedad relativa en la zona está disminuyendo, lo que contribuye a una mayor dispersión de los contaminantes. Además, la concentración de PM10 en la zona exterior está disminuyendo y la ocupación del tráfico también está disminuyendo, lo que ayuda a reducir la contaminación."
+        "narrative": {
+          "es": "Según la predicción, la calidad del aire en Vitoria-Gasteiz para el contaminante ICA en la zona ZBE será de 47.1 µg/m³, lo que es 7.41 puntos por encima de lo esperado. Esto se debe a factores como la contaminación del aire en la zona exterior (+3.06) y la concentración de PM10 en la zona ZBE (+6.2).",
+          "eu": "Kualitateko airearen prestatzei jarraituz, Gasteizko ICA kontaminantea ZBE eremuan 47.1 µg/m³ izango da, espero baino 7.41 aldiz gehiago. Hau zuzenean eragiten duten faktoreak PM10_zbe (+6.2), ICA_out (+3.06) eta ICA_zbe (+7.41) dira."
+        }
       }
     },
     "ICA_out_d1": {
@@ -448,7 +469,10 @@
             "value": -0.36
           }
         ],
-        "narrative": "La predicción de contaminación para mañana en la zona OUT es de 27.8 µg/m³, lo que significa que la contaminación está aumentando. Esto se debe principalmente a la presencia de varios factores que empujan la contaminación al alza, como la contaminación por ICA_out, que aumenta en un 5.36%, y la velocidad del viento, que también contribuye a la dispersión de los contaminantes.\n\nNo obstante, no se observa la presencia de factores que empujen la contaminación a la baja, como la reducción de la contaminación por NO2_out_roll_std_14d, PM10_out o el tráfico."
+        "narrative": {
+          "es": "La calidad del aire en Vitoria-Gasteiz se encuentra en una situación crítica debido a la predicción de un nivel de ICA de 27,8 µg/m³, que supera el umbral de base de 20,2 µg/m³. Los factores que contribuyen a esta situación son la velocidad del viento, la concentración de PM10 en la zona de influencia de la ciudad y el aumento de la contaminación atmosférica en la zona exterior.",
+          "eu": "Vitoria-Gasteizeko airearen kalitatea egoera kriitikoan dago, ICAren 27,8 µg/m³eko predikzioa 20,2 µg/m³eko basearen gainetik dagoelako. Gainera, haizearen abiadura, hiriaren eragin-zonako PM10aren konzentrazioa eta kanpoko eremuko airearen kutsadura maila handitzea faktore nagusiak dira."
+        }
       }
     }
   }

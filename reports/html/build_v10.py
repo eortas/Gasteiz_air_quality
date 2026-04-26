@@ -1631,8 +1631,12 @@ function renderForesight() {
   }
   
   let narrativeText = fs.narrative || t.fsNoNarrative;
+  if (narrativeText && typeof narrativeText === 'object') {
+    narrativeText = narrativeText[currentLang] || narrativeText['es'] || t.fsNoNarrative;
+  }
+  
   if (!narrativeText && fs.error) {
-    narrativeText = `Error al calcular SHAP: ${fs.error}`;
+    narrativeText = `Error: ${fs.error}`;
   }
   narrativeDiv.textContent = narrativeText;
   
