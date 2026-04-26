@@ -1553,19 +1553,24 @@ const featureNames = {
     'fc_relative_humidity_2m': 'Humedad Relativa',
     'fc_precipitation': 'Precipitación',
     'fc_wind_speed_10m': 'Velocidad Viento',
+    'fc_wind_gusts_10m': 'Ráfagas Viento',
     'fc_cloud_cover': 'Nubosidad',
     'fc_surface_pressure': 'Presión Atmosférica',
     'fc_sunshine_duration': 'Horas de Sol',
-    'lag_': 'hace ',
-    'd': ' días',
-    'roll_mean_': 'Media móvil ',
+    'fc_boundary_layer_height': 'Altura Capa Límite',
+    'lag_': ' (hace ',
+    'd': ' días)',
+    'roll_mean_': 'Media ',
     'roll_std_': 'Volatilidad ',
     'NO2': 'Dióxido Nitrógeno',
     'PM10': 'Partículas PM10',
     'PM2.5': 'Partículas PM2.5',
     'ICA': 'Índice Calidad Aire',
-    'zbe': 'ZBE',
-    'out': 'Zona Exterior'
+    'zbe': ' (ZBE)',
+    'out': ' (Exterior)',
+    'temp_min_dia': 'Temp. Mínima',
+    'temp_max_dia': 'Temp. Máxima',
+    'exp_traffic_volume': 'Tráfico esperado'
   },
   eu: {
     'traffic_occupancy': 'Trafiko Okupazioa',
@@ -1574,19 +1579,24 @@ const featureNames = {
     'fc_relative_humidity_2m': 'Hezetasun Erlatiboa',
     'fc_precipitation': 'Prezipitazioa',
     'fc_wind_speed_10m': 'Haizearen Abiadura',
+    'fc_wind_gusts_10m': 'Haize Boladak',
     'fc_cloud_cover': 'Hodeitza',
     'fc_surface_pressure': 'Presio Atmosferikoa',
     'fc_sunshine_duration': 'Eguzki Orduak',
-    'lag_': 'duela ',
-    'd': ' egun',
-    'roll_mean_': 'Batez besteko mugikorra ',
-    'roll_std_': 'Hegakorritasuna ',
+    'fc_boundary_layer_height': 'Muga Geruzaren Altuera',
+    'lag_': ' (duela ',
+    'd': ' egun)',
+    'roll_mean_': 'Batez besteko ',
+    'roll_std_': 'Hegakorritasun ',
     'NO2': 'Nitrogeno Dioxidoa',
     'PM10': 'PM10 Partikulak',
     'PM2.5': 'PM2.5 Partikulak',
     'ICA': 'Aire Kalitatearen Indizea',
-    'zbe': 'EGE',
-    'out': 'Kanpoko Eremua'
+    'zbe': ' (EGE)',
+    'out': ' (Kanpokoa)',
+    'temp_min_dia': 'Gutxieneko Tenperatura',
+    'temp_max_dia': 'Gehieneko Tenperatura',
+    'exp_traffic_volume': 'Aurreikusitako trafikoa'
   }
 };
 
@@ -1595,22 +1605,35 @@ function getFeatureLabel(feat) {
   const dict = featureNames[lang];
   let label = feat;
 
-  // Intentar traducción directa o por partes
+  // 1. Limpieza inicial de prefijos comunes
+  label = label.replace(/^fc_/, '').replace(/^exp_/, '');
+
+  // 2. Traducción de términos base
   for (const [key, val] of Object.entries(dict)) {
-    if (label.includes(key)) {
+    // Evitar pisar términos compuestos (ej: wind_speed vs wind)
+    if (key.length > 3 && label.includes(key)) {
       label = label.replace(key, val);
     }
   }
 
-  // Limpiar guiones bajos y formatear lags
-  label = label.replace(/_/g, ' ');
-  if (label.includes('lag')) {
-    const match = label.match(/lag (\d+)d/);
-    if (match) {
-      const days = match[1];
-      label = label.replace(match[0], dict['lag_'] + days + dict['d']);
-    }
+  // 3. Formateo de Lags (hace X días)
+  const lagMatch = label.match(/lag (\d+)d/i) || label.match(/_lag_(\d+)d/i);
+  if (lagMatch) {
+    const days = lagMatch[1];
+    const suffix = (days === '1' && lang === 'es') ? ' (ayer)' : 
+                   (days === '1' && lang === 'eu') ? ' (atzo)' :
+                   dict['lag_'] + days + dict['d'];
+    label = label.replace(lagMatch[0], suffix);
   }
+
+  // 4. Formateo de Medias Móviles
+  const rollMatch = label.match(/roll_mean_(\d+)d/i) || label.match(/media (\d+)d/i);
+  if (rollMatch) {
+    label = label.replace(rollMatch[0], dict['roll_mean_'] + rollMatch[1] + 'd');
+  }
+
+  // 5. Limpieza final
+  label = label.replace(/_/g, ' ').trim();
   
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
