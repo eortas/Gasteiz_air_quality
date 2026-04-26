@@ -149,7 +149,10 @@ async def prevision_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     for key, label in main_targets:
         if key in targs:
             val = targs[key].get("prediction", 0)
-            msg += f"👉 *{label}:* {val:.1f} µg/m³\n"
+            if key.startswith("ICA"):
+                msg += f"👉 *{label}:* {val:.1f}\n"  # ICA es un índice, sin unidades
+            else:
+                msg += f"👉 *{label}:* {val:.1f} µg/m³\n"
             
     try:
         await update.message.reply_text(msg, parse_mode="Markdown")
@@ -167,8 +170,62 @@ async def prevision_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             except Exception as e:
                 logger.error(f"Error enviando narrativa: {e}")
 
+# ---------------------------------------------------------------------------
+# Respuestas hardcodeadas (FAQ)
+# ---------------------------------------------------------------------------
+FAQ: list[tuple[list[str], str]] = [
+    (
+        ["quién te creó", "quien te creo", "quien te hizo", "quién te hizo",
+         "quién te programó", "quien te programo", "quién eres", "quien eres",
+         "quién está detrás", "quien esta detras", "who made you", "who created you"],
+        "Fui creado por un arquitecto y data scientist apasionado de los datos de la calidad del aire y el impacto de la ZBE en la ciudad. Si quieres saber más de mi o de otros proyectos visita mi LinkedIn https://www.linkedin.com/in/eortas/ .
+        "
+    ),
+    (
+        ["para qué sirves", "para que sirves", "qué haces", "que haces",
+         "qué puedes hacer", "que puedes hacer", "ayuda", "help"],
+        "Soy *VitoriaAirBot* 🌍☁️\n\nTe ayudo a consultar la calidad del aire en Vitoria-Gasteiz. Puedes:\n"
+        "• Pedirme la *previsión de hoy* (/prevision)\n"
+        "• Preguntarme por datos de una *fecha pasada* (ej. \"¿cómo estaba el aire el 2024-03-10?\")\n"
+        "• Consultar el *análisis contrafactual* de la ZBE (ej. \"¿qué pasaría sin la ZBE?\")\n"
+        "• Pedirme consejo para *salir en bici o pasear* 🚴"
+    ),
+    (
+        ["qué es la zbe", "que es la zbe", "zbe", "zona de bajas emisiones",
+         "zona de baja emisión", "zona de baja emision"],
+        "La *ZBE (Zona de Bajas Emisiones)* de Vitoria-Gasteiz es el área del centro urbano donde se restringen los vehículos más contaminantes. "
+        "Entró en vigor en 2022 y es una de las políticas ambientales más relevantes de la ciudad. "
+        "Mi modelo de control sintético analiza su impacto real en NO₂, PM10 y PM2.5. 📊"
+    ),
+    (
+        ["gracias", "thanks", "thank you", "mila esker", "eskerrik asko"],
+        "¡De nada! 😊 Si tienes más preguntas sobre la calidad del aire en Vitoria-Gasteiz, aquí estoy. Eduardo me creo como tu fiel compañero, siempre amaze, amaze, amaze"
+    ),
+    (
+        ["hola", "buenos días", "buenas tardes", "buenas noches", "buenas", "hey", "hi", "hello", "kaixo"],
+        "¡Hola! 👋 Soy *VitoriaAirBot*. Pregúntame por la calidad del aire de Vitoria-Gasteiz, \npor ejemplo: _\"¿Es buen momento para salir a correr?\"_ o usa /prevision para ver el último pronóstico."
+    ),
+]
+
+def find_faq_answer(user_text: str) -> str | None:
+    """Devuelve la respuesta hardcodeada si el mensaje encaja con alguna FAQ, o None si no."""
+    normalized = user_text.lower().strip()
+    # Eliminar signos de puntuación comunes para mejorar la detección
+    normalized = re.sub(r'[¿?¡!.,;:]', '', normalized)
+    for keywords, answer in FAQ:
+        if any(kw in normalized for kw in keywords):
+            return answer
+    return None
+
 async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_msg = update.message.text
+
+    # --- Comprobación FAQ antes de llamar a Groq ---
+    faq_answer = find_faq_answer(user_msg)
+    if faq_answer:
+        await update.message.reply_text(faq_answer, parse_mode="Markdown")
+        return
+
     if not GROQ_API_KEY:
         await update.message.reply_text("Error: GROQ_API_KEY no está configurada. No puedo procesar tu lenguaje.")
         return
@@ -227,7 +284,10 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         context_data = []
         for k, v in targs.items():
             val = v.get("prediction", 0)
-            context_data.append(f"{k}: {val:.1f} µg/m³")
+            if k.startswith("ICA"):
+                context_data.append(f"{k}: {val:.1f} (índice sin unidades)")
+            else:
+                context_data.append(f"{k}: {val:.1f} µg/m³")
         context_str = ", ".join(context_data)
         
         system_prompt = (
