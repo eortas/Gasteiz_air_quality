@@ -178,8 +178,7 @@ FAQ: list[tuple[list[str], str]] = [
         ["quién te creó", "quien te creo", "quien te hizo", "quién te hizo",
          "quién te programó", "quien te programo", "quién eres", "quien eres",
          "quién está detrás", "quien esta detras", "who made you", "who created you"],
-        "Fui creado por un arquitecto y data scientist apasionado de los datos de la calidad del aire y el impacto de la ZBE en la ciudad. Si quieres saber más de mi o de otros proyectos visita mi LinkedIn https://www.linkedin.com/in/eortas/ .
-        "
+        "Fui creado por un arquitecto y data scientist apasionado de los datos de la calidad del aire y el impacto de la ZBE en la ciudad. Si quieres saber más de mí o de otros proyectos visita mi LinkedIn https://www.linkedin.com/in/eortas/."
     ),
     (
         ["para qué sirves", "para que sirves", "qué haces", "que haces",
