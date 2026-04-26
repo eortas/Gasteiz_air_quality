@@ -177,7 +177,8 @@ FAQ: list[tuple[list[str], str]] = [
     (
         ["quién te creó", "quien te creo", "quien te hizo", "quién te hizo",
          "quién te programó", "quien te programo", "quién eres", "quien eres",
-         "quién está detrás", "quien esta detras", "who made you", "who created you"],
+         "quién está detrás", "quien esta detras", "who made you", "who created you",
+         "creador", "creado", "creo este bot", "creado este bot"],
         "Fui creado por un arquitecto y data scientist apasionado de los datos de la calidad del aire y el impacto de la ZBE en la ciudad. Si quieres saber más de mí o de otros proyectos visita mi LinkedIn https://www.linkedin.com/in/eortas/."
     ),
     (
@@ -197,8 +198,13 @@ FAQ: list[tuple[list[str], str]] = [
         "Mi modelo de control sintético analiza su impacto real en NO₂, PM10 y PM2.5. 📊"
     ),
     (
+        ["fiable", "fiabilidad", "precisión", "preciso", "calidad", "funciona bien", "es verdad", "seguro"],
+        "Eduardo es un perfeccionista nato. Los modelos de IA que utilizo son extremadamente precisos y han sido entrenados con datos históricos reales de las estaciones de Vitoria-Gasteiz. "
+        "De hecho, ¡Eduardo ganó el primer desafío de Kaggle! 🏆 Estás en buenas manos."
+    ),
+    (
         ["gracias", "thanks", "thank you", "mila esker", "eskerrik asko"],
-        "¡De nada! 😊 Si tienes más preguntas sobre la calidad del aire en Vitoria-Gasteiz, aquí estoy. Eduardo me creo como tu fiel compañero, siempre amaze, amaze, amaze"
+        "¡De nada! Dáselas a Eduardo si quieres personalmente, aquí tienes su Linkedin https://www.linkedin.com/in/eortas/ 😊 Si tienes más preguntas sobre la calidad del aire en Vitoria-Gasteiz, aquí estoy. Eduardo me creo como tu fiel compañero, siempre amaze, amaze, amaze"
     ),
     (
         ["hola", "buenos días", "buenas tardes", "buenas noches", "buenas", "hey", "hi", "hello", "kaixo"],
