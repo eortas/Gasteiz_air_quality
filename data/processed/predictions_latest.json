@@ -1,15 +1,15 @@
 {
-  "prediction_date": "2026-04-28",
-  "generated_at": "2026-04-27T05:33:21.851185+00:00",
+  "prediction_date": "2026-04-29",
+  "generated_at": "2026-04-28T05:33:43.818757+00:00",
   "model_version": "v5",
   "targets": {
     "NO2_zbe_d1": {
-      "prediction": 6.38,
-      "lower": 1.37,
-      "upper": 11.39,
+      "prediction": 6.23,
+      "lower": 1.22,
+      "upper": 11.24,
       "rmse_cv": 3.915,
       "foresight": {
-        "base_value": 6.38,
+        "base_value": 6.23,
         "positive_top": [
           {
             "feature": "fc_wind_v_d3",
@@ -55,18 +55,18 @@
           }
         ],
         "narrative": {
-          "es": "La predicción de NO2 en la zona ZBE de Vitoria-Gasteiz es de 6.4 µg/m³, lo que coincide con la base de datos. No se han detectado factores que puedan aumentar o disminuir la concentración de este contaminante.",
-          "eu": "NO2ren ZBEko zonan Vitoria-Gasteizen predikzioa 6,4 µg/m³koa da, base datuetan dagoen bezala. Aingurako edo jaitsierako faktoreez ez da kontuan hartu behar."
+          "es": "La calidad del aire en la zona de ZBE de Vitoria-Gasteiz se encuentra dentro de los límites permitidos para el contaminante NO2, con una predicción de 6.2 µg/m³. Aunque no hay factores que aumenten o disminuyan la contaminación, es importante seguir monitoreando la situación.",
+          "eu": "Vitoria-Gasteizeneko ZBE eremuan NO2 kutsadura-maila osoa da, 6,2 µg/m³koa. Baina ez dute faktoreak kutsadura maila igo edo jaisteko, horregatik, egoera segituko daude ikusarazteko."
         }
       }
     },
     "NO2_out_d1": {
-      "prediction": 8.26,
-      "lower": 2.52,
-      "upper": 14.01,
+      "prediction": 8.07,
+      "lower": 2.32,
+      "upper": 13.81,
       "rmse_cv": 4.49,
       "foresight": {
-        "base_value": 8.26,
+        "base_value": 8.07,
         "positive_top": [
           {
             "feature": "fc_wind_v_d3",
@@ -112,18 +112,18 @@
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en Vitoria-Gasteiz se encuentra dentro de los límites permitidos para el NO2 en la zona exterior. La predicción para la concentración de NO2 es de 8.3 µg/m³, lo que es inferior a la base de 8.3 µg/m³.",
-          "eu": "Vitoria-Gasteizeneko airearen kalitatea NO2-ren aldean kanpoaldeko eremuan egonik, muga ez diren mugak betetzen ditu. NO2ren konzentrazioaren aurreikuspena 8.3 µg/m³koa da, 8.3 µg/m³rekin alderatuz, basea dena."
+          "es": "La predicción del contaminante NO2 en la zona exterior de Vitoria-Gasteiz muestra un valor de 8.1 µg/m³, lo que se considera dentro de los límites permitidos. Sin embargo, es importante tener en cuenta que no hay factores que incrementen la concentración de NO2 en la zona.",
+          "eu": "NO2 kontaminatuen aurreikuspena Vitoria-Gasteizen kanpoko eremuan 8,1 µg/m³koa da, hainbat mugakideetan dagoena. Baina, NO2 kontzentrazioa handitzeko faktoreak ez daude eremuan."
         }
       }
     },
     "PM10_zbe_d1": {
-      "prediction": 23.45,
-      "lower": 18.03,
-      "upper": 28.88,
+      "prediction": 23.34,
+      "lower": 17.91,
+      "upper": 28.76,
       "rmse_cv": 4.239,
       "foresight": {
-        "base_value": 23.45,
+        "base_value": 23.34,
         "positive_top": [
           {
             "feature": "fc_wind_v_d3",
@@ -169,18 +169,18 @@
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz se encuentra dentro de los límites permitidos, con una predicción de 23,5 µg/m³, lo que es igual a la base. No hay factores que contribuyan a un aumento o disminución significativa de la contaminación.",
-          "eu": "Vitoria-Gasteizeko ZBE eremuan airearen kalitatea mugak direlakoan dago, 23,5 µg/m³eko predikzioarekin, hau da, oinarri berdina. Ez dago faktore batzuk, geroztik, kontaminazioaren igoera edo jaitsiera nabarmena eragiten dutenak."
+          "es": "La calidad del aire en la zona de ZBE de Vitoria-Gasteiz se encuentra dentro de los límites permitidos, con una predicción de 23.3 µg/m³. Los factores climáticos no han tenido un impacto significativo en la contaminación.",
+          "eu": "Vitoria-Gasteizeko ZBE eremuan airearen kalitatea mugimenduaren barruan dago, 23,3 µg/m³-ko predikzioarekin. Eremuaren klima faktorek ez dute kalitatearen gainbehera eraginik izan."
         }
       }
     },
     "PM10_out_d1": {
-      "prediction": 13.36,
-      "lower": 7.98,
-      "upper": 18.75,
+      "prediction": 13.47,
+      "lower": 8.08,
+      "upper": 18.85,
       "rmse_cv": 4.208,
       "foresight": {
-        "base_value": 13.36,
+        "base_value": 13.47,
         "positive_top": [
           {
             "feature": "fc_wind_v_d3",
@@ -226,18 +226,18 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5469, Requested 855. Please try again in 3.24s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
-          "eu": "API errorea"
+          "es": "La calidad del aire en la zona OUT de Vitoria-Gasteiz se encuentra dentro de los límites permisibles, con una predicción de 13,5 µg/m³. Los factores que influyen en la calidad del aire, como la velocidad del viento y la temperatura, están en valores neutrales.",
+          "eu": "Vitoria-Gasteizeko OUT eremuan airearen kalitatea muga-tarifak barnean dago, 13,5 µg/m³-ko predikzioarekin. Airearen kalitatea eragiten duten faktoreak, adibidez, haizearen abiadura eta tenperatura, balio neutroetan daude."
         }
       }
     },
     "PM2.5_zbe_d1": {
-      "prediction": 9.34,
-      "lower": 5.91,
-      "upper": 12.77,
+      "prediction": 9.49,
+      "lower": 6.06,
+      "upper": 12.92,
       "rmse_cv": 2.68,
       "foresight": {
-        "base_value": 9.34,
+        "base_value": 9.49,
         "positive_top": [
           {
             "feature": "fc_wind_v_d3",
@@ -283,18 +283,18 @@
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en la zona de ZBE de Vitoria-Gasteiz se encuentra dentro de los límites permitidos, con una predicción de 9.3 µg/m³ de PM2.5. Aunque no hay factores que aumenten significativamente la contaminación, tampoco hay factores que la reduzcan.",
-          "eu": "Gasteizko ZBE eremuko airearen kalitatea mugak direlauden barne dago, PM2.5ren 9.3 µg/m³ren predikzioarekin. Ez dago faktorek handikatu dutenik, baina ez dago faktorek gutxitu dutenik ere."
+          "es": "La calidad del aire en la zona de ZBE de Vitoria-Gasteiz se encuentra dentro de los límites seguros, con una predicción de 9,5 µg/m³ de PM2.5. Aunque no hay factores que aumenten la contaminación, tampoco hay factores que la disminuyan.",
+          "eu": "Vitoria-Gasteizeneko ZBE eremuan airearen kalitatea seguruak diren mugak barnean dago, PM2.5 9,5 µg/m³ predikzioarekin. Baina ez dago faktorerik airearen kualitatea handitzen duena, eta ez dago faktorerik ere gutxitzen duena."
         }
       }
     },
     "PM2.5_out_d1": {
-      "prediction": 8.03,
-      "lower": 4.05,
-      "upper": 12.01,
+      "prediction": 8.2,
+      "lower": 4.22,
+      "upper": 12.18,
       "rmse_cv": 3.111,
       "foresight": {
-        "base_value": 8.03,
+        "base_value": 8.2,
         "positive_top": [
           {
             "feature": "fc_wind_v_d3",
@@ -340,15 +340,15 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5823, Requested 433. Please try again in 2.56s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5591, Requested 857. Please try again in 4.48s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
           "eu": "API errorea"
         }
       }
     },
     "ICA_zbe_d1": {
       "prediction": 32.83,
-      "lower": 24.23,
-      "upper": 41.44,
+      "lower": 24.22,
+      "upper": 41.43,
       "rmse_cv": 6.722,
       "foresight": {
         "base_value": 32.83,
@@ -397,18 +397,18 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5809, Requested 461. Please try again in 2.699999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
-          "eu": "API errorea"
+          "es": "La calidad del aire en la zona de ZBE de Vitoria-Gasteiz se encuentra dentro de los límites permisibles, con una predicción de 32,8 µg/m³. Aunque no hay factores que aumenten o disminuyan la calidad del aire en este momento.",
+          "eu": "Vitoria-Gasteizeneko ZBE eremuko airearen kalitatea mugimendu permisibletan dago, 32,8 µg/m³eko predikzioarekin. Eguneroko faktoreek ez dute airearen kalitatea handitzen edo gutxitzen."
         }
       }
     },
     "ICA_out_d1": {
-      "prediction": 21.31,
-      "lower": 11.09,
-      "upper": 31.54,
+      "prediction": 21.69,
+      "lower": 11.47,
+      "upper": 31.92,
       "rmse_cv": 7.987,
       "foresight": {
-        "base_value": 21.31,
+        "base_value": 21.69,
         "positive_top": [
           {
             "feature": "fc_wind_v_d3",
@@ -454,7 +454,7 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5794, Requested 380. Please try again in 1.74s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5897, Requested 451. Please try again in 3.48s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
           "eu": "API errorea"
         }
       }
