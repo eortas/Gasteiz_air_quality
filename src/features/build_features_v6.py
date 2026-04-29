@@ -83,7 +83,8 @@ def subsection(title):
 def load_csvs(directory: Path, pattern: str, ts_col: str) -> pd.DataFrame:
     files = sorted(directory.glob(pattern))
     if not files:
-        raise FileNotFoundError(f"Sin archivos '{pattern}' en {directory}")
+        log(f"  [WARN] Sin archivos '{pattern}' en {directory}")
+        return pd.DataFrame(columns=[ts_col])
     frames = []
     for f in files:
         log(f"  Leyendo {f.name} ({f.stat().st_size/1024/1024:.1f} MB)...")

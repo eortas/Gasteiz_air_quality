@@ -311,8 +311,8 @@ def main():
 
     files = sorted(AIR_DIR.glob("kunak_*.csv"))
     if not files:
-        log(f"  [ERROR] No se encuentran CSVs en {AIR_DIR}")
-        sys.exit(1)
+        log(f"  [WARN] No se encuentran CSVs en {AIR_DIR}")
+        sys.exit(0)
 
     log(f"\n  Archivos encontrados: {len(files)}")
     for f in files:

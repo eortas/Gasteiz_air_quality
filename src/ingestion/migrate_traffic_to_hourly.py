@@ -92,7 +92,7 @@ def main():
 
     if not files:
         print(f"  No se encontraron ficheros en {TRAFFIC_DIR}")
-        sys.exit(1)
+        sys.exit(0)
 
     for f in files:
         size_mb = f.stat().st_size / 1024 / 1024
