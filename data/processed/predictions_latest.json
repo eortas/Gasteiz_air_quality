@@ -1,31 +1,31 @@
 {
-  "prediction_date": "2026-05-30",
-  "generated_at": "2026-05-29T06:11:56.457578+00:00",
+  "prediction_date": "2026-05-31",
+  "generated_at": "2026-05-30T05:50:09.655950+00:00",
   "model_version": "v5",
   "targets": {
     "NO2_zbe_d1": {
-      "prediction": 7.95,
-      "lower": 2.93,
-      "upper": 12.96,
+      "prediction": 7.85,
+      "lower": 2.84,
+      "upper": 12.86,
       "rmse_cv": 3.915,
       "foresight": {
         "base_value": 11.22,
         "positive_top": [
           {
             "feature": "fc_temperature_2m_d1",
-            "value": 0.47
+            "value": 0.48
           },
           {
             "feature": "fc_wind_gusts_10m_d1",
-            "value": 0.45
+            "value": 0.46
           },
           {
             "feature": "traffic_occupancy_lag_2d",
-            "value": 0.29
+            "value": 0.33
           },
           {
             "feature": "fc_wind_speed_10m_d1",
-            "value": 0.28
+            "value": 0.24
           },
           {
             "feature": "NO2_zbe_roll_std_30d",
@@ -35,85 +35,85 @@
         "negative_top": [
           {
             "feature": "NO2_zbe",
-            "value": -2.27
+            "value": -2.28
           },
           {
             "feature": "NO2_zbe_roll_max_3d",
-            "value": -1.35
+            "value": -1.32
           },
           {
             "feature": "exp_traffic_volume_d1",
-            "value": -0.92
+            "value": -0.97
           },
           {
             "feature": "NO2_out",
-            "value": -0.9
+            "value": -0.93
           },
           {
-            "feature": "fc_wind_direction_10m_d1",
-            "value": -0.27
+            "feature": "HDD_acum_7d",
+            "value": -0.29
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz está siendo afectada por la presencia de NO2, con una predicción de 7.9 µg/m³. Aunque la base es de 11.2, los factores que están aumentando la contaminación son la temperatura alta, las ráfagas de viento y el tráfico ocupado.",
-          "eu": "Vitoria-Gasteizeko ZBE eremuan, NO2 kontsentsuak kalitatea airearen kalitatea eragiten ari du, 7.9 µg/m³ko predikzioarekin. Baina, basea 11.2koa bada, gauza gehiago daude kontsentsua handitzen duten faktoreak, hala nola, tenperatura altua, haizearen eraginak eta trafiko okupatua."
+          "es": "El análisis ambiental indica que la predicción de NO2 en la zona ZBE es de 7.8 µg/m³, con una base de 11.2. Los factores que contribuyen a un aumento de la contaminación son la temperatura alta, las ráfagas de viento y un mayor tráfico de ocupación.",
+          "eu": "Analisi ambientala dio itzuli zuen NO2ren ZBEko predikzioa 7,8 µg/m³koa dela, 11,2ko oinarriarekin. Kontaminazioa handitzearen faktoreak altuera handiko tenperatura, haizearen erronkak eta jardueraren trafiko handitzea dira."
         }
       }
     },
     "NO2_out_d1": {
-      "prediction": 13.52,
-      "lower": 7.77,
-      "upper": 19.27,
+      "prediction": 13.29,
+      "lower": 7.54,
+      "upper": 19.04,
       "rmse_cv": 4.49,
       "foresight": {
         "base_value": 12.75,
         "positive_top": [
           {
             "feature": "fc_temperature_2m_d1",
-            "value": 1.69
+            "value": 1.71
           },
           {
             "feature": "fc_wind_gusts_10m_d1",
-            "value": 1.57
+            "value": 1.53
           },
           {
             "feature": "fc_wind_speed_10m_d1",
-            "value": 1.07
+            "value": 1.04
           },
           {
             "feature": "exp_traffic_occupancy_d3",
-            "value": 0.57
+            "value": 0.56
           },
           {
             "feature": "fc_wind_speed_10m_d2",
-            "value": 0.26
+            "value": 0.27
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_out",
-            "value": -3.37
+            "value": -3.38
           },
           {
             "feature": "NO2_out_roll_mean_7d",
-            "value": -1.01
+            "value": -1.13
           },
           {
             "feature": "exp_traffic_volume_d1",
-            "value": -0.91
+            "value": -0.92
           },
           {
             "feature": "NO2_zbe",
-            "value": -0.53
+            "value": -0.52
           },
           {
             "feature": "fc_HDD_d1",
-            "value": -0.38
+            "value": -0.37
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en Vitoria-Gasteiz está siendo afectada por la presencia de NO2 en las zonas exteriores. Aunque la temperatura alta y las ráfagas de viento están aumentando la concentración de NO2, la velocidad del viento está ayudando a disipar los contaminantes.",
-          "eu": "Vitoria-Gasteizeneko airearen kalitatea NO2ren presentzia dela eta kanpoko eremuetan eragiten ari da. Baina, altuera handia eta haizearen eraginak NO2ren kontzentrazioa handitu dute, haizearen abiadurak, aldiz, arnasten diren gasak banatzen laguntzen du."
+          "es": "La predicción del nivel de NO2 en la zona exterior de Vitoria-Gasteiz es de 13.3 µg/m³, lo que supone un aumento de 0.5 µg/m³ con respecto a la base de 12.8 µg/m³. Los factores que contribuyen a este aumento son la temperatura alta, las ráfagas de viento y la velocidad del viento.",
+          "eu": "NO2ren maila aurreikusia Vitoria-Gasteizen kanpoko eremuan 13,3 µg/m³koa da, 0,5 µg/m³ gehiago baita basearen 12,8 µg/m³tik gertuago. Gai hau areagotu zuen faktoreak tenperatura altua, haize-zoroak eta haizearen abiadura dira."
         }
       }
     },
@@ -127,7 +127,7 @@
         "positive_top": [
           {
             "feature": "relative_humidity_2m",
-            "value": 1.71
+            "value": 1.66
           },
           {
             "feature": "fc_wind_speed_10m_d1",
@@ -135,25 +135,25 @@
           },
           {
             "feature": "NO2_out_lag_1d",
-            "value": 0.48
+            "value": 0.49
           },
           {
             "feature": "fc_precipitation_d1",
-            "value": 0.38
+            "value": 0.36
           },
           {
             "feature": "exp_traffic_occupancy_d3",
-            "value": 0.27
+            "value": 0.23
           }
         ],
         "negative_top": [
           {
             "feature": "ICA_zbe",
-            "value": -2.94
+            "value": -2.95
           },
           {
             "feature": "PM10_zbe",
-            "value": -1.47
+            "value": -1.48
           },
           {
             "feature": "PM2.5_zbe",
@@ -165,26 +165,26 @@
           },
           {
             "feature": "exp_traffic_occupancy_d1",
-            "value": -0.31
+            "value": -0.3
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz se encuentra en un estado moderado, con una predicción de 11.0 µg/m³. La humedad relativa y la velocidad del viento están contribuyendo a un aumento en la concentración de PM10.",
-          "eu": "Vitoria-Gasteizeko ZBE eremuan airearen kalitatea egoera moderatuan dago, 11,0 µg/m³-ko predikzioarekin. Humiditate erlatiboa eta haizearen abiadura PM10-ko konzentrazioa handitzea eragiten ari dira."
+          "es": "El análisis de la calidad del aire en la zona ZBE de Vitoria-Gasteiz indica que la predicción de PM10 es de 11.0 µg/m³, lo que está por debajo de la base de 11.7 µg/m³. La humedad relativa y la velocidad del viento están influenciando positivamente la calidad del aire, mientras que la concentración de partículas PM10 y PM2.5 en la zona están contribuyendo negativamente.",
+          "eu": "Vitoria-Gasteizeneko ZBE eremuko airearen kalitatearen analisia erakusten du PM10ren aurreikuspena 11,0 µg/m³koa dela, 11,7 µg/m³koa den oinarriarekiko beherantz. Elikadura erlatiboa eta haizearen abiadura positiboki eragiten duten bitartean, PM10 eta PM2,5 partikulen konzentrazioa eremuan negatiboki eragiten du."
         }
       }
     },
     "PM10_out_d1": {
-      "prediction": 10.19,
-      "lower": 4.8,
-      "upper": 15.58,
+      "prediction": 10.46,
+      "lower": 5.07,
+      "upper": 15.84,
       "rmse_cv": 4.208,
       "foresight": {
         "base_value": 10.65,
         "positive_top": [
           {
             "feature": "relative_humidity_2m",
-            "value": 2.15
+            "value": 2.12
           },
           {
             "feature": "fc_wind_speed_10m_d1",
@@ -192,33 +192,33 @@
           },
           {
             "feature": "fc_sunshine_duration_d2",
-            "value": 0.57
+            "value": 0.56
+          },
+          {
+            "feature": "NO2_out_lag_14d",
+            "value": 0.23
           },
           {
             "feature": "wind_speed_10m",
             "value": 0.22
-          },
-          {
-            "feature": "fc_wind_u_d1",
-            "value": 0.21
           }
         ],
         "negative_top": [
           {
             "feature": "ICA_out",
-            "value": -1.53
+            "value": -1.59
           },
           {
             "feature": "PM2.5_out",
-            "value": -1.39
+            "value": -1.38
           },
           {
             "feature": "PM10_out",
-            "value": -0.92
+            "value": -0.93
           },
           {
             "feature": "sunshine_duration",
-            "value": -0.48
+            "value": -0.47
           },
           {
             "feature": "exp_traffic_occupancy_d1",
@@ -226,22 +226,22 @@
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en Vitoria-Gasteiz se encuentra en una zona exterior (OUT) con una predicción de 10,2 µg/m³, ligeramente por debajo de la base de 10,6 µg/m³. Los factores que influyen en esta situación son la humedad relativa, la velocidad del viento y la duración de la luz solar.",
-          "eu": "Vitoria-Gasteizeneko airearen kalitatea kanpoko eremuan (OUT) dago, 10,2 µg/m³koa, 10,6 µg/m³koa zen basearekiko txiki bat. Hainbat faktorek eragiten dute, hala nola, uhin luzea, haizearen abiadura eta eguzkiaren argitasuna."
+          "es": "La calidad del aire en Vitoria-Gasteiz se encuentra en una zona de riesgo (OUT) debido a la predicción de un nivel de PM10 de 10.5 µg/m³, ligeramente por debajo de la base de 10.6 µg/m³. Los factores que contribuyen a esta situación son la alta humedad relativa, la velocidad del viento y la duración de la radiación solar.",
+          "eu": "Vitoria-Gasteizeko airearen kalitatea arrisku-eremuan dago (OUT), 10.5 µg/m³ PM10aren predikzioa 10.6 µg/m³ batean behera baitago. Hainbat faktorek eragiten dute hau: elur maila altua, haizearen abiadura eta eguzki-irudiaren iraupena."
         }
       }
     },
     "PM2.5_zbe_d1": {
-      "prediction": 5.02,
-      "lower": 1.59,
-      "upper": 8.45,
+      "prediction": 5.04,
+      "lower": 1.61,
+      "upper": 8.47,
       "rmse_cv": 2.68,
       "foresight": {
         "base_value": 7.41,
         "positive_top": [
           {
             "feature": "viento_dir_out",
-            "value": 0.43
+            "value": 0.42
           },
           {
             "feature": "fc_boundary_layer_height_d1",
@@ -249,29 +249,29 @@
           },
           {
             "feature": "fc_wind_speed_10m_d1",
-            "value": 0.34
+            "value": 0.27
           },
           {
             "feature": "wind_speed_10m",
-            "value": 0.25
+            "value": 0.26
           },
           {
             "feature": "fc_wind_gusts_10m_d1",
-            "value": 0.24
+            "value": 0.23
           }
         ],
         "negative_top": [
           {
             "feature": "PM2.5_zbe",
-            "value": -1.44
+            "value": -1.43
           },
           {
             "feature": "ICA_zbe",
-            "value": -1.02
+            "value": -1.03
           },
           {
             "feature": "ICA_out",
-            "value": -0.71
+            "value": -0.74
           },
           {
             "feature": "PM2.5_out",
@@ -283,48 +283,48 @@
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz se prevé que sea buena con un valor de PM2.5 de 5.0 µg/m³, muy por debajo de la base de 7.4. Factores como el viento y la altura de la capa de mezcla contribuyen a mejorar la calidad del aire.",
-          "eu": "Vitoria-Gasteizeneko ZBE eremuan airearen kalitatea 5,0 µg/m³ PM2,5 7,4 baino askoz txikiagoa izango dela da, eta horrek kalitatea hobetzeko eragileak direla esan nahi du, hala nola haizea eta nahizka-mixoa."
+          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz se espera que sea buena, con una predicción de 5.0 µg/m³. La base de la predicción es 7.4, lo que indica una cierta estabilidad en la atmósfera.",
+          "eu": "Vitoria-Gasteizeko ZBE eremuan airearen kalitatea ona izango da, 5.0 µg/m³eko predikzioarekin. Predikzioaren oinarria 7.4 da, atmosferaren estabilitatea adierazten duena."
         }
       }
     },
     "PM2.5_out_d1": {
-      "prediction": 6.53,
-      "lower": 2.55,
-      "upper": 10.51,
+      "prediction": 6.16,
+      "lower": 2.18,
+      "upper": 10.14,
       "rmse_cv": 3.111,
       "foresight": {
         "base_value": 7.16,
         "positive_top": [
           {
-            "feature": "NO2_out_lag_1d",
-            "value": 0.88
+            "feature": "fc_wind_speed_10m_d1",
+            "value": 0.83
           },
           {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.76
+            "feature": "NO2_out_lag_1d",
+            "value": 0.7
           },
           {
             "feature": "weather_code",
-            "value": 0.4
+            "value": 0.34
           },
           {
             "feature": "boundary_layer_height",
-            "value": 0.33
+            "value": 0.32
           },
           {
             "feature": "wind_speed_10m",
-            "value": 0.24
+            "value": 0.25
           }
         ],
         "negative_top": [
           {
             "feature": "PM2.5_out",
-            "value": -2.06
+            "value": -2.08
           },
           {
             "feature": "ICA_out",
-            "value": -1.59
+            "value": -1.54
           },
           {
             "feature": "sunshine_duration",
@@ -336,34 +336,34 @@
           },
           {
             "feature": "temp_range",
-            "value": -0.12
+            "value": -0.1
           }
         ],
         "narrative": {
-          "es": "El análisis de calidad del aire en la zona exterior de Vitoria-Gasteiz indica que la concentración de PM2.5 se espera que sea de 6.5 µg/m³, lo que es ligeramente por debajo de la base de 7.2 µg/m³. La velocidad del viento y el código del tiempo son factores que pueden contribuir a un aumento en la concentración de PM2.5.",
-          "eu": "Vitoria-Gasteizeko kanpoko eremuan airearen kalitatearen azterketa diozen PM2.5 kontzentrazioa 6,5 µg/m³ izango dela uste da, hau 7,2 µg/m³eko oinarriaren beherantz dagoena. Haizearen abiadura eta meteo kodea PM2.5 kontzentrazioa handitzeko faktoreak dira."
+          "es": "La calidad del aire en Vitoria-Gasteiz se prevé que sea moderadamente buena, con una concentración de PM2.5 de 6.2 µg/m³. La velocidad del viento y la concentración de NO2 son factores que contribuyen a una mejora en la calidad del aire.",
+          "eu": "Vitoria-Gasteizeneko airearen kalitatea 6,2 µg/m³ PM2,5 kontzentrazioarekin oso ona izango da. Haizearen abiadura eta NO2 kontzentrazioak airearen kalitatea hobetzeko faktoreak dira."
         }
       }
     },
     "ICA_zbe_d1": {
-      "prediction": 17.17,
-      "lower": 8.57,
-      "upper": 25.78,
+      "prediction": 17.45,
+      "lower": 8.85,
+      "upper": 26.05,
       "rmse_cv": 6.722,
       "foresight": {
         "base_value": 20.38,
         "positive_top": [
           {
             "feature": "fc_wind_speed_10m_d1",
-            "value": 0.88
+            "value": 0.75
           },
           {
             "feature": "wind_speed_10m",
-            "value": 0.7
+            "value": 0.74
           },
           {
             "feature": "weather_code",
-            "value": 0.58
+            "value": 0.52
           },
           {
             "feature": "fc_sunshine_duration_d2",
@@ -371,13 +371,13 @@
           },
           {
             "feature": "fc_boundary_layer_height_d1",
-            "value": 0.47
+            "value": 0.43
           }
         ],
         "negative_top": [
           {
             "feature": "ICA_zbe",
-            "value": -5.73
+            "value": -5.76
           },
           {
             "feature": "ICA_out",
@@ -385,11 +385,11 @@
           },
           {
             "feature": "PM2.5_out",
-            "value": -0.97
+            "value": -0.94
           },
           {
             "feature": "PM10_zbe",
-            "value": -0.44
+            "value": -0.43
           },
           {
             "feature": "PM2.5_zbe",
@@ -397,52 +397,52 @@
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz se encuentra en un estado moderado, con una concentración de ICA de 17.2 µg/m³, ligeramente por debajo de la base de 20.4 µg/m³. Aunque la predicción es favorable, la velocidad del viento y el código del tiempo tienen un impacto positivo en la calidad del aire.",
-          "eu": "Vitoria-Gasteizeko ZBE eremuan airearen kalitatea moderatua dago, ICAren 17.2 µg/m³-ko konzentrazioa 20.4 µg/m³-ko oinarriaren azpitik dago, baina predikzioa ona da. Airearen kalitateari eragin positiboa ematen duten haizearen abiadura eta egoera meteorologikoa dira."
+          "es": "La calidad del aire en la zona de ZBE de Vitoria-Gasteiz está prediciendo una concentración de 17.4 µg/m³ de ICA, lo que es ligeramente por debajo de la base de 20.4 µg/m³. Los factores que influyen en esta predicción son la velocidad del viento, que tiene un impacto positivo, mientras que la concentración de ICA en la zona y el exterior tienen un impacto negativo.",
+          "eu": "Vitoria-Gasteizko ZBE eremuan airearen kalitatea 17,4 µg/m³ ICAren konzentrazioa aurreikusten du, 20,4 µg/m³ren oinarriaren beherago. Aurreikuspen hau eragiten duten faktoreak haizearen abiadura dira, positiboa duena, eta ICAren konzentrazioa eremuan eta kanpoan negatiboa dutena."
         }
       }
     },
     "ICA_out_d1": {
-      "prediction": 14.32,
-      "lower": 4.1,
-      "upper": 24.55,
+      "prediction": 14.82,
+      "lower": 4.6,
+      "upper": 25.05,
       "rmse_cv": 7.987,
       "foresight": {
         "base_value": 20.09,
         "positive_top": [
           {
             "feature": "fc_wind_speed_10m_d1",
-            "value": 1.05
+            "value": 0.97
           },
           {
             "feature": "fc_wind_gusts_10m_d1",
             "value": 0.49
           },
           {
+            "feature": "PM2.5_zbe_roll_std_30d",
+            "value": 0.33
+          },
+          {
             "feature": "fc_relative_humidity_2m_d3",
-            "value": 0.31
+            "value": 0.32
           },
           {
             "feature": "fc_sunshine_duration_d2",
             "value": 0.19
-          },
-          {
-            "feature": "fc_wind_u_d1",
-            "value": 0.15
           }
         ],
         "negative_top": [
           {
             "feature": "ICA_out",
-            "value": -3.7
+            "value": -3.67
           },
           {
             "feature": "PM2.5_out",
-            "value": -2.33
+            "value": -2.36
           },
           {
             "feature": "exp_traffic_volume_d1",
-            "value": -0.8
+            "value": -0.84
           },
           {
             "feature": "PM10_out",
@@ -450,12 +450,12 @@
           },
           {
             "feature": "ICA_zbe",
-            "value": -0.25
+            "value": -0.23
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en Vitoria-Gasteiz está siendo afectada por varios factores. La predicción de ozono troposférico (ICA) para la zona exterior (OUT) es de 14.3 µg/m³, lo que supera la base de 20.1 µg/m³. Aunque la velocidad del viento y las ráfagas de viento están contribuyendo a aumentar la calidad del aire, la humedad relativa y la contaminación por partículas PM2.5 están reduciéndola.",
-          "eu": "Vitoria-Gasteizeneko airearen kalitatea zenbait faktorek eragiten dute. Kanpoaldeko eremuko ozono troposferriko (ICA)aren aurreikuspena 14,3 µg/m³koa da, 20,1 µg/m³ baino gehiago. Beroaren araberako umidadea eta PM2,5 partikulen kutsadura kalitatea murrizten duten arren, haizearen abiadura eta haizearen erorketa kalitatea handitzen duten faktoreak dira."
+          "es": "La calidad del aire en Vitoria-Gasteiz se encuentra en una situación crítica debido a la predicción de un nivel de ICA de 14,8 µg/m³, que supera el valor base de 20,1. La velocidad del viento y las ráfagas de viento están contribuyendo a un aumento en la concentración de contaminantes.",
+          "eu": "Vitoria-Gasteizeko airearen kalitatea krisialdi batean dago, ICAren 14,8 µg/m³eko predikzioa 20,1eko balio oinarriaren gainetik dagoelako. Haizearen abiadura eta haizearen eraginak kontaminanteen konzentrazioa handitzen laguntzen dute."
         }
       }
     }
