@@ -1,22 +1,22 @@
 {
   "NO2": {
-    "avg_cv_rmse": 3.8766,
-    "avg_cv_r2": 0.4421
+    "avg_cv_rmse": 3.8304,
+    "avg_cv_r2": 0.4454
   },
   "PM10": {
-    "avg_cv_rmse": 4.3904,
-    "avg_cv_r2": 0.4122
+    "avg_cv_rmse": 4.388,
+    "avg_cv_r2": 0.4129
   },
   "PM2.5": {
-    "avg_cv_rmse": 3.166,
-    "avg_cv_r2": 0.4204
+    "avg_cv_rmse": 3.097,
+    "avg_cv_r2": 0.443
   },
   "did_v8": {
     "NO2": {
-      "beta3": -0.6096,
-      "pvalue": 0.0083,
-      "ci_low": -1.0624,
-      "ci_high": -0.1568,
+      "beta3": -0.6177,
+      "pvalue": 0.0076,
+      "ci_low": -1.0712,
+      "ci_high": -0.1642,
       "r2": 0.6903,
       "n_obs": 1632,
       "significant": true,

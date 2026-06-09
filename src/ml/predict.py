@@ -328,15 +328,32 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             error_lag_1d = errors[-1] if len(errors) >= 1 else 0
             error_roll_7d = np.mean(errors) if len(errors) >= 1 else 0
             
-            # Preparar features para el meta-modelo
+            # Para la predicción de mañana, las columnas observadas de clima están vacías (NaN)
+            # y debemos leer el pronóstico descargado (las columnas fc_*_d1)
+            temp_val = row["temperature_2m"].iloc[0]
+            if pd.isna(temp_val) and "fc_temperature_2m_d1" in row.columns:
+                temp_val = row["fc_temperature_2m_d1"].iloc[0]
+                
+            wind_val = row["wind_speed_10m"].iloc[0]
+            if pd.isna(wind_val) and "fc_wind_speed_10m_d1" in row.columns:
+                wind_val = row["fc_wind_speed_10m_d1"].iloc[0]
+                
+            boundary_val = row["boundary_layer_height"].iloc[0]
+            if pd.isna(boundary_val) and "fc_boundary_layer_height_d1" in row.columns:
+                boundary_val = row["fc_boundary_layer_height_d1"].iloc[0]
+                
+            humidity_val = row["relative_humidity_2m"].iloc[0]
+            if pd.isna(humidity_val) and "fc_relative_humidity_2m_d1" in row.columns:
+                humidity_val = row["fc_relative_humidity_2m_d1"].iloc[0]
+
             meta_input = {
                 "pred_v1": float(r["prediction"]),
                 "error_lag_1d": float(error_lag_1d),
                 "error_roll_mean_7d": float(error_roll_7d),
-                "temperature_2m": float(pd.to_numeric(row["temperature_2m"], errors='coerce').fillna(0).iloc[0]),
-                "wind_speed_10m": float(pd.to_numeric(row["wind_speed_10m"], errors='coerce').fillna(0).iloc[0]),
-                "boundary_layer_height": float(pd.to_numeric(row["boundary_layer_height"], errors='coerce').fillna(0).iloc[0]),
-                "relative_humidity_2m": float(pd.to_numeric(row["relative_humidity_2m"], errors='coerce').fillna(0).iloc[0]),
+                "temperature_2m": float(pd.to_numeric(pd.Series([temp_val]), errors='coerce').fillna(0).iloc[0]),
+                "wind_speed_10m": float(pd.to_numeric(pd.Series([wind_val]), errors='coerce').fillna(0).iloc[0]),
+                "boundary_layer_height": float(pd.to_numeric(pd.Series([boundary_val]), errors='coerce').fillna(0).iloc[0]),
+                "relative_humidity_2m": float(pd.to_numeric(pd.Series([humidity_val]), errors='coerce').fillna(0).iloc[0]),
                 "is_weekend": float(pd.to_numeric(row["is_weekend"], errors='coerce').fillna(0).iloc[0]),
                 "es_domingo": float(pd.to_numeric(row["es_domingo"], errors='coerce').fillna(0).iloc[0]),
                 "es_invierno_estricto": float(pd.to_numeric(row["es_invierno_estricto"], errors='coerce').fillna(0).iloc[0]),
@@ -641,14 +658,21 @@ def main():
             section("3. Descargando pron?stico Open-Meteo")
         forecast_override = fetch_forecast_d1()
 
+    # Aplicar pronóstico real a row si está disponible para que tanto predict como refine_with_meta_models lo usen
+    if forecast_override:
+        for feat, val in forecast_override.items():
+            if feat in row.columns:
+                row = row.copy()
+                row[feat] = val
+
     # 4. Predecir
-    results = predict(models, row, forecast_override)
+    results = predict(models, row, None)
 
     # 4b. Refinar con Meta-Modelos
     if "--no-meta" not in sys.argv:
         if not json_only:
             section("4. Refinando con Meta-Modelos (v2)")
-        df_history = pd.read_parquet(DATASET_PATH) # Necesitamos el hist?rico para errores
+        df_history = pd.read_parquet(DATASET_PATH) # Necesitamos el histórico para errores
         results = refine_with_meta_models(results, row, df_history)
 
     # 5. Mostrar o volcar JSON

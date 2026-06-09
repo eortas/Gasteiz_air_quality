@@ -46,7 +46,12 @@ def load_data():
     if not META_DATA_PATH.exists():
         print(f"ERR: No existe {META_DATA_PATH}. Ejecuta primero prepare_meta_data.py")
         return None
-    return pd.read_parquet(META_DATA_PATH)
+    df = pd.read_parquet(META_DATA_PATH)
+    # Filtrar solo el período Post-ZBE (a partir del 1 de septiembre de 2025)
+    # para evitar que el meta-modelo aprenda del sesgo de tráfico pre-ZBE (cuando el NO2 era mayor)
+    df["date"] = pd.to_datetime(df["date"], utc=True)
+    df = df[df["date"] >= "2025-09-01"].reset_index(drop=True)
+    return df
 
 def train_meta_models(df):
     meta_results = {}
@@ -81,17 +86,23 @@ def train_meta_models(df):
         rmse_v2 = np.sqrt(mean_squared_error(y_test, y_pred_v2))
         gain = (rmse_v1 - rmse_v2) / rmse_v1 * 100
         
-        # Guardar modelo
+        # Entrenar modelo final con todo el histórico (para predicción de mañana)
+        X_full = sub[META_FEATURES].fillna(0)
+        y_full = sub["actual"]
+        final_model = Ridge(alpha=1.0)
+        final_model.fit(X_full, y_full)
+        
+        # Guardar modelo final
         model_path = MODELS_DIR / f"meta_model_{target}.pkl"
-        joblib.dump(model, model_path)
+        joblib.dump(final_model, model_path)
         
         meta_results[target] = {
             "rmse_v1": round(float(rmse_v1), 4),
             "rmse_v2": round(float(rmse_v2), 4),
             "improvement_pct": round(float(gain), 2),
             "r2_v2": round(float(r2_score(y_test, y_pred_v2)), 4),
-            "intercept": round(float(model.intercept_), 4),
-            "coefficients": dict(zip(META_FEATURES, model.coef_.tolist()))
+            "intercept": round(float(final_model.intercept_), 4),
+            "coefficients": dict(zip(META_FEATURES, final_model.coef_.tolist()))
         }
         
         status = "[OK]" if gain > 0 else "[--]"
