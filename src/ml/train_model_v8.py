@@ -315,10 +315,10 @@ def train_all(df, feature_cols, target_cols, tune=False):
 
         # Ejecutar tuning una sola vez por target utilizando el último split
         if tune:
-            log(f"    Tuning LightGBM con Optuna para {target_col} (10 trials)...")
+            log(f"    Tuning LightGBM con Optuna para {target_col} (30 trials)...")
             try:
                 best_lgbm_params = tune_lgbm_optuna(X_sel.iloc[last_tr], y_full.iloc[last_tr],
-                                                     X_sel.iloc[last_va], y_full.iloc[last_va], n_trials=10)
+                                                     X_sel.iloc[last_va], y_full.iloc[last_va], n_trials=30)
                 lgbm_params.update(best_lgbm_params)
             except Exception as e:
                 log(f"    [WARN] Falló tuning de LightGBM: {e}. Usando default.")

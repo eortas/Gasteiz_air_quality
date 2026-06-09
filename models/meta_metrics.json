@@ -1,40 +1,40 @@
 {
   "NO2_zbe_d1": {
-    "rmse_v1": 3.5265,
-    "rmse_v2": 2.9628,
-    "improvement_pct": 15.98,
-    "r2_v2": 0.67,
-    "intercept": 1.0871,
+    "rmse_v1": 3.4888,
+    "rmse_v2": 2.9684,
+    "improvement_pct": 14.92,
+    "r2_v2": 0.6691,
+    "intercept": 1.3305,
     "coefficients": {
-      "pred_v1": 0.7823651115339261,
-      "error_lag_1d": 0.2818365631561264,
-      "error_roll_mean_7d": 0.4972397007121451,
-      "temperature_2m": -0.10453786600053026,
-      "wind_speed_10m": -0.0647349774337612,
-      "boundary_layer_height": 0.0032092610050578163,
-      "relative_humidity_2m": 0.02281542059969195,
-      "is_weekend": -1.280273170704061,
-      "es_domingo": 1.3853394488777395,
-      "es_invierno_estricto": 0.22240344605595933
+      "pred_v1": 0.7857641783270439,
+      "error_lag_1d": 0.29027069152445156,
+      "error_roll_mean_7d": 0.4821060645377579,
+      "temperature_2m": -0.10405845022527709,
+      "wind_speed_10m": -0.0650678076736707,
+      "boundary_layer_height": 0.003064610421261277,
+      "relative_humidity_2m": 0.020011076406257725,
+      "is_weekend": -1.2710820733152126,
+      "es_domingo": 1.471665259221751,
+      "es_invierno_estricto": 0.21119354505425653
     }
   },
   "NO2_out_d1": {
     "rmse_v1": 3.602,
     "rmse_v2": 3.4826,
     "improvement_pct": 3.31,
-    "r2_v2": 0.665,
+    "r2_v2": 0.6649,
     "intercept": 6.2993,
     "coefficients": {
-      "pred_v1": 0.7624216348484768,
-      "error_lag_1d": 0.338718090353278,
-      "error_roll_mean_7d": 0.22945445092036634,
-      "temperature_2m": -0.196759712191821,
-      "wind_speed_10m": -0.09392245849636846,
-      "boundary_layer_height": 0.002621992138528674,
-      "relative_humidity_2m": -0.018981457629963085,
-      "is_weekend": -1.7672849841446643,
-      "es_domingo": 2.655029954449732,
-      "es_invierno_estricto": 0.8584619908469856
+      "pred_v1": 0.7624216348484767,
+      "error_lag_1d": 0.3387180903532779,
+      "error_roll_mean_7d": 0.22945445092036632,
+      "temperature_2m": -0.1967597121918209,
+      "wind_speed_10m": -0.09392245849636861,
+      "boundary_layer_height": 0.0026219921385286773,
+      "relative_humidity_2m": -0.018981457629963058,
+      "is_weekend": -1.7672849841446645,
+      "es_domingo": 2.655029954449733,
+      "es_invierno_estricto": 0.8584619908469893
     }
   },
   "PM10_zbe_d1": {
@@ -44,35 +44,35 @@
     "r2_v2": 0.3843,
     "intercept": 7.6878,
     "coefficients": {
-      "pred_v1": 0.6838283549990718,
-      "error_lag_1d": 0.2800362965424638,
-      "error_roll_mean_7d": 0.08957692010096067,
-      "temperature_2m": 0.111504896123262,
-      "wind_speed_10m": -0.08227214972725866,
-      "boundary_layer_height": -0.002358484983228487,
-      "relative_humidity_2m": -0.04293054421259159,
-      "is_weekend": -1.6933381880276264,
+      "pred_v1": 0.6838283549990716,
+      "error_lag_1d": 0.28003629654246387,
+      "error_roll_mean_7d": 0.08957692010096065,
+      "temperature_2m": 0.11150489612326202,
+      "wind_speed_10m": -0.08227214972725883,
+      "boundary_layer_height": -0.0023584849832284844,
+      "relative_humidity_2m": -0.042930544212591605,
+      "is_weekend": -1.6933381880276266,
       "es_domingo": 0.28944987633171776,
-      "es_invierno_estricto": 1.6949059459022362
+      "es_invierno_estricto": 1.694905945902237
     }
   },
   "PM10_out_d1": {
-    "rmse_v1": 3.6934,
-    "rmse_v2": 3.5866,
+    "rmse_v1": 3.6933,
+    "rmse_v2": 3.5865,
     "improvement_pct": 2.89,
     "r2_v2": 0.6065,
     "intercept": 8.1203,
     "coefficients": {
       "pred_v1": 0.7612744307530316,
-      "error_lag_1d": 0.31189350161535256,
-      "error_roll_mean_7d": 0.204268984667124,
-      "temperature_2m": 0.01793432381898714,
+      "error_lag_1d": 0.3118935016153525,
+      "error_roll_mean_7d": 0.20426898466712393,
+      "temperature_2m": 0.017934323818987134,
       "wind_speed_10m": -0.08062759007215711,
-      "boundary_layer_height": -0.0018454962468973854,
+      "boundary_layer_height": -0.0018454962468973852,
       "relative_humidity_2m": -0.045396325595536524,
       "is_weekend": -1.4001640737465433,
       "es_domingo": 0.5062092089682458,
-      "es_invierno_estricto": 0.059731939433686695
+      "es_invierno_estricto": 0.05973193943368669
     }
   },
   "PM2.5_zbe_d1": {
@@ -82,35 +82,35 @@
     "r2_v2": 0.6064,
     "intercept": 3.27,
     "coefficients": {
-      "pred_v1": 0.7769208208041983,
-      "error_lag_1d": 0.3483872881963377,
-      "error_roll_mean_7d": 0.09522876013259272,
+      "pred_v1": 0.7769208208041984,
+      "error_lag_1d": 0.34838728819633763,
+      "error_roll_mean_7d": 0.09522876013259254,
       "temperature_2m": 0.06362998478458691,
-      "wind_speed_10m": -0.07184161559537056,
-      "boundary_layer_height": -0.001742686883105561,
-      "relative_humidity_2m": -0.010671402823761361,
-      "is_weekend": -0.6800336395728839,
+      "wind_speed_10m": -0.07184161559537067,
+      "boundary_layer_height": -0.0017426868831055594,
+      "relative_humidity_2m": -0.010671402823761368,
+      "is_weekend": -0.6800336395728838,
       "es_domingo": 0.06894571563699077,
-      "es_invierno_estricto": 0.7706034530190788
+      "es_invierno_estricto": 0.7706034530190793
     }
   },
   "PM2.5_out_d1": {
-    "rmse_v1": 2.5986,
-    "rmse_v2": 2.5542,
-    "improvement_pct": 1.71,
-    "r2_v2": 0.6315,
-    "intercept": 6.7009,
+    "rmse_v1": 2.6186,
+    "rmse_v2": 2.5469,
+    "improvement_pct": 2.74,
+    "r2_v2": 0.6336,
+    "intercept": 6.8422,
     "coefficients": {
-      "pred_v1": 0.724303210913708,
-      "error_lag_1d": 0.4232651114474878,
-      "error_roll_mean_7d": 0.24023463537503267,
-      "temperature_2m": 0.018793717859945942,
-      "wind_speed_10m": -0.08119379675359939,
-      "boundary_layer_height": -0.001799167758175043,
-      "relative_humidity_2m": -0.037799013623689245,
-      "is_weekend": -0.8821532153202697,
-      "es_domingo": 0.31981221770747964,
-      "es_invierno_estricto": 0.1274774678087379
+      "pred_v1": 0.7077167662131197,
+      "error_lag_1d": 0.42343689171151483,
+      "error_roll_mean_7d": 0.24082328100265457,
+      "temperature_2m": 0.02145016872477605,
+      "wind_speed_10m": -0.08316891861737749,
+      "boundary_layer_height": -0.0018599304143704224,
+      "relative_humidity_2m": -0.03793767711166521,
+      "is_weekend": -0.8870136011010851,
+      "es_domingo": 0.3329107562083387,
+      "es_invierno_estricto": 0.1300879978209255
     }
   }
 }
