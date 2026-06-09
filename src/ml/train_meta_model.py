@@ -30,7 +30,6 @@ TARGETS = [
     "NO2_zbe_d1", "NO2_out_d1",
     "PM10_zbe_d1", "PM10_out_d1",
     "PM2.5_zbe_d1", "PM2.5_out_d1",
-    "ICA_zbe_d1", "ICA_out_d1",
 ]
 
 # Features de entrada para el Meta-Modelo
@@ -91,6 +90,7 @@ def train_meta_models(df):
             "rmse_v2": round(float(rmse_v2), 4),
             "improvement_pct": round(float(gain), 2),
             "r2_v2": round(float(r2_score(y_test, y_pred_v2)), 4),
+            "intercept": round(float(model.intercept_), 4),
             "coefficients": dict(zip(META_FEATURES, model.coef_.tolist()))
         }
         

@@ -61,7 +61,7 @@ MODELS_DIR.mkdir(parents=True, exist_ok=True)
 DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
 
 # ??? CONFIG ???????????????????????????????????????????????????????????????????
-TARGETS        = ["NO2", "PM10", "PM2.5", "ICA"]
+TARGETS        = ["NO2", "PM10", "PM2.5"]
 ZBE_DATE       = pd.Timestamp("2025-09-01", tz="UTC")
 N_SPLITS       = 5
 HORIZON        = "d1"
@@ -167,7 +167,8 @@ def load_dataset():
     log(f"  Filas    : {len(df):,}")
 
     all_target_cols = [c for c in df.columns
-                       if c.startswith("target_") and c.endswith(f"_{HORIZON}")]
+                       if c.startswith("target_") and c.endswith(f"_{HORIZON}")
+                       and not any(x in c for x in ["ICA", "ica"])]
     log(f"  Targets  : {len(all_target_cols)} (solo {HORIZON})")
 
     raw_contaminants = ["NO2", "PM10", "PM2.5", "ICA",
@@ -242,28 +243,45 @@ def select_features_permutation(X_train, y_train, X_val, y_val,
     return selected
 
 
-# ??? 4. ENTRENAR UN MODELO ????????????????????????????????????????????????????
-def train_single(X_train, y_train, X_val, y_val, tune=False):
+# ??? 4. OPTUNA TUNING & ENSEMBLE TRAINING ?????????????????????????????????????
+def tune_lgbm_optuna(X_train, y_train, X_val, y_val, n_trials=25):
+    import optuna
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
+    
+    def objective(trial):
+        params = {
+            "objective": "regression",
+            "metric": "rmse",
+            "n_estimators": trial.suggest_int("n_estimators", 300, 1000),
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.1, log=True),
+            "num_leaves": trial.suggest_int("num_leaves", 15, 127),
+            "max_depth": trial.suggest_int("max_depth", -1, 10),
+            "min_child_samples": trial.suggest_int("min_child_samples", 5, 100),
+            "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+            "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
+            "reg_alpha": trial.suggest_float("reg_alpha", 1e-3, 10.0, log=True),
+            "reg_lambda": trial.suggest_float("reg_lambda", 1e-3, 10.0, log=True),
+            "random_state": 42,
+            "n_jobs": -1,
+            "verbose": -1,
+        }
+        from lightgbm import LGBMRegressor, early_stopping
+        model = LGBMRegressor(**params)
+        model.fit(X_train, y_train, eval_set=[(X_val, y_val)], callbacks=[early_stopping(50, verbose=False)])
+        preds = model.predict(X_val)
+        return rmse(y_val.values, preds)
+        
+    study = optuna.create_study(direction="minimize")
+    study.optimize(objective, n_trials=n_trials)
+    return study.best_params
+
+
+
+def train_single(X_train, y_train, X_val, y_val, lgbm_params):
     from lightgbm import LGBMRegressor, early_stopping, log_evaluation
-
-    callbacks = [early_stopping(EARLY_STOPPING_ROUNDS, verbose=False),
-                 log_evaluation(-1)]
-    params = LGBM_PARAMS.copy()
-
-    if tune:
-        best_rmse, best_params = np.inf, params.copy()
-        for gp in ParameterSampler(TUNE_GRID, n_iter=N_ITER_RANDOM, random_state=42):
-            p = {**params, **gp, "n_estimators": 1000}
-            m = LGBMRegressor(**p)
-            m.fit(X_train, y_train, eval_set=[(X_val, y_val)], callbacks=callbacks)
-            r = rmse(y_val.values, m.predict(X_val))
-            if r < best_rmse:
-                best_rmse, best_params = r, p
-        params = best_params
-        log(f"    Mejor RMSE tuning: {best_rmse:.4f}")
-
-    model = LGBMRegressor(**params)
-    model.fit(X_train, y_train, eval_set=[(X_val, y_val)], callbacks=callbacks)
+    model = LGBMRegressor(**lgbm_params)
+    model.fit(X_train, y_train, eval_set=[(X_val, y_val)],
+                   callbacks=[early_stopping(EARLY_STOPPING_ROUNDS, verbose=False), log_evaluation(-1)])
     return model
 
 
@@ -292,11 +310,26 @@ def train_all(df, feature_cols, target_cols, tune=False):
         all_selected[target_col] = selected
         X_sel = df[selected].fillna(0)
 
+        # Configuración por defecto
+        lgbm_params = LGBM_PARAMS.copy()
+
+        # Ejecutar tuning una sola vez por target utilizando el último split
+        if tune:
+            log(f"    Tuning LightGBM con Optuna para {target_col} (10 trials)...")
+            try:
+                best_lgbm_params = tune_lgbm_optuna(X_sel.iloc[last_tr], y_full.iloc[last_tr],
+                                                     X_sel.iloc[last_va], y_full.iloc[last_va], n_trials=10)
+                lgbm_params.update(best_lgbm_params)
+            except Exception as e:
+                log(f"    [WARN] Falló tuning de LightGBM: {e}. Usando default.")
+
         final_model = None
         for tr_idx, va_idx in folds:
             model = train_single(X_sel.iloc[tr_idx], y_full.iloc[tr_idx],
-                                 X_sel.iloc[va_idx],   y_full.iloc[va_idx], tune=tune)
+                                 X_sel.iloc[va_idx],   y_full.iloc[va_idx],
+                                 lgbm_params)
             pred = model.predict(X_sel.iloc[va_idx])
+            
             fold_metrics["rmse"].append(rmse(y_full.iloc[va_idx].values, pred))
             fold_metrics["mae"].append(mae(y_full.iloc[va_idx].values, pred))
             fold_metrics["r2"].append(r2(y_full.iloc[va_idx].values, pred))
@@ -310,7 +343,9 @@ def train_all(df, feature_cols, target_cols, tune=False):
             "cv_mape":    round(np.nanmean(fold_metrics["mape"]), 2),
             "n_features": len(selected),
         }
+        
         all_importances[target_col] = dict(zip(selected, final_model.feature_importances_))
+        
         joblib.dump(final_model,
             MODELS_DIR / f"lgbm_v8_{target_col.replace('target_', '')}.pkl")
         with open(MODELS_DIR / f"lgbm_v8_{target_col.replace('target_', '')}_features.json", "w") as f:

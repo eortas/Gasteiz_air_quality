@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 import json
 import joblib
+import numpy as np
 from pathlib import Path
 from datetime import datetime, timedelta
 import shutil
@@ -196,30 +197,62 @@ try:
                 target_name = f"{cont}_{zone}_d1"
                 model_path = MODELS_DIR / f"lgbm_v8_{target_name}.pkl"
                 feat_path  = MODELS_DIR / f"lgbm_v8_{target_name}_features.json"
+                meta_model_path = MODELS_DIR / f"meta_model_{target_name}.pkl"
                 
                 try:
+                    # 1. Base prediction (v1)
                     model = joblib.load(model_path)
                     features = json.loads(feat_path.read_text(encoding="utf-8"))
-                    
                     X_backtest = inputs_backtest.reindex(columns=features, fill_value=0).fillna(0)
                     preds_v1 = model.predict(X_backtest)
                     
-                    # Aplicar Refinamiento V2 (Meta-Modelo)
+                    # 2. Refinamiento V2 (Meta-Modelo) usando el .pkl directamente
                     preds_v2 = []
-                    meta_key = f"{cont}_{zone}"
-                    if meta_key in meta_models:
-                        coeffs = meta_models[meta_key].get("coefficients", {})
-                        intercept = meta_models[meta_key].get("intercept", 0)
+                    if meta_model_path.exists():
+                        meta_model = joblib.load(meta_model_path)
+                        contam_col = f"{cont}_{zone}"
                         
-                        for i in range(len(preds_v1)):
-                            p = coeffs.get("base_prediction", 1.0) * preds_v1[i] + intercept
-                            # Sumar efectos de otras features si están en los coeficientes
-                            for f_name, f_coeff in coeffs.items():
-                                if f_name != "base_prediction" and f_name in inputs_backtest.columns:
-                                    val = inputs_backtest.iloc[i][f_name]
-                                    if not pd.isna(val):
-                                        p += f_coeff * val
-                            preds_v2.append(max(0, p))
+                        for idx_i in range(len(preds_v1)):
+                            row_i = inputs_backtest.iloc[idx_i]
+                            date_i = row_i["date"]
+                            
+                            # Obtener histórico reciente antes de date_i
+                            df_history_i = df_past[df_past["date"] < date_i].tail(8)
+                            
+                            # Calcular errores históricos de la predicción base (v1)
+                            errors_i = []
+                            for _, h_row in df_history_i.iterrows():
+                                X_h = h_row.to_frame().T.reindex(columns=features, fill_value=0).fillna(0)
+                                p_h = model.predict(X_h)[0]
+                                    
+                                actual = h_row.get(contam_col)
+                                if pd.notna(actual):
+                                    errors_i.append(actual - p_h)
+                                    
+                            error_lag_1d = errors_i[-1] if len(errors_i) >= 1 else 0
+                            error_roll_7d = np.mean(errors_i) if len(errors_i) >= 1 else 0
+                            
+                            # Construir vector de entrada para el meta-modelo
+                            meta_input = {
+                                "pred_v1": float(preds_v1[idx_i]),
+                                "error_lag_1d": float(error_lag_1d),
+                                "error_roll_mean_7d": float(error_roll_7d),
+                                "temperature_2m": float(pd.to_numeric(row_i.get("temperature_2m", 0), errors='coerce')),
+                                "wind_speed_10m": float(pd.to_numeric(row_i.get("wind_speed_10m", 0), errors='coerce')),
+                                "boundary_layer_height": float(pd.to_numeric(row_i.get("boundary_layer_height", 0), errors='coerce')),
+                                "relative_humidity_2m": float(pd.to_numeric(row_i.get("relative_humidity_2m", 0), errors='coerce')),
+                                "is_weekend": float(pd.to_numeric(row_i.get("is_weekend", 0), errors='coerce')),
+                                "es_domingo": float(pd.to_numeric(row_i.get("es_domingo", 0), errors='coerce')),
+                                "es_invierno_estricto": float(pd.to_numeric(row_i.get("es_invierno_estricto", 0), errors='coerce')),
+                            }
+                            # Rellenar nans
+                            for k_m, v_m in meta_input.items():
+                                if pd.isna(v_m):
+                                    meta_input[k_m] = 0.0
+                                    
+                            X_meta = pd.DataFrame([meta_input]).astype(float)
+                            p_v2 = float(meta_model.predict(X_meta)[0])
+                            preds_v2.append(max(0.0, p_v2))
                     else:
                         preds_v2 = preds_v1
                     
@@ -240,8 +273,56 @@ try:
                     }
                     
                 except Exception as e:
+                    print(f"  WARN Error procesando backtest para {target_name}: {e}")
                     perf_data[zone][cont] = {"real": [None]*7, "pred": [0]*7}
-
+            
+            # Calcular ICA determinista en el backtest a partir de los contaminantes ya calculados
+            try:
+                from sklearn.linear_model import Ridge
+                no2_col = f"NO2_{zone}"
+                pm10_col = f"PM10_{zone}"
+                pm25_col = f"PM2.5_{zone}"
+                ica_col = f"ICA_{zone}"
+                
+                sub = df_past[[no2_col, pm10_col, pm25_col, ica_col]].dropna()
+                if len(sub) >= 30:
+                    X_ica = sub[[no2_col, pm10_col, pm25_col]]
+                    y_ica = sub[ica_col]
+                    
+                    model_ica = Ridge(alpha=1.0)
+                    model_ica.fit(X_ica, y_ica)
+                    
+                    ica_real = []
+                    ica_pred = []
+                    
+                    for i in range(7):
+                        r_no2 = perf_data[zone]['NO2']['real'][i]
+                        r_pm10 = perf_data[zone]['PM10']['real'][i]
+                        r_pm25 = perf_data[zone]['PM2.5']['real'][i]
+                        
+                        p_no2 = perf_data[zone]['NO2']['pred'][i]
+                        p_pm10 = perf_data[zone]['PM10']['pred'][i]
+                        p_pm25 = perf_data[zone]['PM2.5']['pred'][i]
+                        
+                        if r_no2 is None or r_pm10 is None or r_pm25 is None:
+                            ica_real.append(None)
+                        else:
+                            val_r = float(model_ica.predict([[r_no2, r_pm10, r_pm25]])[0])
+                            ica_real.append(round(max(0.0, val_r), 1))
+                            
+                        val_p = float(model_ica.predict([[p_no2, p_pm10, p_pm25]])[0])
+                        ica_pred.append(round(max(0.0, val_p), 1))
+                        
+                    perf_data[zone]['ICA'] = {
+                        "real": ica_real,
+                        "pred": ica_pred
+                    }
+                else:
+                    perf_data[zone]['ICA'] = {"real": [None]*7, "pred": [0]*7}
+            except Exception as e:
+                print(f"  WARN Error calculando ICA determinista para backtest en zona {zone}: {e}")
+                perf_data[zone]['ICA'] = {"real": [None]*7, "pred": [0]*7}
+        
         print("  OK Predicciones y Backtest (V2 Refined) listos.")
     else:
         raise ValueError("El DataFrame de features está vacío.")

@@ -29,7 +29,7 @@ DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
 OUT_PATH      = PROCESSED_DIR / "meta_training_data.parquet"
 
 # ─── CONFIG (Igual que train_model_v8.py) ───────────────────────────────────
-TARGETS  = ["NO2", "PM10", "PM2.5", "ICA"]
+TARGETS  = ["NO2", "PM10", "PM2.5"]
 ZONES    = ["zbe", "out"]
 N_SPLITS = 5
 HORIZON  = "d1"
@@ -106,9 +106,9 @@ def generate_oof_predictions(df):
             target_oof = pd.Series(index=df_target.index, dtype=float)
             
             for tr_idx, va_idx in tscv.split(X):
-                model = LGBMRegressor(**LGBM_PARAMS)
-                model.fit(X.iloc[tr_idx], y.iloc[tr_idx])
-                target_oof.iloc[va_idx] = model.predict(X.iloc[va_idx])
+                model_lgbm = LGBMRegressor(**LGBM_PARAMS)
+                model_lgbm.fit(X.iloc[tr_idx], y.iloc[tr_idx])
+                target_oof.iloc[va_idx] = model_lgbm.predict(X.iloc[va_idx])
             
             # Guardamos solo las filas que tienen predicción (las del primer train fold son NaN)
             valid_oof = target_oof.dropna()

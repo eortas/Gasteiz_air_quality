@@ -37,6 +37,8 @@ from datetime import datetime
 
 import pandas as pd
 import numpy as np
+import holidays
+
 
 warnings.filterwarnings("ignore")
 
@@ -291,6 +293,23 @@ def load_weather_daily() -> pd.DataFrame:
     # Flag día muy frío (HDD > 10 equivale a temp media < 5C)
     weather["dia_muy_frio"] = (weather["HDD"] > 10).astype(int)
 
+    # Punto de rocío (Dew Point) aproximado
+    if "relative_humidity_2m" in weather.columns:
+        weather["dew_point"] = weather[temp_col] - ((100.0 - weather["relative_humidity_2m"]) / 5.0)
+    else:
+        weather["dew_point"] = np.nan
+
+    # Índice de ventilación (Ventilation Index)
+    if "boundary_layer_height" in weather.columns and "wind_speed_10m" in weather.columns:
+        weather["ventilation_index"] = weather["boundary_layer_height"] * weather["wind_speed_10m"]
+    else:
+        weather["ventilation_index"] = np.nan
+
+    # Lluvia acumulada últimos 3 y 7 días (Scavenging Effect)
+    if "precipitation" in weather.columns:
+        weather["precipitation_acum_3d"] = weather["precipitation"].rolling(3, min_periods=1).sum()
+        weather["precipitation_acum_7d"] = weather["precipitation"].rolling(7, min_periods=1).sum()
+
     # Demanda acumulada 7 días (representa carga térmica reciente del edificio)
     # Se calculará como rolling en add_lags_and_rolling, aquí dejamos HDD base
 
@@ -386,6 +405,23 @@ def fetch_forecast() -> pd.DataFrame:
     # HDD del pronóstico
     daily_fc["HDD"] = (HDD_BASE_TEMP - daily_fc["temperature_2m"]).clip(lower=0)
 
+    # Punto de rocío del pronóstico
+    if "relative_humidity_2m" in daily_fc.columns:
+        daily_fc["dew_point"] = daily_fc["temperature_2m"] - ((100.0 - daily_fc["relative_humidity_2m"]) / 5.0)
+    else:
+        daily_fc["dew_point"] = np.nan
+
+    # Índice de ventilación del pronóstico
+    if "boundary_layer_height" in daily_fc.columns and "wind_speed_10m" in daily_fc.columns:
+        daily_fc["ventilation_index"] = daily_fc["boundary_layer_height"] * daily_fc["wind_speed_10m"]
+    else:
+        daily_fc["ventilation_index"] = np.nan
+
+    # Lluvia acumulada del pronóstico
+    if "precipitation" in daily_fc.columns:
+        daily_fc["precipitation_acum_3d"] = daily_fc["precipitation"].rolling(3, min_periods=1).sum()
+        daily_fc["precipitation_acum_7d"] = daily_fc["precipitation"].rolling(7, min_periods=1).sum()
+
     if "wind_speed_10m" in daily_fc.columns:
         rad = np.deg2rad(daily_fc["wind_direction_10m"])
         daily_fc["wind_u"] = -daily_fc["wind_speed_10m"] * np.sin(rad)
@@ -479,9 +515,28 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     # Interacción clave: domingo de invierno (tráfico mínimo + calderas máximo)
     df["domingo_invierno"] = (df["es_domingo"] & df["es_invierno_estricto"]).astype(int)
 
+    # Ingesta de festivos (Vitoria-Gasteiz, Álava, País Vasco)
+    try:
+        years = sorted(df["date"].dt.year.unique())
+        es_holidays = holidays.Spain(years=years, subdiv="PV")
+        for y in years:
+            es_holidays[f"{y}-04-28"] = "San Prudencio"
+            es_holidays[f"{y}-08-05"] = "Virgen Blanca"
+        df["es_festivo"] = df["date"].dt.date.map(lambda d: 1 if d in es_holidays else 0)
+    except Exception as e:
+        log(f"  [WARN] Error cargando festivos de España/PV: {e}. Usando fallback nacional.")
+        try:
+            es_holidays = holidays.Spain(years=years)
+            df["es_festivo"] = df["date"].dt.date.map(lambda d: 1 if d in es_holidays else 0)
+        except Exception:
+            df["es_festivo"] = 0
+            
+    df["festivo_invierno"] = (df["es_festivo"] & df["es_invierno_estricto"]).astype(int)
+
     log(f"  Features temporales base: dow, month, season, is_weekend, is_workday")
     log(f"  Features ZBE: is_post_zbe, days_since_zbe")
     log(f"  Features calderas: es_invierno_estricto, es_verano, es_domingo, domingo_invierno")
+    log(f"  Features festivos: es_festivo, festivo_invierno")
     log(f"  Codificación cíclica: sin/cos para dow, month, doy")
     return df
 
@@ -556,9 +611,10 @@ def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
         log("  Sin pronóstico - usando proxy histórico en training")
         weather_base_cols = [c for c in df.columns if any(x in c for x in
             ["temperature", "precipitation", "wind", "cloud",
-             "humidity", "boundary", "sunshine", "HDD"])
+             "humidity", "boundary", "sunshine", "HDD", "dew_point", "ventilation_index"])
             and "_lag_" not in c and "_roll_" not in c
-            and "_diff_" not in c and "_acum_" not in c
+            and "_diff_" not in c 
+            and ("_acum_" not in c or "precipitation_acum" in c)
             and not c.startswith("fc_")]
         df = df.set_index("date").sort_index()
         for h in range(1, HORIZON_DAYS + 1):
@@ -569,9 +625,10 @@ def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
     section("9. Añadiendo features del pronóstico Open-Meteo")
     weather_base_cols = [c for c in df.columns if any(x in c for x in
         ["temperature", "precipitation", "wind", "cloud",
-         "humidity", "boundary", "sunshine", "HDD"])
+         "humidity", "boundary", "sunshine", "HDD", "dew_point", "ventilation_index"])
         and "_lag_" not in c and "_roll_" not in c
-        and "_diff_" not in c and "_acum_" not in c
+        and "_diff_" not in c 
+        and ("_acum_" not in c or "precipitation_acum" in c)
         and not c.startswith("fc_")]
 
     df = df.set_index("date").sort_index()

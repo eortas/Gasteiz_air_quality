@@ -55,7 +55,6 @@ TARGETS = [
     "NO2_zbe_d1", "NO2_out_d1",
     "PM10_zbe_d1", "PM10_out_d1",
     "PM2.5_zbe_d1", "PM2.5_out_d1",
-    "ICA_zbe_d1", "ICA_out_d1",
 ]
 
 # M?tricas CV v5 - usadas para construir intervalos de confianza aproximados
@@ -99,7 +98,7 @@ def section(title):
 
 # ??? 1. CARGAR MODELOS Y FEATURES ????????????????????????????????????????????
 def load_models() -> dict:
-    """Carga los 8 modelos v8 y sus listas de features seleccionadas."""
+    """Carga los modelos v8 (LightGBM y CatBoost) y sus listas de features seleccionadas."""
     models = {}
     missing = []
 
@@ -125,7 +124,7 @@ def load_models() -> dict:
         log(f"\n  -> Ejecuta primero: python src/ml/train_model_v8.py")
         sys.exit(1)
 
-    log(f"  [OK] {len(models)} modelos cargados")
+    log(f"  [OK] {len(models)} modelos cargados (LightGBM)")
     for target, m in models.items():
         log(f"     {target:<20} - {len(m['features'])} features")
 
@@ -256,6 +255,30 @@ def fetch_forecast_d1() -> dict:
         rad = np.deg2rad(agg["fc_wind_direction_10m_d1"])
         agg["fc_wind_u_d1"] = -agg["fc_wind_speed_10m_d1"] * np.sin(rad)
         agg["fc_wind_v_d1"] = -agg["fc_wind_speed_10m_d1"] * np.cos(rad)
+
+    # Punto de rocío del pronóstico
+    temp_tomorrow = df_tomorrow["temperature_2m"].mean()
+    rh_tomorrow = df_tomorrow["relative_humidity_2m"].mean()
+    agg["fc_dew_point_d1"] = temp_tomorrow - ((100.0 - rh_tomorrow) / 5.0)
+
+    # Índice de ventilación del pronóstico
+    if "boundary_layer_height" in df_tomorrow.columns and "wind_speed_10m" in df_tomorrow.columns:
+        agg["fc_ventilation_index_d1"] = df_tomorrow["boundary_layer_height"].mean() * df_tomorrow["wind_speed_10m"].mean()
+
+    # Lluvia acumulada últimos 3 y 7 días (Scavenging Effect)
+    try:
+        if DATASET_PATH.exists():
+            df_hist = pd.read_parquet(DATASET_PATH)
+            df_hist["date"] = pd.to_datetime(df_hist["date"], utc=True)
+            last_precip = df_hist.sort_values("date")["precipitation"].tail(6).values.tolist()
+            precip_tomorrow = agg.get("fc_precipitation_d1", 0.0)
+            
+            # 3d: tomorrow + last 2 days of history
+            agg["fc_precipitation_acum_3d_d1"] = precip_tomorrow + sum(last_precip[-2:]) if len(last_precip) >= 2 else precip_tomorrow
+            # 7d: tomorrow + last 6 days of history
+            agg["fc_precipitation_acum_7d_d1"] = precip_tomorrow + sum(last_precip) if len(last_precip) >= 6 else precip_tomorrow
+    except Exception as e:
+        log(f"  [WARN] Falló cálculo de lluvia acumulada pronosticada: {e}")
 
     log(f"  [OK] Pron?stico descargado: {len(agg)} features fc_*_d1 para {tomorrow.date()}")
     return agg
@@ -407,10 +430,70 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
         return {"es": f"Error: {str(e)}", "eu": "Errorea"}
 
 
+def add_deterministic_ica(results: dict):
+    """Calcula el ICA de forma determinista para zbe y out a partir de las predicciones corregidas."""
+    from sklearn.linear_model import Ridge
+    try:
+        if DATASET_PATH.exists():
+            df_hist = pd.read_parquet(DATASET_PATH)
+            for zone in ["zbe", "out"]:
+                no2_col = f"NO2_{zone}"
+                pm10_col = f"PM10_{zone}"
+                pm25_col = f"PM2.5_{zone}"
+                ica_col = f"ICA_{zone}"
+                
+                sub = df_hist[[no2_col, pm10_col, pm25_col, ica_col]].dropna()
+                if len(sub) >= 30:
+                    X = sub[[no2_col, pm10_col, pm25_col]]
+                    y = sub[ica_col]
+                    
+                    model_ica = Ridge(alpha=1.0)
+                    model_ica.fit(X, y)
+                    
+                    # Predicciones corregidas (o base si no hay corrector)
+                    pred_no2 = results[f"NO2_{zone}_d1"]["prediction"]
+                    pred_pm10 = results[f"PM10_{zone}_d1"]["prediction"]
+                    pred_pm25 = results[f"PM2.5_{zone}_d1"]["prediction"]
+                    
+                    pred_ica = float(model_ica.predict([[pred_no2, pred_pm10, pred_pm25]])[0])
+                    pred_ica = max(0.0, pred_ica)
+                    
+                    # Predicción base (v1)
+                    pred_no2_v1 = results[f"NO2_{zone}_d1"].get("prediction_v1", pred_no2)
+                    pred_pm10_v1 = results[f"PM10_{zone}_d1"].get("prediction_v1", pred_pm10)
+                    pred_pm25_v1 = results[f"PM2.5_{zone}_d1"].get("prediction_v1", pred_pm25)
+                    
+                    pred_ica_v1 = float(model_ica.predict([[pred_no2_v1, pred_pm10_v1, pred_pm25_v1]])[0])
+                    pred_ica_v1 = max(0.0, pred_ica_v1)
+                    
+                    # Métricas de error aproximadas
+                    rmse_cv = 6.722 if zone == "zbe" else 7.987
+                    
+                    results[f"ICA_{zone}_d1"] = {
+                        "prediction_v1": round(pred_ica_v1, 2),
+                        "prediction":    round(pred_ica, 2),
+                        "lower":         round(max(0, pred_ica - 1.28 * rmse_cv), 2),
+                        "upper":         round(pred_ica + 1.28 * rmse_cv, 2),
+                        "rmse_cv":       rmse_cv,
+                        "correction":    round(pred_ica - pred_ica_v1, 2),
+                        "foresight": {
+                            "base_value": round(float(y.mean()), 2),
+                            "positive_top": [{"feature": "PM2.5 (Ensemble)", "value": round(float(model_ica.coef_[2]*(pred_pm25 - y.mean())), 2)}],
+                            "negative_top": [],
+                            "narrative": {
+                                "es": f"Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 ({pred_no2:.1f} µg/m³), PM10 ({pred_pm10:.1f} µg/m³) y PM2.5 ({pred_pm25:.1f} µg/m³).",
+                                "eu": f"Airearen Kalitate Indizea (ICA) NO2 ({pred_no2:.1f} µg/m³), PM10 ({pred_pm10:.1f} µg/m³) eta PM2.5 ({pred_pm25:.1f} µg/m³) aztertu ondoren lortu da."
+                            }
+                        }
+                    }
+    except Exception as e:
+        log(f"  [WARN] Falló el cálculo del ICA determinista: {e}")
+
+
 # ??? 4. PREDECIR ??????????????????????????????????????????????????????????????
 def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> dict:
     """
-    Genera predicciones para los 8 targets usando sus respectivas features.
+    Genera predicciones para los targets usando sus respectivas features.
     Si forecast_override tiene features fc_*_d1 reales, las sustituye en la fila.
     """
     results = {}
@@ -473,6 +556,9 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
             "rmse_cv":    rmse_cv,
             "foresight":  foresight
         }
+
+    # Añadir el ICA calculado de manera determinista en base a los contaminantes base
+    add_deterministic_ica(results)
 
     return results
 
