@@ -2,7 +2,7 @@ name: Pipeline diario + Dashboard
 
 on:
   schedule:
-    - cron: '0 1 * * *'   # 2:00 AM UTC (3:00 AM hora española en invierno)
+    - cron: '10 22 * * *'   # 22:10 UTC (00:10 AM hora española en verano / 23:10 en invierno)
   workflow_dispatch:        # permite lanzarlo manualmente desde GitHub
 
 permissions:
