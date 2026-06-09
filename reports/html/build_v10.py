@@ -159,27 +159,24 @@ try:
         # El DataFrame suele tener la fila de "Mañana" al final
         df_feat = df_feat.sort_values("date").reset_index(drop=True)
         
-        # Buscamos el índice de "Ayer" (último día con datos reales probables)
-        # Normalmente es la penúltima o antepenúltima fila si ya se generó la de hoy/mañana
-        last_date = df_feat['date'].iloc[-1]
+        # Excluimos el día de hoy (o futuros) para el backtest, ya que no son días completos
+        today_date = datetime.now().date()
+        df_past = df_feat[df_feat['date'].dt.date < today_date].copy()
         
-        # Tomamos suficientes filas para el backtest
-        last_rows = df_feat.tail(12).copy()
-        
-        # Definimos 'Ayer' como el último día que tiene medición real (no NaN) en el contaminante principal
-        # O simplemente iloc[-3] si asumimos que -1 es Mañana y -2 es Hoy.
-        # Para ser robustos, buscamos la última fila donde PM10_out no sea NaN
-        valid_indices = last_rows.index[last_rows['PM10_out'].notna()].tolist()
+        # Buscamos la última fila con datos reales de PM10_out en todo el histórico de días pasados
+        valid_indices = df_past.index[df_past['PM10_out'].notna()].tolist()
         if not valid_indices:
-            # Fallback si no hay datos reales recientes
-            targets_backtest = last_rows.iloc[-8:-1]
-            inputs_backtest  = last_rows.iloc[-9:-2]
+            # Fallback si no hay ningún dato real
+            last_rows = df_past.tail(12).copy()
+            targets_backtest = last_rows.iloc[-8:-1] if len(last_rows) >= 8 else last_rows
+            inputs_backtest  = last_rows.iloc[-9:-2] if len(last_rows) >= 9 else last_rows
         else:
-            last_real_idx_pos = last_rows.index.get_loc(valid_indices[-1])
+            last_real_idx = valid_indices[-1]
+            last_real_idx_pos = df_past.index.get_loc(last_real_idx)
             # Queremos 7 targets terminando en el último real
-            targets_backtest = last_rows.iloc[max(0, last_real_idx_pos-6) : last_real_idx_pos+1]
+            targets_backtest = df_past.iloc[max(0, last_real_idx_pos-6) : last_real_idx_pos+1]
             # Sus inputs son los del día anterior (modelo d1)
-            inputs_backtest  = last_rows.iloc[max(0, last_real_idx_pos-7) : last_real_idx_pos]
+            inputs_backtest  = df_past.iloc[max(0, last_real_idx_pos-7) : last_real_idx_pos]
         
         fechas = targets_backtest['date'].dt.strftime('%d %b').tolist()
         if len(fechas) > 0:
@@ -828,7 +825,44 @@ let currentLang = localStorage.getItem('vitoria_lang') || 'eu';
 if (currentLang !== 'es' && currentLang !== 'eu') currentLang = 'eu';
 const predDate = "__PRED_DATE_PLACEHOLDER__";
 
-const getCssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const getCssVar = (name) => {
+  const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  if (val) return val;
+  const fallbacks = {
+    '--bg':        '#f4f6f8',
+    '--surface':   '#ffffff',
+    '--surface2':  '#f0f2f5',
+    '--border':    '#dcdfe4',
+    '--text':      '#111827',
+    '--muted':     '#6b7280',
+    '--observed':  '#0288d1',
+    '--cf-pure':   '#d84315',
+    '--cf-lags':   '#ef6c00',
+    '--accent':    '#4f46e5',
+    '--green':     '#059669',
+    '--red':       '#dc2626',
+    '--yellow':    '#d97706'
+  };
+  if (document.documentElement.getAttribute('data-theme') === 'dark') {
+    const darkFallbacks = {
+      '--bg':        '#0d0f14',
+      '--surface':   '#151820',
+      '--surface2':  '#1c2030',
+      '--border':    '#2a2f3f',
+      '--text':      '#e2e6f0',
+      '--muted':     '#6b7494',
+      '--observed':  '#4fc3f7',
+      '--cf-pure':   '#ff7043',
+      '--cf-lags':   '#ffb74d',
+      '--accent':    '#7c6af7',
+      '--green':     '#4caf82',
+      '--red':       '#ef5350',
+      '--yellow':    '#ffd54f'
+    };
+    return darkFallbacks[name] || fallbacks[name] || '';
+  }
+  return fallbacks[name] || '';
+};
 
 const SUMMARY_STATS = __SUMMARY_DATA_PLACEHOLDER__;
 const DID_RESULTS = __DID_DATA_PLACEHOLDER__;

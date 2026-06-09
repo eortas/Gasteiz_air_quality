@@ -165,7 +165,12 @@ def json_to_records(data: dict, device_id: int, estacion: str) -> list:
 
     for pollutant_id, mediciones in reads.items():
         nombre = CONTAMINANTES.get(str(pollutant_id), f"p_{pollutant_id}")
-        for ts_ms, valor, unidad in mediciones:
+        for m in mediciones:
+            if not m or len(m) < 2:
+                continue
+            ts_ms = m[0]
+            valor = m[1]
+            unidad = m[2] if len(m) > 2 else ""
             filas.append({
                 "timestamp":    pd.to_datetime(ts_ms, unit="ms", utc=True).isoformat(),
                 "estacion_id":  device_id,
