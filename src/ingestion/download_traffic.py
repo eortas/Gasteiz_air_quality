@@ -200,7 +200,7 @@ def load_checkpoint(client) -> datetime:
         last = datetime.fromisoformat(data["last_completed"])
         next_day = last + timedelta(days=1)
         print(f"  Reanudando desde {next_day.date()} (checkpoint local JSON)")
-        return next_day
+        return next_day.replace(tzinfo=None)
 
     # 2. Si no hay JSON, mirar el CSV del año más reciente
     current_year = datetime.now().year
@@ -215,7 +215,7 @@ def load_checkpoint(client) -> datetime:
                     # No sumamos un día aquí para asegurar que el último día se completó si la descarga se cortó
                     checkpoint = last_ts.replace(hour=0, minute=0, second=0).to_pydatetime()
                     print(f"  Checkpoint detectado desde {csv_path.name}: {checkpoint.date()}")
-                    return checkpoint
+                    return checkpoint.replace(tzinfo=None)
             except:
                 continue
 
@@ -224,10 +224,10 @@ def load_checkpoint(client) -> datetime:
     if supabase_last:
         next_day = supabase_last.replace(hour=0, minute=0, second=0) + timedelta(days=1)
         print(f"  Reanudando desde {next_day.date()} (checkpoint Supabase)")
-        return next_day
+        return next_day.replace(tzinfo=None)
 
     print(f"  Primera ejecucion — arrancando desde {START_DATE.date()}")
-    return START_DATE
+    return START_DATE.replace(tzinfo=None)
 
 
 def save_checkpoint(date: datetime):
