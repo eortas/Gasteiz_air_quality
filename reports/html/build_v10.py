@@ -273,8 +273,11 @@ try:
                     }
                     
                 except Exception as e:
+                    import traceback
                     print(f"  WARN Error procesando backtest para {target_name}: {e}")
+                    traceback.print_exc()
                     perf_data[zone][cont] = {"real": [None]*7, "pred": [0]*7}
+
             
             # Calcular ICA determinista en el backtest a partir de los contaminantes ya calculados
             try:
@@ -320,7 +323,9 @@ try:
                 else:
                     perf_data[zone]['ICA'] = {"real": [None]*7, "pred": [0]*7}
             except Exception as e:
+                import traceback
                 print(f"  WARN Error calculando ICA determinista para backtest en zona {zone}: {e}")
+                traceback.print_exc()
                 perf_data[zone]['ICA'] = {"real": [None]*7, "pred": [0]*7}
         
         print("  OK Predicciones y Backtest (V2 Refined) listos.")
@@ -328,7 +333,9 @@ try:
         raise ValueError("El DataFrame de features está vacío.")
 
 except Exception as e:
+    import traceback
     print(f"  WARN Error en backtesting: {e}")
+    traceback.print_exc()
     for z in ['zbe', 'out']:
         perf_data[z] = {"labels": ["D-6", "D-5", "D-4", "D-3", "D-2", "D-1", "Ayer"]}
         for c in ['NO2', 'PM10', 'PM2.5']:
