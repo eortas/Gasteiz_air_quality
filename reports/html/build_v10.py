@@ -203,7 +203,7 @@ try:
                     # 1. Base prediction (v1)
                     model = joblib.load(model_path)
                     features = json.loads(feat_path.read_text(encoding="utf-8"))
-                    X_backtest = inputs_backtest.reindex(columns=features, fill_value=0).fillna(0)
+                    X_backtest = inputs_backtest.reindex(columns=features, fill_value=0).fillna(0).astype(float)
                     preds_v1 = model.predict(X_backtest)
                     
                     # 2. Refinamiento V2 (Meta-Modelo) usando el .pkl directamente
@@ -222,7 +222,7 @@ try:
                             # Calcular errores históricos de la predicción base (v1)
                             errors_i = []
                             for _, h_row in df_history_i.iterrows():
-                                X_h = h_row.to_frame().T.reindex(columns=features, fill_value=0).fillna(0)
+                                X_h = h_row.to_frame().T.reindex(columns=features, fill_value=0).fillna(0).astype(float)
                                 p_h = model.predict(X_h)[0]
                                     
                                 actual = h_row.get(contam_col)

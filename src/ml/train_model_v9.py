@@ -98,7 +98,7 @@ def run_synthetic_control(df: pd.DataFrame):
             
             # Aplicar modelo al periodo Post-ZBE
             # Rellenar NAs en post_df para los donors con la media de la fila
-            X_post = post_df[available_donors].fillna(method="ffill").fillna(method="bfill")
+            X_post = post_df[available_donors].ffill().bfill()
             y_post = post_df[y_col]
             
             # Las fechas completas (Pre + Post)

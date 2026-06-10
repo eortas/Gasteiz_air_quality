@@ -315,7 +315,7 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             # Calcular errores de los ?ltimos 7 d?as (si hay datos)
             errors = []
             for _, h_row in history_8d.iterrows():
-                X_h = h_row.to_frame().T.reindex(columns=feats_v1, fill_value=0).fillna(0)
+                X_h = h_row.to_frame().T.reindex(columns=feats_v1, fill_value=0).fillna(0).astype(float)
                 p_h = float(model_v1.predict(X_h)[0])
                 
                 # Buscar valor real en el target correspondiente (mismo d?a, d1 shift)
@@ -532,7 +532,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
             log(f"  [WARN]  {target}: {len(missing_features)} features no encontradas en parquet")
             log(f"       Primeras: {missing_features[:5]}")
 
-        X = row.reindex(columns=features, fill_value=0).fillna(0)
+        X = row.reindex(columns=features, fill_value=0).fillna(0).astype(float)
         pred = float(model.predict(X)[0])
         pred = max(0.0, pred)  # los contaminantes no pueden ser negativos
         
