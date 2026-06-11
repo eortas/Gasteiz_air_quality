@@ -52,7 +52,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 # ─── CONFIGURACION ────────────────────────────────────────────────────────────
 BASE_URL      = "https://www.vitoria-gasteiz.org/c11-01w/traffic"
 START_DATE    = datetime(2024, 3, 1)
-END_DATE      = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+END_DATE      = pd.Timestamp.now(tz="Europe/Madrid").floor("D").tz_localize(None).to_pydatetime()
 DELAY_SECONDS = 1.0
 BATCH_SIZE    = 500
 SUPABASE_DAYS = 30

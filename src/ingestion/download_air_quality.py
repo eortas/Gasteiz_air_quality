@@ -40,7 +40,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 # ─── CONFIGURACION ────────────────────────────────────────────────────────────
 URL_BASE      = "https://kunakcloud.com/dashboards/services"
 START_DATE    = datetime(2024, 3, 1)
-END_DATE      = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+END_DATE      = pd.Timestamp.now(tz="Europe/Madrid").floor("D").tz_localize(None).to_pydatetime()
 DELAY_S       = 0.5
 
 ESTACIONES = {

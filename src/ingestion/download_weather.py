@@ -56,7 +56,7 @@ VITORIA_LAT   = 42.8467
 VITORIA_LON   = -2.6726
 TIMEZONE      = "Europe/Madrid"
 START_DATE    = date(2024, 3, 1)
-END_DATE      = date.today() - timedelta(days=1)
+END_DATE      = pd.Timestamp.now(tz=TIMEZONE).date() - timedelta(days=1)
 DELAY_S       = 0.5
 BATCH_SIZE    = 500
 SUPABASE_DAYS = 90
