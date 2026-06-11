@@ -296,10 +296,17 @@ def aggregate_to_hourly(records: list) -> list:
 def append_to_csv(records: list, year: int):
     if not records:
         return
-    df           = pd.DataFrame(records)
-    filepath     = DATA_DIR / f"trafico_{year}.csv"
-    write_header = not filepath.exists()
-    df.to_csv(filepath, mode="a", header=write_header, index=False, encoding="utf-8")
+    df = pd.DataFrame(records)
+    filepath = DATA_DIR / f"trafico_{year}.csv"
+    if filepath.exists():
+        try:
+            df_old = pd.read_csv(filepath)
+            df = pd.concat([df_old, df], ignore_index=True)
+        except Exception as e:
+            print(f"  Error leyendo CSV existente para deduplicar: {e}")
+            
+    df.drop_duplicates(subset=["code", "start_date"], keep="last", inplace=True)
+    df.to_csv(filepath, index=False, encoding="utf-8")
 
 
 # ─── DESCARGA PRINCIPAL ───────────────────────────────────────────────────────

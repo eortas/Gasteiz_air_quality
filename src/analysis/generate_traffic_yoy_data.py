@@ -31,7 +31,7 @@ def generate_yoy():
         df = df[df["code"].isin(PERIPHERAL_SENSORS)]
         
         if not df.empty:
-            df["start_date"] = pd.to_datetime(df["start_date"])
+            df["start_date"] = pd.to_datetime(df["start_date"], format='mixed', utc=True)
             all_data.append(df)
             
     if not all_data:
