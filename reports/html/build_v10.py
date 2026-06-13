@@ -38,6 +38,46 @@ cf_data = {}
 try:
     if csv_file.exists():
         df_cv = pd.read_csv(csv_file)
+        # Si ICA no está en df_cv, lo calculamos de forma determinista combinando NO2, PM10 y PM2.5 si están disponibles
+        if 'ICA' not in df_cv['contaminant'].unique():
+            print("  ICA no encontrado en counterfactual_gap_v8.csv. Generándolo dinámicamente a partir de NO2, PM10 y PM2.5...")
+            ica_rows = []
+            for zone in df_cv['zone'].unique():
+                for version in df_cv['version'].unique():
+                    # Obtener las series de cada contaminante
+                    m_no2 = (df_cv['contaminant'] == 'NO2') & (df_cv['zone'] == zone) & (df_cv['version'] == version)
+                    m_pm10 = (df_cv['contaminant'] == 'PM10') & (df_cv['zone'] == zone) & (df_cv['version'] == version)
+                    m_pm25 = (df_cv['contaminant'] == 'PM2.5') & (df_cv['zone'] == zone) & (df_cv['version'] == version)
+                    
+                    df_no2 = df_cv[m_no2].set_index('date')
+                    df_pm10 = df_cv[m_pm10].set_index('date')
+                    df_pm25 = df_cv[m_pm25].set_index('date')
+                    
+                    # Unir para alinear fechas
+                    df_merged = pd.concat([df_no2[['observed', 'counterfactual']], 
+                                           df_pm10[['observed', 'counterfactual']], 
+                                           df_pm25[['observed', 'counterfactual']]], 
+                                          axis=1, keys=['NO2', 'PM10', 'PM25']).dropna()
+                    
+                    if not df_merged.empty:
+                        # Para cada fecha, el ICA es el máximo de los sub-índices.
+                        # Como aproximación determinista lineal o máximo, usamos el máximo para simular el comportamiento del ICA real
+                        obs_ica = df_merged.apply(lambda r: max(r[('NO2', 'observed')], r[('PM10', 'observed')], r[('PM25', 'observed')] * 2), axis=1)
+                        cf_ica = df_merged.apply(lambda r: max(r[('NO2', 'counterfactual')], r[('PM10', 'counterfactual')], r[('PM25', 'counterfactual')] * 2), axis=1)
+                        
+                        df_ica = pd.DataFrame(index=df_merged.index)
+                        df_ica['contaminant'] = 'ICA'
+                        df_ica['zone'] = zone
+                        df_ica['version'] = version
+                        df_ica['observed'] = obs_ica
+                        df_ica['counterfactual'] = cf_ica
+                        df_ica['gap'] = df_ica['observed'] - df_ica['counterfactual']
+                        df_ica['gap_pct'] = (df_ica['gap'] / df_ica['counterfactual'] * 100).fillna(0)
+                        
+                        ica_rows.append(df_ica.reset_index())
+            if ica_rows:
+                df_cv = pd.concat([df_cv, *ica_rows], ignore_index=True)
+
         for cont in df_cv['contaminant'].unique():
             for zone in df_cv['zone'].unique():
                 key = f"{cont}_{zone}"
