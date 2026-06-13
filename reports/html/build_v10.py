@@ -802,6 +802,7 @@ html_template = """<!DOCTYPE html>
       <div class="v10-risk-item"><div class="val" id="val-no2">--</div><div class="lab">NO₂ µg/m³</div></div>
       <div class="v10-risk-item"><div class="val" id="val-pm25">--</div><div class="lab">PM2.5 µg/m³</div></div>
       <div class="v10-risk-item"><div class="val" id="val-pm10">--</div><div class="lab">PM10 µg/m³</div></div>
+      <div class="v10-risk-item"><div class="val" id="val-ica">--</div><div class="lab">ICA</div></div>
     </div>
   </div>
 
@@ -811,6 +812,7 @@ html_template = """<!DOCTYPE html>
       <button class="tab active" onclick="selectContV10('NO2', this)">NO₂</button>
       <button class="tab" onclick="selectContV10('PM10', this)">PM10</button>
       <button class="tab" onclick="selectContV10('PM2.5', this)">PM2.5</button>
+      <button class="tab" onclick="selectContV10('ICA', this)">ICA</button>
     </div>
     <div class="sep"></div>
     <span class="controls-label" data-i18n="zone">ZONA </span>
@@ -1410,7 +1412,7 @@ function renderFig1() {
   
   const text = getCssVar('--muted'); const grid = getCssVar('--border'); const bg = getCssVar('--surface2'); const title = getCssVar('--text');
   
-  fig1Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_fillUpper', data: pure.counterfactual, borderColor: 'transparent', backgroundColor: getCssVar('--observed') + '20', fill: '+1', pointRadius: 0, tension: 0.3 }, { label: t.fig1Obs, data: obsSmooth, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, order: 1 }, { label: t.fig1CFPure, data: movingAvg(pure.counterfactual, 7), borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, tension: 0.3, fill: false, order: 2 }, { label: t.fig1CFLags, data: movingAvg(lags.counterfactual, 7), borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, tension: 0.3, fill: false, order: 3 } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)} µg/m³`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(1) + ' µg/m³' }, grid: { color: grid }, title: { display: true, text: `µg/m³`, color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
+  fig1Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_fillUpper', data: pure.counterfactual, borderColor: 'transparent', backgroundColor: getCssVar('--observed') + '20', fill: '+1', pointRadius: 0, tension: 0.3 }, { label: t.fig1Obs, data: obsSmooth, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, order: 1 }, { label: t.fig1CFPure, data: movingAvg(pure.counterfactual, 7), borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, tension: 0.3, fill: false, order: 2 }, { label: t.fig1CFLags, data: movingAvg(lags.counterfactual, 7), borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, tension: 0.3, fill: false, order: 3 } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; const unit = currentCont === 'ICA' ? '' : ' µg/m³'; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)}${unit}`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(1) + (currentCont === 'ICA' ? '' : ' µg/m³') }, grid: { color: grid }, title: { display: true, text: currentCont === 'ICA' ? 'Índice' : 'µg/m³', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
 }
 
 function renderFig2() {
@@ -1528,6 +1530,7 @@ function renderDashboard3() {
   const no2 = zoneData['NO2'] || 0;
   const pm25 = zoneData['PM2.5'] || 0;
   const pm10 = zoneData['PM10'] || 0;
+  const ica = zoneData['ICA'] || 0;
   const t = translations[currentLang];
 
   let badge = document.getElementById('riskBadge');
@@ -1542,6 +1545,7 @@ function renderDashboard3() {
   document.getElementById('val-no2').innerHTML = `${no2.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
   document.getElementById('val-pm25').innerHTML = `${pm25.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
   document.getElementById('val-pm10').innerHTML = `${pm10.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
+  document.getElementById('val-ica').innerHTML = `${ica.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
 
   const d = perfStats[currentZoneV10][currentContV10] || {labels:[], real:[], pred:[]};
   const ctx = document.getElementById('perfChart').getContext('2d');
@@ -1574,7 +1578,7 @@ function renderDashboard3() {
   } else {
       const lastReal = lastRealDraw;
       const error = lastPred > 0 ? (((lastReal - lastPred) / lastPred) * 100).toFixed(1) : 0;
-      realText = `${lastReal.toFixed(1)} µg/m³`;
+      realText = currentContV10 === 'ICA' ? `${lastReal.toFixed(1)}` : `${lastReal.toFixed(1)} µg/m³`;
       errorText = `${error > 0 ? '+' : ''}${error}%`;
       const errorColor = error > 0 ? "var(--red)" : "var(--green)";
       const absError = Math.abs(error);
@@ -1583,10 +1587,12 @@ function renderDashboard3() {
       else if (absError <= 30) { interpretColor = "var(--green)"; interpret = t.backAccept; } 
       else { interpretColor = "var(--yellow)"; interpret = t.backReview; }
 
+      const predText = currentContV10 === 'ICA' ? `${lastPred.toFixed(1)}` : `${lastPred.toFixed(1)} µg/m³`;
+
       document.getElementById('backtestTable').innerHTML = `
         <tr>
           <td><strong>${currentContV10} (${currentZoneV10.toUpperCase()})</strong></td>
-          <td>${lastPred.toFixed(1)} µg/m³</td>
+          <td>${predText}</td>
           <td>${realText}</td>
           <td style="color:${errorColor}; font-weight:bold;">${errorText}</td>
           <td style="color:${interpretColor}; font-weight:bold;">${interpret}</td>
