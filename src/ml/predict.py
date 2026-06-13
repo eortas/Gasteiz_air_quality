@@ -195,8 +195,8 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
 
 
 # ??? 3. PRON?STICO OPEN-METEO (OPCIONAL) ?????????????????????????????????????
-def fetch_forecast_d1() -> dict:
-    """Descarga pron?stico Open-Meteo para ma?ana y devuelve dict de features fc_*_d1."""
+def fetch_forecast_d1(target_date: pd.Timestamp) -> dict:
+    """Descarga pron?stico Open-Meteo para el d?a de predicci?n y devuelve dict de features fc_*_d1."""
     try:
         import requests
     except ImportError:
@@ -213,7 +213,7 @@ def fetch_forecast_d1() -> dict:
             "wind_gusts_10m", "cloud_cover", "boundary_layer_height",
             "sunshine_duration", "weather_code",
         ]),
-        "forecast_days":  2,
+        "forecast_days":  3,  # Aumentado a 3 para evitar problemas de desfase horario (timezone/UTC) en el runner de GitHub Actions
         "timezone":       "UTC",
         "wind_speed_unit": "ms",
     }
@@ -230,11 +230,12 @@ def fetch_forecast_d1() -> dict:
     df["timestamp"] = pd.to_datetime(df["time"], utc=True)
     df["date"]      = df["timestamp"].dt.floor("D")
 
-    tomorrow = pd.to_datetime(pd.Timestamp.now(tz="Europe/Madrid").date()).tz_localize("UTC") + pd.Timedelta(days=1)
+    # Alinear la fecha objetivo en UTC (normalizada a las 00:00:00 UTC)
+    tomorrow = target_date.normalize()
     df_tomorrow = df[df["date"] == tomorrow]
 
     if df_tomorrow.empty:
-        log("  [WARN]  Sin datos de ma?ana en Open-Meteo")
+        log(f"  [WARN]  Sin datos de {tomorrow.date()} en Open-Meteo")
         return {}
 
     agg = {}
@@ -655,7 +656,7 @@ def main():
     if with_forecast:
         if not json_only:
             section("3. Descargando pron?stico Open-Meteo")
-        forecast_override = fetch_forecast_d1()
+        forecast_override = fetch_forecast_d1(pred_date)
 
     # Aplicar pronóstico real a row si está disponible para que tanto predict como refine_with_meta_models lo usen
     if forecast_override:
