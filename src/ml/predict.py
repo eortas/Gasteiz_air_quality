@@ -517,10 +517,9 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
 
     # Aplicar pron?stico real si est? disponible
     if forecast_override:
+        row = row.copy()
         for feat, val in forecast_override.items():
-            if feat in row.columns:
-                row = row.copy()
-                row[feat] = val
+            row[feat] = val
 
     for target, m in models.items():
         model    = m["model"]
@@ -660,10 +659,9 @@ def main():
 
     # Aplicar pronóstico real a row si está disponible para que tanto predict como refine_with_meta_models lo usen
     if forecast_override:
+        row = row.copy()
         for feat, val in forecast_override.items():
-            if feat in row.columns:
-                row = row.copy()
-                row[feat] = val
+            row[feat] = val
 
     # 4. Predecir
     results = predict(models, row, None)
