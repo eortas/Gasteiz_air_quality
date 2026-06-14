@@ -240,7 +240,6 @@ def fetch_month(year: int, month: int) -> pd.DataFrame:
     if first_day > END_DATE:
         return pd.DataFrame()
 
-    url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
         "latitude":           VITORIA_LAT,
         "longitude":          VITORIA_LON,
@@ -249,18 +248,26 @@ def fetch_month(year: int, month: int) -> pd.DataFrame:
         "hourly":             ",".join(HOURLY_VARS),
         "daily":              ",".join(DAILY_VARS),
         "timezone":           TIMEZONE,
-        "models":             "best_match",
         "wind_speed_unit":    "kmh",
         "precipitation_unit": "mm",
         "temperature_unit":   "celsius",
     }
+
+    # Si la fecha de fin está dentro de los últimos 90 días, la API de archivo puede tener retraso.
+    # Usamos la API de forecast estándar que permite consultar los últimos 90 días en tiempo real.
+    days_ago = (date.today() - last_day).days
+    if days_ago < 90:
+        url = "https://api.open-meteo.com/v1/forecast"
+    else:
+        url = "https://archive-api.open-meteo.com/v1/archive"
+        params["models"] = "best_match"
 
     try:
         resp = requests.get(url, params=params, timeout=60)
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
-        print(f"\n  Error fetch {year}-{month:02d}: {e}")
+        print(f"\n  Error fetch {year}-{month:02d} ({url}): {e}")
         return pd.DataFrame()
 
     hourly = data.get("hourly", {})
@@ -321,7 +328,7 @@ def main(local_only: bool = False):
     print(f"  Destino             : CSV local {'+ Supabase' if client else '(solo local)'}")
     print()
 
-    if remaining <= 0:
+    if remaining < 0:
         print("Descarga ya completada.")
         purge_old_supabase(client)
         return
