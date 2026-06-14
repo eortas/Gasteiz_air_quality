@@ -398,6 +398,8 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             log(f"  [WARN] Fallo en meta-modelo {target}: {e}")
             refined_results[target] = r
             
+    # Recalcular ICA determinista basándose en las predicciones refinadas
+    add_deterministic_ica(refined_results)
     return refined_results
 
 
