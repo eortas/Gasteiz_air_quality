@@ -69,10 +69,16 @@ def train_meta_models(df):
         train_sub = sub.iloc[:split]
         test_sub  = sub.iloc[split:]
         
-        X_train = train_sub[META_FEATURES].fillna(0)
+        # Imputar valores nulos con la media de train_sub para evitar fuga de datos
+        X_train_raw = train_sub[META_FEATURES]
+        X_test_raw = test_sub[META_FEATURES]
+        
+        means = X_train_raw.mean().fillna(0.0)
+        
+        X_train = X_train_raw.fillna(means)
         y_train = train_sub["actual"]
         
-        X_test  = test_sub[META_FEATURES].fillna(0)
+        X_test  = X_test_raw.fillna(means)
         y_test  = test_sub["actual"]
         
         model = Ridge(alpha=1.0)
@@ -87,7 +93,9 @@ def train_meta_models(df):
         gain = (rmse_v1 - rmse_v2) / rmse_v1 * 100
         
         # Entrenar modelo final con todo el histórico (para predicción de mañana)
-        X_full = sub[META_FEATURES].fillna(0)
+        X_full_raw = sub[META_FEATURES]
+        full_means = X_full_raw.mean().fillna(0.0)
+        X_full = X_full_raw.fillna(full_means)
         y_full = sub["actual"]
         final_model = Ridge(alpha=1.0)
         final_model.fit(X_full, y_full)

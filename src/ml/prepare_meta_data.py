@@ -133,7 +133,6 @@ def generate_oof_predictions(df):
     final_meta_df = pd.concat(all_oof_results).reset_index(drop=True)
     
     # Calcular errores históricos (Error en t-1)
-    # Necesitamos pivotar o procesar por target para no mezclar dateranges
     sorted_meta = []
     for t_name in final_meta_df["target_name"].unique():
         sub = final_meta_df[final_meta_df["target_name"] == t_name].sort_values("date")
@@ -148,7 +147,21 @@ def generate_oof_predictions(df):
         
         sorted_meta.append(sub)
         
-    return pd.concat(sorted_meta).dropna().reset_index(drop=True)
+    final_df = pd.concat(sorted_meta)
+    
+    # 1. Quitar filas donde falten las variables esenciales del meta-modelo
+    essential_cols = ["date", "target_name", "pred_v1", "actual", "error_lag_1d", "error_roll_mean_7d"]
+    final_df = final_df.dropna(subset=essential_cols).reset_index(drop=True)
+    
+    # 2. Imputar nulos en variables exógenas con sus medias
+    for col in final_df.columns:
+        if col not in essential_cols and pd.api.types.is_numeric_dtype(final_df[col]):
+            col_mean = final_df[col].mean()
+            if pd.isna(col_mean):
+                col_mean = 0.0
+            final_df[col] = final_df[col].fillna(col_mean)
+            
+    return final_df
 
 def main():
     print("Iniciando preparación de datos para Meta-modelo...")

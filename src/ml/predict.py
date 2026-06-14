@@ -288,20 +288,33 @@ def fetch_forecast_d1(target_date: pd.Timestamp) -> dict:
 def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.DataFrame, pred_date: pd.Timestamp) -> dict:
     """
     Usa los meta-modelos Ridge para corregir las predicciones v1.
-    Calcula error_lag_1d y error_roll_mean_7d usando el hist?rico reciente.
+    Calcula error_lag_1d y error_roll_mean_7d usando el histórico reciente.
     """
     refined_results = {}
     
     # 1. Calcular errores recientes para las features del meta-modelo
-    # Necesitamos las predicciones del modelo 1 para los ?ltimos 8 d?as
+    # Necesitamos las predicciones del modelo 1 para los últimos 8 días
     # y los valores reales para compararlos.
     # El histórico para calcular errores debe tener datos reales COMPLETOS.
     # Como hoy (t) aún no ha terminado, no podemos usar ninguna fila del histórico
     # cuyo target sea hoy (t) o posterior. El último target completo es ayer (t-1).
-    # Por tanto, filtramos el histórico para quedarnos solo con filas de fecha <= pred_date - 3 días.
-    cutoff_date = pred_date - pd.Timedelta(days=3)
+    # Si ejecutamos de madrugada (02:00 AM), ayer (t-1) está completo.
+    # Por tanto, filtramos el histórico para quedarnos solo con filas de fecha <= pred_date - 2 días.
+    cutoff_date = pred_date - pd.Timedelta(days=2)
     df_history_clean = df_history[df_history["date"] <= cutoff_date].sort_values("date").reset_index(drop=True)
     history_8d = df_history_clean.tail(8).copy()
+    
+    # Calcular medias históricas de clima para imputación robusta
+    mean_temp = df_history["temperature_2m"].mean()
+    mean_wind = df_history["wind_speed_10m"].mean()
+    mean_boundary = df_history["boundary_layer_height"].mean()
+    mean_humidity = df_history["relative_humidity_2m"].mean()
+    
+    # Valores por defecto por si el dataset histórico estuviese vacío de climatología
+    default_temp = mean_temp if pd.notna(mean_temp) else 12.0
+    default_wind = mean_wind if pd.notna(mean_wind) else 2.5
+    default_boundary = mean_boundary if pd.notna(mean_boundary) else 500.0
+    default_humidity = mean_humidity if pd.notna(mean_humidity) else 75.0
     
     for target, r in results.items():
         model_meta_path = MODELS_DIR / f"meta_model_{target}.pkl"
@@ -318,15 +331,15 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             model_v1 = joblib.load(m1_path)
             feats_v1 = json.loads(f1_path.read_text(encoding="utf-8"))
             
-            # Calcular errores de los ?ltimos 7 d?as (si hay datos)
+            # Calcular errores de los últimos 7 días (si hay datos)
             errors = []
             for _, h_row in history_8d.iterrows():
                 X_h = h_row.to_frame().T.reindex(columns=feats_v1, fill_value=0).fillna(0).astype(float)
                 p_h = float(model_v1.predict(X_h)[0])
                 
-                # Buscar valor real en el target correspondiente (mismo d?a, d1 shift)
-                # En features_daily, el target_XXX_d1 es el valor del d?a SIGUIENTE.
-                # As? que el error de "hoy" (t) lo vemos comparando la predicci?n hecha en t-1 con el target en t-1.
+                # Buscar valor real en el target correspondiente (mismo día, d1 shift)
+                # En features_daily, el target_XXX_d1 es el valor del día SIGUIENTE.
+                # Así que el error de "hoy" (t) lo vemos comparando la predicción hecha en t-1 con el target en t-1.
                 actual = h_row.get(f"target_{target}") 
                 if pd.notna(actual):
                     errors.append(actual - p_h)
@@ -356,10 +369,10 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
                 "pred_v1": float(r["prediction"]),
                 "error_lag_1d": float(error_lag_1d),
                 "error_roll_mean_7d": float(error_roll_7d),
-                "temperature_2m": float(pd.to_numeric(pd.Series([temp_val]), errors='coerce').fillna(0).iloc[0]),
-                "wind_speed_10m": float(pd.to_numeric(pd.Series([wind_val]), errors='coerce').fillna(0).iloc[0]),
-                "boundary_layer_height": float(pd.to_numeric(pd.Series([boundary_val]), errors='coerce').fillna(0).iloc[0]),
-                "relative_humidity_2m": float(pd.to_numeric(pd.Series([humidity_val]), errors='coerce').fillna(0).iloc[0]),
+                "temperature_2m": float(pd.to_numeric(pd.Series([temp_val]), errors='coerce').fillna(default_temp).iloc[0]),
+                "wind_speed_10m": float(pd.to_numeric(pd.Series([wind_val]), errors='coerce').fillna(default_wind).iloc[0]),
+                "boundary_layer_height": float(pd.to_numeric(pd.Series([boundary_val]), errors='coerce').fillna(default_boundary).iloc[0]),
+                "relative_humidity_2m": float(pd.to_numeric(pd.Series([humidity_val]), errors='coerce').fillna(default_humidity).iloc[0]),
                 "is_weekend": float(pd.to_numeric(row["is_weekend"], errors='coerce').fillna(0).iloc[0]),
                 "es_domingo": float(pd.to_numeric(row["es_domingo"], errors='coerce').fillna(0).iloc[0]),
                 "es_invierno_estricto": float(pd.to_numeric(row["es_invierno_estricto"], errors='coerce').fillna(0).iloc[0]),
