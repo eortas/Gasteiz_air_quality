@@ -139,9 +139,12 @@ def generate_oof_predictions(df):
         sub = final_meta_df[final_meta_df["target_name"] == t_name].sort_values("date")
         sub["error"] = sub["actual"] - sub["pred_v1"]
         
-        # El error que conocemos hoy es el del día anterior (t-1)
-        sub["error_lag_1d"] = sub["error"].shift(1)
-        sub["error_roll_mean_7d"] = sub["error"].shift(1).rolling(7).mean()
+        # El error que conocemos en la fecha de predicción t (para predecir t+1)
+        # es el error de t-1 (ayer) y anteriores, ya que el valor real de t (hoy)
+        # no está completo aún al momento de lanzar la predicción.
+        # Por tanto, desplazamos los errores 2 días.
+        sub["error_lag_1d"] = sub["error"].shift(2)
+        sub["error_roll_mean_7d"] = sub["error"].shift(2).rolling(7).mean()
         
         sorted_meta.append(sub)
         

@@ -285,8 +285,7 @@ def fetch_forecast_d1(target_date: pd.Timestamp) -> dict:
     return agg
 
 
-# ??? 4. REFINAR CON META-MODELOS ?????????????????????????????????????????????
-def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.DataFrame) -> dict:
+def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.DataFrame, pred_date: pd.Timestamp) -> dict:
     """
     Usa los meta-modelos Ridge para corregir las predicciones v1.
     Calcula error_lag_1d y error_roll_mean_7d usando el hist?rico reciente.
@@ -296,7 +295,13 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
     # 1. Calcular errores recientes para las features del meta-modelo
     # Necesitamos las predicciones del modelo 1 para los ?ltimos 8 d?as
     # y los valores reales para compararlos.
-    history_8d = df_history.tail(8).copy()
+    # El histórico para calcular errores debe tener datos reales COMPLETOS.
+    # Como hoy (t) aún no ha terminado, no podemos usar ninguna fila del histórico
+    # cuyo target sea hoy (t) o posterior. El último target completo es ayer (t-1).
+    # Por tanto, filtramos el histórico para quedarnos solo con filas de fecha <= pred_date - 3 días.
+    cutoff_date = pred_date - pd.Timedelta(days=3)
+    df_history_clean = df_history[df_history["date"] <= cutoff_date].sort_values("date").reset_index(drop=True)
+    history_8d = df_history_clean.tail(8).copy()
     
     for target, r in results.items():
         model_meta_path = MODELS_DIR / f"meta_model_{target}.pkl"
@@ -672,7 +677,7 @@ def main():
         if not json_only:
             section("4. Refinando con Meta-Modelos (v2)")
         df_history = pd.read_parquet(DATASET_PATH) # Necesitamos el histórico para errores
-        results = refine_with_meta_models(results, row, df_history)
+        results = refine_with_meta_models(results, row, df_history, pred_date)
 
     # 5. Mostrar o volcar JSON
     if json_only:
