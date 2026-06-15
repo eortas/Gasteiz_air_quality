@@ -97,7 +97,9 @@ def generate_oof_predictions(df):
             
             # Preparar datos (mismo pre-procesamiento que v8)
             df_target = df.dropna(subset=[y_col]).copy()
-            X = df_target[features].fillna(0)
+            # A1: Usar medianas en vez de fillna(0)
+            feat_medians = df_target[features].median().fillna(0)
+            X = df_target[features].fillna(feat_medians)
             y = df_target[y_col]
             dates = df_target["date"]
             
@@ -105,9 +107,13 @@ def generate_oof_predictions(df):
             
             target_oof = pd.Series(index=df_target.index, dtype=float)
             
+            # C3: Añadir early stopping para evitar sobreajuste del OOF
+            from lightgbm import early_stopping, log_evaluation
             for tr_idx, va_idx in tscv.split(X):
                 model_lgbm = LGBMRegressor(**LGBM_PARAMS)
-                model_lgbm.fit(X.iloc[tr_idx], y.iloc[tr_idx])
+                model_lgbm.fit(X.iloc[tr_idx], y.iloc[tr_idx],
+                              eval_set=[(X.iloc[va_idx], y.iloc[va_idx])],
+                              callbacks=[early_stopping(100, verbose=False), log_evaluation(-1)])
                 target_oof.iloc[va_idx] = model_lgbm.predict(X.iloc[va_idx])
             
             # Guardamos solo las filas que tienen predicción (las del primer train fold son NaN)

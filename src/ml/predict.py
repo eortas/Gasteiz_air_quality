@@ -74,7 +74,7 @@ META = {
     "NO2":   {"unit": "ug/m3", "alert": 25.0,  "label": "NO?"},
     "PM10":  {"unit": "ug/m3", "alert": 45.0,  "label": "PM10"},
     "PM2.5": {"unit": "ug/m3", "alert": 15.0,  "label": "PM2.5"},
-    "ICA":   {"unit": "ug/m3", "alert": 40.0,  "label": "ICA"},
+    "ICA":   {"unit": "idx",   "alert": 40.0,  "label": "ICA"},
 }
 
 LATITUDE  = 42.8467
@@ -115,7 +115,14 @@ def load_models() -> dict:
 
         model    = joblib.load(model_path)
         features = json.loads(feat_path.read_text(encoding="utf-8"))
-        models[target] = {"model": model, "features": features}
+
+        # A1: Cargar medianas de features guardadas durante entrenamiento
+        median_path = MODELS_DIR / f"lgbm_v8_{target}_medians.json"
+        medians = {}
+        if median_path.exists():
+            medians = json.loads(median_path.read_text(encoding="utf-8"))
+
+        models[target] = {"model": model, "features": features, "medians": medians}
 
     if missing:
         log(f"\n  ? Archivos no encontrados:")
@@ -126,7 +133,7 @@ def load_models() -> dict:
 
     log(f"  [OK] {len(models)} modelos cargados (LightGBM)")
     for target, m in models.items():
-        log(f"     {target:<20} - {len(m['features'])} features")
+        log(f"     {target:<20} - {len(m['features'])} features, medianas: {'s\u00ed' if m.get('medians') else 'no'}")
 
     return models
 
@@ -545,6 +552,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
     for target, m in models.items():
         model    = m["model"]
         features = m["features"]
+        medians  = m.get("medians", {})
 
         # Construir vector de entrada con las features del modelo
         missing_features = [f for f in features if f not in row.columns]
@@ -552,7 +560,9 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
             log(f"  [WARN]  {target}: {len(missing_features)} features no encontradas en parquet")
             log(f"       Primeras: {missing_features[:5]}")
 
-        X = row.reindex(columns=features, fill_value=0).fillna(0).astype(float)
+        # A1: Usar medianas guardadas del entrenamiento en vez de fill_value=0
+        fill_values = {f: medians.get(f, 0) for f in features}
+        X = row.reindex(columns=features).fillna(fill_values).astype(float)
         pred = float(model.predict(X)[0])
         pred = max(0.0, pred)  # los contaminantes no pueden ser negativos
         
@@ -636,7 +646,7 @@ def save_json(results: dict, pred_date: pd.Timestamp):
     out = {
         "prediction_date": pred_date.date().isoformat(),
         "generated_at":    datetime.now(timezone.utc).isoformat(),
-        "model_version":   "v5",
+        "model_version":   "v8",
         "targets": results,
     }
     out_path = PROCESSED_DIR / "predictions_latest.json"
@@ -656,13 +666,13 @@ def main():
         log("=" * 65)
         log("  PREDICT - Vitoria Air Quality")
         log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        log(f"  Modelo: LightGBM v8 ? 8 targets d1")
-        log(f"  Meteo d1: {'Open-Meteo real' if with_forecast else 'proxy hist?rico'}")
+        log(f"  Modelo: LightGBM v8 \u00d7 8 targets d1")
+        log(f"  Meteo d1: {'Open-Meteo real' if with_forecast else 'proxy hist\u00f3rico'}")
         log("=" * 65)
 
     # 1. Cargar modelos
     if not json_only:
-        section("1. Cargando modelos v5")
+        section("1. Cargando modelos v8")
     models = load_models()
 
     # 2. Fila de predicci?n

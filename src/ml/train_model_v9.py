@@ -157,12 +157,16 @@ def run_synthetic_control(df: pd.DataFrame):
 # --- EVENT STUDY (DiD) --------------------------------------------------------
 def run_event_study(df: pd.DataFrame):
     """
-    Calcula un Event Study puro simplificado.
+    Calcula un Event Study puro simplificado con bootstrap CIs.
     Compara la media mensual de Treatment (IntraZBE) vs Control (ExtraZBE)
     relativo al mes 0 (implementación).
-    """
-    print("\n-- 2. Entrenando Event Study DiD -----------------------------")
     
+    Los intervalos de confianza se calculan por bootstrap (1000 resamplings)
+    de los residuos diarios DiD dentro de cada mes.
+    """
+    print("\n-- 2. Entrenando Event Study DiD (bootstrap CIs) ---------------")
+    
+    N_BOOTSTRAP = 1000
     es_results = {cont: {} for cont in CONTAMINANTS}
     zbe_date = pd.Timestamp(ZBE_DATE_STR)
     
@@ -173,6 +177,8 @@ def run_event_study(df: pd.DataFrame):
     if -1 not in df["month_idx"].values:
         print("  WARN No se encontro datos de referencia (mes -1) para el Event Study.")
         return
+
+    rng = np.random.default_rng(42)
 
     for cont in CONTAMINANTS:
         cont_col = cont.replace("PM2.5", "PM25")
@@ -187,49 +193,55 @@ def run_event_study(df: pd.DataFrame):
         df["treated_mean"] = df[treated_cols].mean(axis=1)
         df["control_mean"] = df[donor_cols].mean(axis=1)
         
-        # Agrupar por mes relativo
-        monthly = df.groupby("month_idx")[["treated_mean", "control_mean"]].mean().reset_index()
+        # Calcular DiD diario: (T_d - C_d) para cada día d
+        df["daily_diff"] = df["treated_mean"] - df["control_mean"]
         
-        # Diferencia de diferencias: (T_t - C_t) - (T_ref - C_ref)
-        # Usamos t = -1 como mes de referencia
-        ref_row = monthly[monthly["month_idx"] == -1]
-        
-        if ref_row.empty:
+        # Referencia: media del DiD diario en el mes -1
+        ref_days = df[df["month_idx"] == -1]["daily_diff"].dropna()
+        if ref_days.empty:
             continue
-            
-        t_ref = ref_row["treated_mean"].values[0]
-        c_ref = ref_row["control_mean"].values[0]
-        ref_diff = t_ref - c_ref
+        ref_diff = ref_days.mean()
         
         coefficients = {}
         
-        for _, row in monthly.iterrows():
-            m = int(row["month_idx"])
-            # Filtramos para no ir muy atrás (ej: solo un año pre) ni al futuro lejano
+        # Para cada mes, calcular beta y bootstrap CI
+        for m_idx in sorted(df["month_idx"].unique()):
+            m = int(m_idx)
             if m < -12 or m > 12:
                 continue
-                
-            t_t = row["treated_mean"]
-            c_t = row["control_mean"]
             
-            if pd.isna(t_t) or pd.isna(c_t):
+            month_days = df[df["month_idx"] == m]["daily_diff"].dropna()
+            if month_days.empty:
                 continue
-                
-            diff_t = t_t - c_t
-            beta = diff_t - ref_diff
             
-            # Intervalo de confianza simulado (aproximadamente ±20% de varianza, para la prueba)
-            # En un modelo real statsmodels devolvería estos CIs, aquí lo aproximamos para el gráfico 
-            std_err = (t_t * 0.15) if t_t > 0 else 1.0
-            
-            # El mes de ref siempre es 0 cerrado
+            # El mes de referencia siempre es 0 por construcción
             if m == -1:
-                beta, std_err = 0.0, 0.0
+                coefficients[str(m)] = {
+                    "beta": 0.0,
+                    "ci_low": 0.0,
+                    "ci_high": 0.0
+                }
+                continue
+            
+            beta = month_days.mean() - ref_diff
+            
+            # Bootstrap: resamplear los DiD diarios del mes y del mes ref
+            boot_betas = []
+            month_vals = month_days.values
+            ref_vals = ref_days.values
+            for _ in range(N_BOOTSTRAP):
+                boot_month = rng.choice(month_vals, size=len(month_vals), replace=True)
+                boot_ref = rng.choice(ref_vals, size=len(ref_vals), replace=True)
+                boot_betas.append(boot_month.mean() - boot_ref.mean())
+            
+            boot_betas = np.array(boot_betas)
+            ci_low = float(np.percentile(boot_betas, 2.5))
+            ci_high = float(np.percentile(boot_betas, 97.5))
             
             coefficients[str(m)] = {
                 "beta": float(beta),
-                "ci_low": float(beta - 1.96 * std_err),
-                "ci_high": float(beta + 1.96 * std_err)
+                "ci_low": ci_low,
+                "ci_high": ci_high
             }
             
         es_results[cont] = {
@@ -239,6 +251,7 @@ def run_event_study(df: pd.DataFrame):
     with open(OUT_ES_FILE, "w", encoding="utf-8") as f:
         json.dump(es_results, f, ensure_ascii=False)
     print(f"  OK Guardado: {OUT_ES_FILE.name}")
+
 
 
 # --- GRAFICAR -----------------------------------------------------------------

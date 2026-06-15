@@ -15,13 +15,13 @@ CAMBIOS v6 (hipótesis calderas / ZBE):
     como raw target).
 
 Targets (predicción diaria, separados por grupo ZBE):
-  - NO2_zbe, PM10_zbe, PM2.5_zbe, ICA_zbe  -> estación PAUL (dentro ZBE)
-  - NO2_out, PM10_out, PM2.5_out, ICA_out  -> media resto estaciones (fuera ZBE)
+  - NO2_zbe, PM10_zbe, PM2.5_zbe, ICA_zbe  -> media estaciones ZBE (dentro ZBE)
+  - NO2_out, PM10_out, PM2.5_out, ICA_out  -> media estaciones OUT (fuera ZBE)
   -> targets: target_NO2_zbe_d1 ... target_ICA_out_d3
 
 Estaciones:
-  - PAUL, LANDAZURI  -> grupo ZBE (dentro de la Zona de Bajas Emisiones)
-  - BEATO, FUEROS, HUETOS, ZUMABIDE -> grupo OUT (fuera ZBE)
+  - PAUL, FUEROS      -> grupo ZBE (dentro de la Zona de Bajas Emisiones)
+  - LANDAZURI, HUETOS, ZUMABIDE, BEATO -> grupo OUT (fuera ZBE)
 
 Uso:
     python build_features.py
@@ -233,18 +233,20 @@ def load_weather_daily() -> pd.DataFrame:
     df = load_csvs(WEATHER_DIR, "weather_[0-9]*.csv", "timestamp")
     df["date"] = df["timestamp"].dt.floor("D")
 
+    def _circular_mean_deg(x):
+        """Media circular para ángulos en grados (ej. dirección del viento)."""
+        return float(np.degrees(np.arctan2(
+            np.sin(np.radians(x)).mean(),
+            np.cos(np.radians(x)).mean()
+        )) % 360)
+
     agg_dict = {}
     for col in FORECAST_VARS:
         if col in df.columns:
             if col in ["precipitation", "rain", "snowfall", "sunshine_duration"]:
                 agg_dict[col] = "sum"
             elif col == "wind_direction_10m":
-                agg_dict[col] = lambda x: (
-                    np.degrees(np.arctan2(
-                        np.sin(np.radians(x)).mean(),
-                        np.cos(np.radians(x)).mean()
-                    )) % 360
-                )
+                agg_dict[col] = _circular_mean_deg
             else:
                 agg_dict[col] = "mean"
 
@@ -306,9 +308,10 @@ def load_weather_daily() -> pd.DataFrame:
         weather["ventilation_index"] = np.nan
 
     # Lluvia acumulada últimos 3 y 7 días (Scavenging Effect)
+    # Usamos shift(1) para no incluir el día actual (dato del futuro en predicción)
     if "precipitation" in weather.columns:
-        weather["precipitation_acum_3d"] = weather["precipitation"].rolling(3, min_periods=1).sum()
-        weather["precipitation_acum_7d"] = weather["precipitation"].rolling(7, min_periods=1).sum()
+        weather["precipitation_acum_3d"] = weather["precipitation"].shift(1).rolling(3, min_periods=1).sum()
+        weather["precipitation_acum_7d"] = weather["precipitation"].shift(1).rolling(7, min_periods=1).sum()
 
     # Demanda acumulada 7 días (representa carga térmica reciente del edificio)
     # Se calculará como rolling en add_lags_and_rolling, aquí dejamos HDD base
@@ -390,12 +393,7 @@ def fetch_forecast() -> pd.DataFrame:
             if col in ["precipitation", "rain", "snowfall", "sunshine_duration"]:
                 agg_dict[col] = "sum"
             elif col == "wind_direction_10m":
-                agg_dict[col] = lambda x: (
-                    np.degrees(np.arctan2(
-                        np.sin(np.radians(x)).mean(),
-                        np.cos(np.radians(x)).mean()
-                    )) % 360
-                )
+                agg_dict[col] = _circular_mean_deg
             else:
                 agg_dict[col] = "mean"
 
@@ -451,8 +449,8 @@ def merge_daily(air, traffic, weather) -> pd.DataFrame:
     for df_input in [air, traffic, weather]:
         df_input["date"] = pd.to_datetime(df_input["date"], utc=True)
 
-    # -- 4. MERGE FINAL ------------------------------
-    section("4. Unificando datasets (outer join)")
+    # -- MERGE FINAL ------------------------------
+    section("5. Unificando datasets (outer join)")
     df = (air
           .merge(traffic, on="date", how="outer")
           .merge(weather, on="date", how="outer"))
