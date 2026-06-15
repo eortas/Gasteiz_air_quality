@@ -191,30 +191,39 @@ def load_traffic_daily() -> pd.DataFrame:
         monthly_occupancy=("traffic_occupancy", "mean"),
     ).reset_index()
 
-    for h in range(1, HORIZON_DAYS + 1):
-        daily[f"exp_traffic_volume_d{h}"]    = np.nan
-        daily[f"exp_traffic_occupancy_d{h}"] = np.nan
+    # Precalcular los valores esperados de tráfico para todas las fechas del dataset y horizontes futuros
+    start_date = daily["date"].min()
+    end_date = daily["date"].max() + pd.Timedelta(days=HORIZON_DAYS)
+    all_dates = pd.date_range(start=start_date, end=end_date, freq="D", tz="UTC")
+    
+    expected_traffic_by_date = {}
+    for dt in all_dates:
+        fdow = dt.dayofweek
+        fdoy = dt.dayofyear
+        fmon = dt.month
+        
+        lookup_val  = traffic_lookup.get((fdow, fdoy), {})
+        monthly_val = monthly_base[monthly_base["month"] == fmon]
+        
+        vol = lookup_val.get("volume", np.nan)
+        occ = lookup_val.get("occupancy", np.nan)
+        
+        if not monthly_val.empty:
+            m_vol = monthly_val["monthly_volume"].iloc[0]
+            m_occ = monthly_val["monthly_occupancy"].iloc[0]
+            if not np.isnan(vol):
+                vol = 0.7 * vol + 0.3 * m_vol
+                occ = 0.7 * occ + 0.3 * m_occ
+            else:
+                vol, occ = m_vol, m_occ
+        
+        expected_traffic_by_date[dt] = (vol, occ)
 
-    for idx, row in daily.iterrows():
-        for h in range(1, HORIZON_DAYS + 1):
-            future_date = row["date"] + pd.Timedelta(days=h)
-            fdow = future_date.dayofweek
-            fdoy = future_date.dayofyear
-            fmon = future_date.month
-            lookup_val  = traffic_lookup.get((fdow, fdoy), {})
-            monthly_val = monthly_base[monthly_base["month"] == fmon]
-            vol = lookup_val.get("volume", np.nan)
-            occ = lookup_val.get("occupancy", np.nan)
-            if not monthly_val.empty:
-                m_vol = monthly_val["monthly_volume"].iloc[0]
-                m_occ = monthly_val["monthly_occupancy"].iloc[0]
-                if not np.isnan(vol):
-                    vol = 0.7 * vol + 0.3 * m_vol
-                    occ = 0.7 * occ + 0.3 * m_occ
-                else:
-                    vol, occ = m_vol, m_occ
-            daily.at[idx, f"exp_traffic_volume_d{h}"]    = vol
-            daily.at[idx, f"exp_traffic_occupancy_d{h}"] = occ
+    # Asignar los valores proyectados para cada horizonte temporal de forma vectorizada
+    for h in range(1, HORIZON_DAYS + 1):
+        future_dates = daily["date"] + pd.Timedelta(days=h)
+        daily[f"exp_traffic_volume_d{h}"] = future_dates.map(lambda d: expected_traffic_by_date.get(d, (np.nan, np.nan))[0])
+        daily[f"exp_traffic_occupancy_d{h}"] = future_dates.map(lambda d: expected_traffic_by_date.get(d, (np.nan, np.nan))[1])
 
     import json
     lookup_serial = {f"{k[0]}_{k[1]}": v for k, v in traffic_lookup.items()}

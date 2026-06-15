@@ -549,35 +549,41 @@ def did_analysis_v8(df):
     df = df.copy()
     df["date"] = pd.to_datetime(df["date"], utc=True)
 
-    # (7) Variable mes?a?o para efectos fijos
+    # (7) Variable mes-año para efectos fijos
     df["month_year"] = (df["date"].dt.year.astype(str) + "_"
                         + df["date"].dt.month.astype(str).str.zfill(2))
 
-    # Construir panel largo (date ? zone)
-    panel_rows = []
+    # Construir panel largo (date × zone) de forma vectorizada
+    panel_list = []
     for cont in ["NO2", "PM10", "PM2.5"]:
         col_zbe = f"{cont}_zbe"
         col_out = f"{cont}_out"
         if col_zbe not in df.columns or col_out not in df.columns:
             continue
-
-        for _, row in df.iterrows():
-            base = {
-                "date":        row["date"],
-                "month_year":  row["month_year"],
-                "Post":        int(row["date"] >= ZBE_DATE),
-                "contaminant": cont,
-            }
-            for cov in METEO_COVARIATES:
-                if cov in df.columns:
-                    base[cov] = row[cov] if not pd.isna(row.get(cov, np.nan)) else 0
-
-            if not pd.isna(row.get(col_zbe, np.nan)):
-                panel_rows.append({**base, "ZBE": 1, "pollution": row[col_zbe]})
-            if not pd.isna(row.get(col_out, np.nan)):
-                panel_rows.append({**base, "ZBE": 0, "pollution": row[col_out]})
-
-    panel = pd.DataFrame(panel_rows)
+            
+        base_cols = ["date", "month_year"]
+        covs_in_df = [c for c in METEO_COVARIATES if c in df.columns]
+        
+        # Seleccionar columnas necesarias y rellenar nulos en covariables con 0
+        sub_df = df[base_cols + covs_in_df + [col_zbe, col_out]].copy()
+        sub_df[covs_in_df] = sub_df[covs_in_df].fillna(0.0)
+        
+        sub_df["Post"] = (sub_df["date"] >= ZBE_DATE).astype(int)
+        sub_df["contaminant"] = cont
+        
+        # Parte ZBE
+        zbe_part = sub_df.dropna(subset=[col_zbe]).copy()
+        zbe_part["ZBE"] = 1
+        zbe_part = zbe_part.rename(columns={col_zbe: "pollution"}).drop(columns=[col_out])
+        
+        # Parte OUT
+        out_part = sub_df.dropna(subset=[col_out]).copy()
+        out_part["ZBE"] = 0
+        out_part = out_part.rename(columns={col_out: "pollution"}).drop(columns=[col_zbe])
+        
+        panel_list.append(pd.concat([zbe_part, out_part], ignore_index=True))
+        
+    panel = pd.concat(panel_list, ignore_index=True)
     panel["Post_x_ZBE"] = panel["Post"] * panel["ZBE"]
 
     n_month_year = panel["month_year"].nunique()

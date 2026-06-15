@@ -295,8 +295,9 @@ def main():
     log(); log("=" * 65); log("  AUDITORÍA COMPLETADA"); log("=" * 65)
 
     report = ROOT_DIR / "data" / "analytical" / f"audit_report_{datetime.now().strftime('%Y%m%d_%H%M')}.txt"
+    report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text("\n".join(lines), encoding="utf-8")
-    log(f"\n  Reporte guardado en: {report.name}")
+    log(f"\n  Reporte guardado en: {report}")
 
 
 if __name__ == "__main__":

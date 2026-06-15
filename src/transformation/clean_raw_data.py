@@ -231,8 +231,7 @@ def validate(df):
         log(f"  [OK] Sin ceros residuales en contaminantes criticos")
 
 
-# ─── 6. GUARDAR CSVs LIMPIOS ──────────────────────────────────────────────────
-# ─── 7. LIMPIEZA WEATHER CSVs ─────────────────────────────────────────────────────
+# ─── 6. LIMPIEZA WEATHER CSVs ─────────────────────────────────────────────────
 def clean_weather_csvs(dry_run=False):
     """Interpola NaN numéricos en los CSVs de meteorología para evitar el error
     'Out of range float values are not JSON compliant' al subir a Supabase."""
@@ -281,7 +280,7 @@ def clean_weather_csvs(dry_run=False):
         log("  [INFO]  Los CSVs se han sobrescrito. El backfill a Supabase usará datos limpios.")
 
 
-# ─── 6. GUARDAR CSVs LIMPIOS ──────────────────────────────────────────────────
+# ─── 7. GUARDAR CSVs LIMPIOS ──────────────────────────────────────────────────
 def save_clean(df, dry_run=False):
     section("5. Guardando CSVs limpios")
 
