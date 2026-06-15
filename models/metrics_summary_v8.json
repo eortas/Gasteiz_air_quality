@@ -1,15 +1,15 @@
 {
   "NO2": {
-    "avg_cv_rmse": 3.8084,
-    "avg_cv_r2": 0.4526
+    "avg_cv_rmse": 3.7752,
+    "avg_cv_r2": 0.4602
   },
   "PM10": {
-    "avg_cv_rmse": 4.3731,
-    "avg_cv_r2": 0.4062
+    "avg_cv_rmse": 4.3283,
+    "avg_cv_r2": 0.4216
   },
   "PM2.5": {
-    "avg_cv_rmse": 3.1358,
-    "avg_cv_r2": 0.4262
+    "avg_cv_rmse": 2.976,
+    "avg_cv_r2": 0.4982
   },
   "did_v8": {
     "NO2": {
