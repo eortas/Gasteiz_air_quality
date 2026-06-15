@@ -227,18 +227,19 @@ def load_traffic_daily() -> pd.DataFrame:
 
 
 # -- 3. METEOROLOGÍA -----------------------------
+def _circular_mean_deg(x):
+    """Media circular para ángulos en grados (ej. dirección del viento)."""
+    return float(np.degrees(np.arctan2(
+        np.sin(np.radians(x)).mean(),
+        np.cos(np.radians(x)).mean()
+    )) % 360)
+
+
 def load_weather_daily() -> pd.DataFrame:
     section("3. Meteorología -> agregado diario + variables de demanda térmica")
 
     df = load_csvs(WEATHER_DIR, "weather_[0-9]*.csv", "timestamp")
     df["date"] = df["timestamp"].dt.floor("D")
-
-    def _circular_mean_deg(x):
-        """Media circular para ángulos en grados (ej. dirección del viento)."""
-        return float(np.degrees(np.arctan2(
-            np.sin(np.radians(x)).mean(),
-            np.cos(np.radians(x)).mean()
-        )) % 360)
 
     agg_dict = {}
     for col in FORECAST_VARS:
@@ -605,22 +606,7 @@ def add_targets(df: pd.DataFrame) -> pd.DataFrame:
 
 # -- 9. PRONÓSTICO COMO FEATURES -----------------------
 def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
-    if fc.empty:
-        log("  Sin pronóstico - usando proxy histórico en training")
-        weather_base_cols = [c for c in df.columns if any(x in c for x in
-            ["temperature", "precipitation", "wind", "cloud",
-             "humidity", "boundary", "sunshine", "HDD", "dew_point", "ventilation_index"])
-            and "_lag_" not in c and "_roll_" not in c
-            and "_diff_" not in c 
-            and ("_acum_" not in c or "precipitation_acum" in c)
-            and not c.startswith("fc_")]
-        df = df.set_index("date").sort_index()
-        for h in range(1, HORIZON_DAYS + 1):
-            for col in weather_base_cols:
-                df[f"fc_{col}_d{h}"] = df[col].shift(-h)
-        return df.reset_index()
-
-    section("9. Añadiendo features del pronóstico Open-Meteo")
+    # Identificar columnas meteorológicas base para el pronóstico
     weather_base_cols = [c for c in df.columns if any(x in c for x in
         ["temperature", "precipitation", "wind", "cloud",
          "humidity", "boundary", "sunshine", "HDD", "dew_point", "ventilation_index"])
@@ -630,15 +616,77 @@ def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
         and not c.startswith("fc_")]
 
     df = df.set_index("date").sort_index()
+    
+    # Usamos un generador con semilla aleatoria fija (42) para que el ruido sea reproducible
+    rng = np.random.default_rng(42)
+
     for h in range(1, HORIZON_DAYS + 1):
         for col in weather_base_cols:
-            df[f"fc_{col}_d{h}"] = df[col].shift(-h)
+            future_val = df[col].shift(-h)
+            
+            # Definir el nivel de ruido gaussiano simulado según la variable y horizonte de predicción (h)
+            col_lower = col.lower()
+            if "temperature" in col_lower or "temp_" in col_lower:
+                noise_std = 1.2 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = future_val + noise
+            elif "precipitation" in col_lower or "rain" in col_lower or "snow" in col_lower:
+                noise_std = 0.8 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = (future_val + noise).clip(lower=0.0)
+            elif "wind" in col_lower:
+                noise_std = 0.7 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                if "speed" in col_lower or "gusts" in col_lower:
+                    noisy_val = (future_val + noise).clip(lower=0.0)
+                else:
+                    noisy_val = future_val + noise
+            elif "humidity" in col_lower:
+                noise_std = 4.0 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = (future_val + noise).clip(0.0, 100.0)
+            elif "boundary" in col_lower:
+                noise_std = 75.0 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = (future_val + noise).clip(lower=0.0)
+            elif "cloud" in col_lower:
+                noise_std = 12.0 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = (future_val + noise).clip(0.0, 100.0)
+            elif "sunshine" in col_lower:
+                noise_std = 1000.0 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = (future_val + noise).clip(lower=0.0)
+            elif "dew_point" in col_lower:
+                noise_std = 1.2 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = future_val + noise
+            elif "ventilation_index" in col_lower:
+                noise_std = 250.0 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = (future_val + noise).clip(lower=0.0)
+            elif "hdd" in col_lower:
+                noise_std = 1.0 * h
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = (future_val + noise).clip(lower=0.0)
+            else:
+                noise_std = future_val.std() * 0.1 * h if future_val.std() > 0 else 1.0
+                noise = rng.normal(0, noise_std, size=len(df))
+                noisy_val = future_val + noise
+                
+            df[f"fc_{col}_d{h}"] = noisy_val
 
+    if fc.empty:
+        log("  Sin pronóstico - usando proxy histórico con ruido simulado en training")
+        return df.reset_index()
+
+    section("9. Añadiendo features del pronóstico Open-Meteo")
     for col in fc.columns:
         if col in df.columns:
+            # Sobreescribir la última fila de predicción con el pronóstico real de Open-Meteo
             df.loc[df.index[-1], col] = fc[col].iloc[0]
 
-    log(f"  Features de pronóstico añadidas (incluyendo HDD pronosticado)")
+    log(f"  Features de pronóstico añadidas (con ruido simulado en histórico y pronóstico real en última fila)")
     return df.reset_index()
 
 

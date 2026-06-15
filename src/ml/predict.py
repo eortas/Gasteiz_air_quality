@@ -133,7 +133,8 @@ def load_models() -> dict:
 
     log(f"  [OK] {len(models)} modelos cargados (LightGBM)")
     for target, m in models.items():
-        log(f"     {target:<20} - {len(m['features'])} features, medianas: {'s\u00ed' if m.get('medians') else 'no'}")
+        medianas_status = "sí" if m.get("medians") else "no"
+        log(f"     {target:<20} - {len(m['features'])} features, medianas: {medianas_status}")
 
     return models
 
@@ -663,11 +664,12 @@ def main():
                           if a == "--date" and i+1 < len(sys.argv)), None)
 
     if not json_only:
+        meteo_desc = "Open-Meteo real" if with_forecast else "proxy histórico"
         log("=" * 65)
         log("  PREDICT - Vitoria Air Quality")
         log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         log(f"  Modelo: LightGBM v8 \u00d7 8 targets d1")
-        log(f"  Meteo d1: {'Open-Meteo real' if with_forecast else 'proxy hist\u00f3rico'}")
+        log(f"  Meteo d1: {meteo_desc}")
         log("=" * 65)
 
     # 1. Cargar modelos

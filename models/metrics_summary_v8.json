@@ -1,48 +1,48 @@
 {
   "NO2": {
-    "avg_cv_rmse": 3.7927,
-    "avg_cv_r2": 0.4548
+    "avg_cv_rmse": 3.8084,
+    "avg_cv_r2": 0.4526
   },
   "PM10": {
-    "avg_cv_rmse": 4.3688,
-    "avg_cv_r2": 0.4
+    "avg_cv_rmse": 4.3731,
+    "avg_cv_r2": 0.4062
   },
   "PM2.5": {
-    "avg_cv_rmse": 3.0847,
-    "avg_cv_r2": 0.4596
+    "avg_cv_rmse": 3.1358,
+    "avg_cv_r2": 0.4262
   },
   "did_v8": {
     "NO2": {
-      "beta3": -0.6064,
-      "pvalue": 0.0085,
-      "ci_low": -1.0577,
-      "ci_high": -0.155,
-      "r2": 0.6917,
-      "n_obs": 1640,
+      "beta3": -0.6025,
+      "pvalue": 0.0087,
+      "ci_low": -1.0527,
+      "ci_high": -0.1524,
+      "r2": 0.6924,
+      "n_obs": 1644,
       "significant": true,
       "fe_dummies": 28,
       "se_type": "clustered_by_date",
       "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
     },
     "PM10": {
-      "beta3": 3.7978,
+      "beta3": 3.7832,
       "pvalue": 0.0,
-      "ci_low": 3.2845,
-      "ci_high": 4.3111,
-      "r2": 0.3439,
-      "n_obs": 1640,
+      "ci_low": 3.2727,
+      "ci_high": 4.2937,
+      "r2": 0.3418,
+      "n_obs": 1644,
       "significant": true,
       "fe_dummies": 28,
       "se_type": "clustered_by_date",
       "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
     },
     "PM2.5": {
-      "beta3": 0.8936,
+      "beta3": 0.8915,
       "pvalue": 0.0,
-      "ci_low": 0.709,
-      "ci_high": 1.0782,
+      "ci_low": 0.7076,
+      "ci_high": 1.0754,
       "r2": 0.3534,
-      "n_obs": 1640,
+      "n_obs": 1644,
       "significant": true,
       "fe_dummies": 28,
       "se_type": "clustered_by_date",
