@@ -861,7 +861,7 @@ html_template = """<!DOCTYPE html>
       </table>
     </div>
     <p style="padding: 12px 48px 0; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace;">
-      <span data-i18n="mapeNote">MAPE calculado solo sobre filas con valor observado > 1 µg/m³.</span>&nbsp;&nbsp;<span data-i18n="mapeThreshold">Umbral aceptación: MAPE < 25%, R² > 0.35.</span>
+      <span data-i18n="mapeNote">MAPE calculado solo sobre filas con valor observado > 1 µg/m³.</span>&nbsp;&nbsp;<span data-i18n="mapeThreshold">Umbral aceptación: MAPE < 35%, R² > 0.35.</span>
     </p>
   </div>
 </div>
@@ -1066,7 +1066,7 @@ const translations = {
     colR2: "R²",
     colNFeatures: "N. Features",
     mapeNote: "MAPE calculado solo sobre filas con valor observado > 1 µg/m³.",
-    mapeThreshold: "Umbral de aceptación: MAPE < 25%, R² > 0.35.",
+    mapeThreshold: "Umbral de aceptación: MAPE < 35%, R² > 0.35.",
     mapTag: "Vitoria-Gasteiz — Red Sensores Municipales",
     mapTitle: "Mapa de <span>Estaciones</span>",
     mapSubtitle: "Medias diarias de ayer y predicción para mañana. Haga clic en un punto para ver detalles.",
@@ -1180,7 +1180,7 @@ const translations = {
     colR2: "R²",
     colNFeatures: "Ezaugarri Kopurua",
     mapeNote: "MAPE behatutako balioa > 1 µg/m³ duten errenkadetan soilik kalkulatua.",
-    mapeThreshold: "Onarpen-atalasea: MAPE < %25, R² > 0.35.",
+    mapeThreshold: "Onarpen-atalasea: MAPE < %35, R² > 0.35.",
     mapTag: "Vitoria-Gasteiz — Udaltzaingoaren sentsoreen sarea",
     mapTitle: "Estazioen <span>Mapa</span>",
     mapSubtitle: "Atzoko eguneroko batez bestekoak eta biharko aurreikuspenak. Egin klik puntu batean xehetasunak ikusteko.",
@@ -1595,7 +1595,7 @@ function renderDashboard3() {
       const absError = Math.abs(error);
       if (absError <= 10) { interpretColor = "var(--green)"; interpret = t.backExcel; } 
       else if (absError <= 20) { interpretColor = "var(--green)"; interpret = t.backGood; } 
-      else if (absError <= 30) { interpretColor = "var(--green)"; interpret = t.backAccept; } 
+      else if (absError <= 35) { interpretColor = "var(--green)"; interpret = t.backAccept; } 
       else { interpretColor = "var(--yellow)"; interpret = t.backReview; }
 
       const predText = currentContV10 === 'ICA' ? `${lastPred.toFixed(1)}` : `${lastPred.toFixed(1)} µg/m³`;

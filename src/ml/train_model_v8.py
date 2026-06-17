@@ -287,69 +287,83 @@ def train_single(X_train, y_train, X_val, y_val, lgbm_params):
 
 # ??? 5. ENTRENAR TODOS (CV) ???????????????????????????????????????????????????
 def train_all(df, feature_cols, target_cols, tune=False):
-    section(f"3. Entrenamiento LightGBM v8 - {HORIZON} ? TimeSeriesSplit ({N_SPLITS} Folds)")
-
-    # A1: Imputar con medianas en vez de 0 para evitar sesgo en variables como temperatura
-    feature_medians = df[feature_cols].median()
-    feature_medians = feature_medians.fillna(0)  # fallback para columnas 100% NaN
+    section(f"3. Entrenamiento LightGBM v8 - {HORIZON} × TimeSeriesSplit ({N_SPLITS} Folds)")
 
     tscv   = TimeSeriesSplit(n_splits=N_SPLITS)
-    folds  = list(tscv.split(df[feature_cols].fillna(feature_medians)))
-    X_full = df[feature_cols].fillna(feature_medians)
+    # Definir los folds usando la mediana global solo para definir los índices de split (sin impacto en modelado)
+    global_medians = df[feature_cols].median().fillna(0)
+    folds  = list(tscv.split(df[feature_cols].fillna(global_medians)))
 
     all_metrics, all_importances, all_selected = {}, {}, {}
 
     pbar = tqdm(target_cols, desc="Entrenando", unit="target")
     for target_col in pbar:
         pbar.set_description(f"Procesando {target_col}")
-        # A2: En vez de rellenar NaN con la mediana global, usar dropna
-        # y ajustar índices del CV para que coincidan con las filas válidas
+        
         valid_mask = df[target_col].notna()
-        y_full     = df.loc[valid_mask, target_col]
-        X_full_t   = X_full.loc[valid_mask]
+        df_target = df.loc[valid_mask].copy()
+        y_full     = df_target[target_col]
 
         # Recalcular folds sobre las filas con target válido
-        folds_t = list(tscv.split(X_full_t))
+        folds_t = list(tscv.split(df_target[feature_cols]))
         fold_metrics = {"rmse": [], "mae": [], "r2": [], "mape": []}
 
+        # 1. Feature selection (permutation importance) usando el último fold sin leakage
         last_tr, last_va = folds_t[-1]
+        fs_medians = df_target.iloc[last_tr][feature_cols].median().fillna(0)
+        
+        X_fs_tr = df_target.iloc[last_tr][feature_cols].fillna(fs_medians)
+        X_fs_va = df_target.iloc[last_va][feature_cols].fillna(fs_medians)
+        
         selected = select_features_permutation(
-            X_full_t.iloc[last_tr], y_full.iloc[last_tr],
-            X_full_t.iloc[last_va], y_full.iloc[last_va],
+            X_fs_tr, y_full.iloc[last_tr],
+            X_fs_va, y_full.iloc[last_va],
             feature_cols, target_col,
         )
         all_selected[target_col] = selected
-        X_sel = df.loc[valid_mask, selected].fillna(feature_medians[selected])
 
         # Configuración por defecto
         lgbm_params = LGBM_PARAMS.copy()
 
-        # Ejecutar tuning una sola vez por target utilizando el último split
+        # Tuning con Optuna en el último fold
         if tune:
             log(f"    Tuning LightGBM con Optuna para {target_col} (30 trials)...")
             try:
-                best_lgbm_params = tune_lgbm_optuna(X_sel.iloc[last_tr], y_full.iloc[last_tr],
-                                                     X_sel.iloc[last_va], y_full.iloc[last_va], n_trials=30)
+                X_tune_tr = df_target.iloc[last_tr][selected].fillna(fs_medians[selected])
+                X_tune_va = df_target.iloc[last_va][selected].fillna(fs_medians[selected])
+                best_lgbm_params = tune_lgbm_optuna(X_tune_tr, y_full.iloc[last_tr],
+                                                     X_tune_va, y_full.iloc[last_va], n_trials=30)
                 lgbm_params.update(best_lgbm_params)
             except Exception as e:
                 log(f"    [WARN] Falló tuning de LightGBM: {e}. Usando default.")
 
+        # 2. Loop de Validación Cruzada sin Leakage
         for tr_idx, va_idx in folds_t:
-            model = train_single(X_sel.iloc[tr_idx], y_full.iloc[tr_idx],
-                                 X_sel.iloc[va_idx],   y_full.iloc[va_idx],
+            # Calcular medianas de train del fold actual
+            fold_medians = df_target.iloc[tr_idx][selected].median().fillna(0)
+            
+            X_tr_fold = df_target.iloc[tr_idx][selected].fillna(fold_medians)
+            X_va_fold = df_target.iloc[va_idx][selected].fillna(fold_medians)
+            
+            model = train_single(X_tr_fold, y_full.iloc[tr_idx],
+                                 X_va_fold, y_full.iloc[va_idx],
                                  lgbm_params)
-            pred = model.predict(X_sel.iloc[va_idx])
+            pred = model.predict(X_va_fold)
             
             fold_metrics["rmse"].append(rmse(y_full.iloc[va_idx].values, pred))
             fold_metrics["mae"].append(mae(y_full.iloc[va_idx].values, pred))
             fold_metrics["r2"].append(r2(y_full.iloc[va_idx].values, pred))
             fold_metrics["mape"].append(mape(y_full.iloc[va_idx].values, pred))
 
-        # A5: Re-entrenar modelo final con TODOS los datos (no solo el último fold)
-        final_model = train_single(X_sel, y_full,
-                                   X_sel.iloc[-len(folds_t[-1][1]):], y_full.iloc[-len(folds_t[-1][1]):],
+        # 3. Entrenamiento del Modelo Final
+        # Para el modelo productivo, imputamos con la mediana del histórico completo y la guardamos
+        final_medians = df_target[selected].median().fillna(0)
+        X_sel_final = df_target[selected].fillna(final_medians)
+        
+        final_model = train_single(X_sel_final, y_full,
+                                   X_sel_final.iloc[-len(folds_t[-1][1]):], y_full.iloc[-len(folds_t[-1][1]):],
                                    lgbm_params)
-        log(f"    [OK] Modelo final re-entrenado con {len(X_sel)} muestras (100% datos)")
+        log(f"    [OK] Modelo final re-entrenado con {len(X_sel_final)} muestras (100% datos)")
 
         all_metrics[target_col] = {
             "cv_rmse":    round(np.mean(fold_metrics["rmse"]), 4),
@@ -367,7 +381,7 @@ def train_all(df, feature_cols, target_cols, tune=False):
             json.dump(selected, f)
 
         # A1: Guardar medianas de features para usar en predict.py
-        medians_dict = {feat: float(feature_medians[feat]) for feat in selected if feat in feature_medians.index}
+        medians_dict = {feat: float(final_medians[feat]) for feat in selected if feat in final_medians.index}
         with open(MODELS_DIR / f"lgbm_v8_{target_key}_medians.json", "w") as f:
             json.dump(medians_dict, f)
 
@@ -453,9 +467,16 @@ def train_counterfactual_dual(df, feature_cols):
 
                 split  = int(len(X_pre) * 0.8)
                 X_tr   = X_pre.iloc[:split]
-                X_va   = X_pre.iloc[split:] if split < len(X_pre) - 5 else X_pre
                 y_tr   = y_pre.iloc[:split]
-                y_va   = y_pre.iloc[split:] if split < len(y_pre) - 5 else y_pre
+                
+                # Asegurar conjunto de validación disjunto si hay suficientes datos
+                if len(X_pre) - split >= 5:
+                    X_va = X_pre.iloc[split:]
+                    y_va = y_pre.iloc[split:]
+                else:
+                    # Si no hay datos suficientes para validación disjunta, no usamos early stopping (va_set = tr_set)
+                    X_va = X_tr
+                    y_va = y_tr
 
                 model_cf = LGBMRegressor(**cf_params)
                 model_cf.fit(X_tr, y_tr,

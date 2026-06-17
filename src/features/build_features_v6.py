@@ -169,24 +169,30 @@ def load_traffic_daily() -> pd.DataFrame:
     daily["day_of_year"] = daily["date"].dt.dayofyear
     daily["month"]       = daily["date"].dt.month
 
-    subsection("Calculando proxy de tráfico futuro (DOW ± 15d + mes anterior)")
+    subsection("Calculando proxy de tráfico futuro (DOW ± 15d + mes anterior) - solo datos pre-ZBE")
+    
+    # Filtrar solo el periodo pre-ZBE para calcular el tráfico esperado baseline
+    pre_zbe_daily = daily[daily["date"] < ZBE_DATE]
+    if pre_zbe_daily.empty:
+        pre_zbe_daily = daily # Fallback de seguridad
+        
     traffic_lookup = {}
     for dow in range(7):
         for doy in range(1, 366):
             mask = (
-                (daily["dow"] == dow) &
-                (((daily["day_of_year"] - doy).abs() <= 15) |
-                 ((daily["day_of_year"] - doy + 365).abs() <= 15) |
-                 ((daily["day_of_year"] - doy - 365).abs() <= 15))
+                (pre_zbe_daily["dow"] == dow) &
+                (((pre_zbe_daily["day_of_year"] - doy).abs() <= 15) |
+                 ((pre_zbe_daily["day_of_year"] - doy + 365).abs() <= 15) |
+                 ((pre_zbe_daily["day_of_year"] - doy - 365).abs() <= 15))
             )
-            subset = daily[mask]
+            subset = pre_zbe_daily[mask]
             if len(subset) > 0:
                 traffic_lookup[(dow, doy)] = {
                     "volume":    subset["traffic_volume"].mean(),
                     "occupancy": subset["traffic_occupancy"].mean(),
                 }
 
-    monthly_base = daily.groupby("month").agg(
+    monthly_base = pre_zbe_daily.groupby("month").agg(
         monthly_volume   =("traffic_volume",    "mean"),
         monthly_occupancy=("traffic_occupancy", "mean"),
     ).reset_index()
