@@ -97,9 +97,19 @@ def generate_oof_predictions(df):
             
             # Preparar datos (mismo pre-procesamiento que v8)
             df_target = df.dropna(subset=[y_col]).copy()
-            # A1: Usar medianas en vez de fillna(0)
-            feat_medians = df_target[features].median().fillna(0)
-            X = df_target[features].fillna(feat_medians)
+            # A1: Usar medianas guardadas durante el entrenamiento para evitar desalineación train/inference
+            med_path = MODELS_DIR / f"lgbm_v8_{target_key}_medians.json"
+            if med_path.exists():
+                try:
+                    medians_dict = json.loads(med_path.read_text(encoding="utf-8"))
+                    fill_values = {f: medians_dict.get(f, 0.0) for f in features}
+                    X = df_target[features].fillna(fill_values)
+                except Exception:
+                    feat_medians = df_target[features].median().fillna(0)
+                    X = df_target[features].fillna(feat_medians)
+            else:
+                feat_medians = df_target[features].median().fillna(0)
+                X = df_target[features].fillna(feat_medians)
             y = df_target[y_col]
             dates = df_target["date"]
             

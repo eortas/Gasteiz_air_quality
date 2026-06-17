@@ -243,7 +243,18 @@ try:
                     # 1. Base prediction (v1)
                     model = joblib.load(model_path)
                     features = json.loads(feat_path.read_text(encoding="utf-8"))
-                    X_backtest = inputs_backtest.reindex(columns=features, fill_value=0).fillna(0).astype(float)
+                    
+                    # Cargar medianas de features para el modelo v1 para imputación consistente (evitar sesgo por fillna(0))
+                    med_path = MODELS_DIR / f"lgbm_v8_{target_name}_medians.json"
+                    medians = {}
+                    if med_path.exists():
+                        try:
+                            medians = json.loads(med_path.read_text(encoding="utf-8"))
+                        except Exception:
+                            pass
+                    fill_values = {f: medians.get(f, 0.0) for f in features}
+                    
+                    X_backtest = inputs_backtest.reindex(columns=features).fillna(fill_values).astype(float)
                     preds_v1 = model.predict(X_backtest)
                     
                     # 2. Refinamiento V2 (Meta-Modelo) usando el .pkl directamente
@@ -262,7 +273,7 @@ try:
                             # Calcular errores históricos de la predicción base (v1)
                             errors_i = []
                             for _, h_row in df_history_i.iterrows():
-                                X_h = h_row.to_frame().T.reindex(columns=features, fill_value=0).fillna(0).astype(float)
+                                X_h = h_row.to_frame().T.reindex(columns=features).fillna(fill_values).astype(float)
                                 p_h = model.predict(X_h)[0]
                                     
                                 actual = h_row.get(contam_col)

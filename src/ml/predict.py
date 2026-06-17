@@ -270,6 +270,9 @@ def fetch_forecast_d1(target_date: pd.Timestamp) -> dict:
     rh_tomorrow = df_tomorrow["relative_humidity_2m"].mean()
     agg["fc_dew_point_d1"] = temp_tomorrow - ((100.0 - rh_tomorrow) / 5.0)
 
+    # HDD del pronóstico
+    agg["fc_HDD_d1"] = max(0.0, 15.0 - temp_tomorrow) if pd.notna(temp_tomorrow) else 0.0
+
     # Índice de ventilación del pronóstico
     if "boundary_layer_height" in df_tomorrow.columns and "wind_speed_10m" in df_tomorrow.columns:
         agg["fc_ventilation_index_d1"] = df_tomorrow["boundary_layer_height"].mean() * df_tomorrow["wind_speed_10m"].mean()
@@ -339,10 +342,20 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             model_v1 = joblib.load(m1_path)
             feats_v1 = json.loads(f1_path.read_text(encoding="utf-8"))
             
+            # Cargar medianas de features para el modelo v1 para imputación consistente (evitar sesgo por fillna(0))
+            med1_path = MODELS_DIR / f"lgbm_v8_{target}_medians.json"
+            medians_v1 = {}
+            if med1_path.exists():
+                try:
+                    medians_v1 = json.loads(med1_path.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+            fill_values = {f: medians_v1.get(f, 0.0) for f in feats_v1}
+            
             # Calcular errores de los últimos 7 días (si hay datos)
             errors = []
             for _, h_row in history_8d.iterrows():
-                X_h = h_row.to_frame().T.reindex(columns=feats_v1, fill_value=0).fillna(0).astype(float)
+                X_h = h_row.to_frame().T.reindex(columns=feats_v1).fillna(fill_values).astype(float)
                 p_h = float(model_v1.predict(X_h)[0])
                 
                 # Buscar valor real en el target correspondiente (mismo día, d1 shift)
