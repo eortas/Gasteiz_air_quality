@@ -1,403 +1,403 @@
 {
-  "prediction_date": "2026-06-25",
-  "generated_at": "2026-06-24T01:35:11.830807+00:00",
+  "prediction_date": "2026-06-26",
+  "generated_at": "2026-06-25T01:40:01.129737+00:00",
   "model_version": "v8",
   "targets": {
     "NO2_zbe_d1": {
-      "prediction_v1": 2.67,
-      "prediction": 1.99,
+      "prediction_v1": 3.63,
+      "prediction": 2.26,
       "lower": 0,
-      "upper": 7.0,
+      "upper": 7.28,
       "rmse_cv": 3.915,
-      "correction": -0.68,
+      "correction": -1.37,
       "foresight": {
-        "base_value": 10.71,
+        "base_value": 10.7,
         "positive_top": [
           {
             "feature": "exp_traffic_volume_d1",
-            "value": 0.59
+            "value": 0.57
           },
           {
-            "feature": "humedad_zbe",
+            "feature": "fc_wind_gusts_10m_d1",
             "value": 0.29
           },
           {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.2
+            "feature": "ICA_out",
+            "value": 0.08
           },
           {
-            "feature": "traffic_volume_lag_2d",
-            "value": 0.05
+            "feature": "rain",
+            "value": 0.08
           },
           {
-            "feature": "traffic_occupancy_lag_14d",
-            "value": 0.04
+            "feature": "PM10_zbe_roll_std_3d",
+            "value": 0.08
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_zbe",
-            "value": -3.26
+            "value": -3.43
           },
           {
             "feature": "NO2_zbe_roll_mean_7d",
-            "value": -1.25
-          },
-          {
-            "feature": "fc_HDD_d1",
-            "value": -0.49
+            "value": -1.24
           },
           {
             "feature": "PM10_zbe_roll_mean_30d",
-            "value": -0.42
+            "value": -0.5
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
-            "value": -0.36
+            "feature": "fc_HDD_d1",
+            "value": -0.39
+          },
+          {
+            "feature": "viento_vel_out",
+            "value": -0.33
           }
         ],
         "narrative": {
-          "es": "La predicción del nivel de NO2 en la zona ZBE de Vitoria-Gasteiz es de 2,7 µg/m³. Este valor se ve influenciado por varios factores, incluyendo la cantidad de tráfico, la humedad y la velocidad del viento.",
-          "eu": "ZBEko eremuaren NO2 maila aurreikuspena 2,7 µg/m³koa da. Hauek faktore nagusiak dira: trafikoaren kantitatea, uholdeak eta haizearen abiadura."
+          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz está siendo afectada por un aumento en la concentración de NO2, con una predicción de 3.6 µg/m³. Este aumento se debe principalmente a factores como el volumen de tráfico, las ráfagas de viento y la emisión de NO2 por parte de las industrias cercanas.",
+          "eu": "Vitoria-Gasteizeko ZBE eremuan airearen kalitatea NO2aren konzentrazioa handitu dela jakitean dago. Predikzioa 3.6 µg/m³-koa da. Horretan, trafikoaren bolumena, haizearen errausketa eta industrien NO2aren emisioa dira faktore nagusiak."
         }
       }
     },
     "NO2_out_d1": {
-      "prediction_v1": 3.24,
-      "prediction": 3.24,
+      "prediction_v1": 4.28,
+      "prediction": 3.67,
       "lower": 0,
-      "upper": 8.99,
+      "upper": 9.41,
       "rmse_cv": 4.49,
-      "correction": 0.0,
+      "correction": -0.61,
       "foresight": {
-        "base_value": 12.49,
+        "base_value": 12.5,
         "positive_top": [
           {
             "feature": "exp_traffic_volume_d1",
-            "value": 0.61
+            "value": 0.56
           },
           {
-            "feature": "fc_HDD_d1",
-            "value": 0.35
+            "feature": "NO2_zbe_roll_std_7d",
+            "value": 0.12
           },
           {
-            "feature": "temp_min_dia",
-            "value": 0.15
+            "feature": "NO2_zbe_roll_std_3d",
+            "value": 0.12
           },
           {
-            "feature": "PM2.5_zbe_roll_std_3d",
-            "value": 0.13
+            "feature": "ICA_out",
+            "value": 0.12
           },
           {
-            "feature": "fc_dew_point_d2",
-            "value": 0.13
+            "feature": "HDD_lag_7d",
+            "value": 0.09
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_out",
-            "value": -3.63
+            "value": -3.75
           },
           {
             "feature": "fc_temperature_2m_d1",
-            "value": -0.98
+            "value": -1.35
           },
           {
             "feature": "NO2_zbe_roll_mean_7d",
-            "value": -0.82
+            "value": -1.03
           },
           {
-            "feature": "temperatura_zbe",
-            "value": -0.82
+            "feature": "PM10_zbe_roll_max_14d",
+            "value": -0.56
           },
           {
-            "feature": "doy_cos",
-            "value": -0.53
+            "feature": "fc_HDD_d1",
+            "value": -0.48
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en Vitoria-Gasteiz se encuentra dentro de los límites permitidos, con una predicción de NO2 de 3.2 µg/m³. Sin embargo, se espera un aumento en la contaminación debido a la intensidad del tráfico, las temperaturas frías y la acumulación reciente de NO2.",
-          "eu": "Vitoria-Gasteizeneko airearen kalitatea mugen barne dago, NO2ren 3.2 µg/m³ko predikzioarekin. Baina, trafikoaren intentsitatea, tenperatura hotzak eta NO2ren akumulazioa berriak kontaminazioa handitzeko aurreikusita dute."
+          "es": "La calidad del aire en Vitoria-Gasteiz se encuentra en una situación de alerta debido a los niveles elevados de NO2. La predicción de NO2 para la zona exterior es de 4,3 µg/m³, lo que supera la base de 12,5 µg/m³.",
+          "eu": "Gasteizko aire kalitatea alerta egoeran dago NO2 mailen igoeragatik. Zabaltzen diren NO2 mailak 4,3 µg/m³ izango dira, 12,5 µg/m³ batek baino handiagoak."
         }
       }
     },
     "PM10_zbe_d1": {
-      "prediction_v1": 27.5,
-      "prediction": 33.57,
-      "lower": 28.14,
-      "upper": 38.99,
+      "prediction_v1": 22.06,
+      "prediction": 26.03,
+      "lower": 20.61,
+      "upper": 31.46,
       "rmse_cv": 4.239,
-      "correction": 6.07,
+      "correction": 3.97,
       "foresight": {
-        "base_value": 12.69,
+        "base_value": 12.7,
         "positive_top": [
           {
             "feature": "PM10_zbe",
-            "value": 11.83
+            "value": 7.56
           },
           {
             "feature": "ICA_zbe",
-            "value": 1.47
+            "value": 0.78
           },
           {
-            "feature": "precipitation",
-            "value": 0.53
+            "feature": "NO2_zbe_roll_max_14d",
+            "value": 0.44
+          },
+          {
+            "feature": "fc_precipitation_acum_3d_d2",
+            "value": 0.36
           },
           {
             "feature": "viento_vel_out",
-            "value": 0.39
-          },
-          {
-            "feature": "ICA_out",
-            "value": 0.37
+            "value": 0.22
           }
         ],
         "negative_top": [
           {
-            "feature": "NO2_out_lag_30d",
-            "value": -0.42
+            "feature": "fc_precipitation_acum_3d_d1",
+            "value": -0.37
           },
           {
-            "feature": "boundary_layer_height",
-            "value": -0.23
+            "feature": "fc_ventilation_index_d1",
+            "value": -0.36
+          },
+          {
+            "feature": "PM10_out_roll_mean_3d",
+            "value": -0.17
           },
           {
             "feature": "NO2_zbe_roll_std_30d",
-            "value": -0.2
-          },
-          {
-            "feature": "fc_ventilation_index_d2",
-            "value": -0.19
+            "value": -0.13
           },
           {
             "feature": "fc_sunshine_duration_d3",
-            "value": -0.18
+            "value": -0.13
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz se encuentra en un estado moderado, con una predicción de 27.5 µg/m³. Los factores que contribuyen a la mejora de la calidad del aire son la disminución de la concentración de NO2 en los últimos 30 días y la mayor altura de la capa limitante.",
-          "eu": "Vitoria-Gasteizeko ZBE eremuan airearen kalitatea egoera moderatuan dago, 27,5 µg/m³eko predikzioarekin. Airearen kalitatea hobetzeko faktoreak NO2ren konzentrazioa azken 30 egunetan jaitsi dela eta mugimendu mugagabearen altuera handitu dela dira."
+          "es": "El análisis ambiental indica que la calidad del aire en la zona ZBE de Vitoria-Gasteiz se encuentra en un estado moderadamente contaminado, con un nivel de PM10 predicho de 22.1 µg/m³. Este valor es superior al nivel base de 12.7 µg/m³, lo que sugiere una influencia de factores que están aumentando la contaminación.",
+          "eu": "Gaztegiaren kalitatearen analisia diozkien datuen arabera, ZBE eremuko Vitoria-Gasteizen airearen kalitatea moderatu kontaminatua dago, PM10ren 22.1 µg/m³ko predikzioa du. Hau 12.7 µg/m³ko maila basearen gainetik dago, faktore batzuen eragina duten arren, airearen kualitatea hobetzeko aukera ematen dutenak."
         }
       }
     },
     "PM10_out_d1": {
-      "prediction_v1": 20.52,
-      "prediction": 21.38,
-      "lower": 15.99,
-      "upper": 26.76,
+      "prediction_v1": 16.71,
+      "prediction": 16.71,
+      "lower": 11.33,
+      "upper": 22.1,
       "rmse_cv": 4.208,
-      "correction": 0.86,
+      "correction": 0.0,
       "foresight": {
-        "base_value": 10.6,
+        "base_value": 10.61,
         "positive_top": [
           {
             "feature": "ICA_out",
-            "value": 4.27
-          },
-          {
-            "feature": "PM10_out",
-            "value": 2.17
+            "value": 2.43
           },
           {
             "feature": "PM10_zbe",
-            "value": 1.79
+            "value": 1.54
           },
           {
-            "feature": "humedad_out",
-            "value": 0.72
+            "feature": "PM10_out",
+            "value": 0.9
           },
           {
             "feature": "PM2.5_out",
-            "value": 0.47
+            "value": 0.48
+          },
+          {
+            "feature": "humedad_out",
+            "value": 0.33
           }
         ],
         "negative_top": [
           {
-            "feature": "relative_humidity_2m",
+            "feature": "fc_precipitation_acum_3d_d1",
             "value": -0.32
           },
           {
-            "feature": "fc_precipitation_acum_3d_d1",
-            "value": -0.13
+            "feature": "NO2_zbe",
+            "value": -0.22
+          },
+          {
+            "feature": "fc_wind_speed_10m_d1",
+            "value": -0.18
           },
           {
             "feature": "NO2_out",
-            "value": -0.12
-          },
-          {
-            "feature": "NO2_zbe",
             "value": -0.1
           },
           {
-            "feature": "ICA_out_lag_3d",
-            "value": -0.1
+            "feature": "NO2_zbe_lag_14d",
+            "value": -0.08
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en Vitoria-Gasteiz se encuentra en una situación moderada, con un nivel de PM10 de 20,5 µg/m³. Este valor se encuentra ligeramente por encima de la base de 10,6 µg/m³.",
-          "eu": "Vitoria-Gasteizeko airearen kalitatea egoera moderatuan dago, PM10ren maila 20,5 µg/m³koa delarik. Balio hau 10,6 µg/m³ko basearen gainetik dago."
+          "es": "La calidad del aire en la zona OUT de Vitoria-Gasteiz se encuentra dentro de los límites permitidos, con una predicción de 16.7 µg/m³. Aunque hay factores que influyen en su aumento, como la concentración de partículas finas en el aire exterior y la velocidad del viento.",
+          "eu": "Vitoria-Gasteizeko OUT eremuan airearen kalitatea mugimenduaren barruan dago, 16,7 µg/m³ren aurreikuspenarekin. Baina, gauza batzuk hazi egiten duten faktoreak dira, hala nola airearen kanpoaldeko partikuluen konzentrazioa eta haizearen abiadura."
         }
       }
     },
     "PM2.5_zbe_d1": {
-      "prediction_v1": 12.32,
-      "prediction": 12.78,
-      "lower": 9.35,
-      "upper": 16.21,
+      "prediction_v1": 10.62,
+      "prediction": 10.84,
+      "lower": 7.41,
+      "upper": 14.27,
       "rmse_cv": 2.68,
-      "correction": 0.46,
+      "correction": 0.22,
       "foresight": {
         "base_value": 7.51,
         "positive_top": [
           {
             "feature": "ICA_out",
-            "value": 1.67
+            "value": 1.85
+          },
+          {
+            "feature": "PM10_zbe",
+            "value": 0.81
           },
           {
             "feature": "PM2.5_zbe",
-            "value": 1.09
+            "value": 0.67
           },
           {
             "feature": "ICA_zbe",
-            "value": 0.79
+            "value": 0.52
           },
           {
-            "feature": "PM2.5_out",
-            "value": 0.49
-          },
-          {
-            "feature": "PM10_out",
-            "value": 0.47
+            "feature": "weather_code",
+            "value": 0.27
           }
         ],
         "negative_top": [
           {
-            "feature": "fc_sunshine_duration_d3",
-            "value": -0.32
-          },
-          {
-            "feature": "fc_precipitation_acum_3d_d3",
-            "value": -0.29
-          },
-          {
             "feature": "NO2_zbe_lag_14d",
-            "value": -0.17
+            "value": -0.3
           },
           {
             "feature": "fc_precipitation_acum_3d_d1",
-            "value": -0.16
+            "value": -0.29
           },
           {
-            "feature": "ventilation_index",
-            "value": -0.12
+            "feature": "fc_wind_v_d2",
+            "value": -0.17
+          },
+          {
+            "feature": "NO2_out",
+            "value": -0.15
+          },
+          {
+            "feature": "fc_temperature_2m_d2",
+            "value": -0.13
           }
         ],
         "narrative": {
-          "es": "El análisis de calidad del aire en la zona de ZBE de Vitoria-Gasteiz muestra una predicción de 12.3 µg/m³ de PM2.5, lo que es un poco por encima de la base de 7.5 µg/m³. Los factores que contribuyen a un aumento en la contaminación son la concentración de partículas finas en la zona (PM2.5_zbe), la concentración de partículas finas en la zona urbana (ICA_zbe) y la concentración de partículas finas en el aire exterior (ICA_out).",
-          "eu": "Vitoria-Gasteizeko ZBE eremuan airearen kalitatearen analisia egiten bada, PM2.5ren 12,3 µg/m³ko predikzioa egiten da, 7,5 µg/m³ko oinarriaren gainetik. Partikula finen konzentrazioa eremuan (PM2.5_zbe), partikula finen konzentrazioa hiriko eremuan (ICA_zbe) eta aire kanpoko partikula finen konzentrazioa (ICA_out) partikula finen konzentrazioa handitzeko faktoreak dira."
+          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz se predice que será moderada, con un nivel de PM2.5 de 10.6 µg/m³, superior a la base de 7.5 µg/m³. Los factores que contribuyen a esta situación son la intensidad de la circulación atmosférica (ICA_out), el nivel de PM10 y PM2.5 en la zona.",
+          "eu": "Vitoria-Gasteizeneko ZBE eremuko airearen kalitatea 10.6 µg/m³ PM2.5 maila izango dela aurreikusten da, 7.5 µg/m³ baztertuaren gainetik. ICA_out intentsitatea, PM10 eta PM2.5 mailak eremu honetan faktore nagusiak dira."
         }
       }
     },
     "PM2.5_out_d1": {
-      "prediction_v1": 11.65,
-      "prediction": 12.15,
-      "lower": 8.17,
-      "upper": 16.13,
+      "prediction_v1": 9.94,
+      "prediction": 10.12,
+      "lower": 6.14,
+      "upper": 14.1,
       "rmse_cv": 3.111,
-      "correction": 0.5,
+      "correction": 0.18,
       "foresight": {
         "base_value": 7.05,
         "positive_top": [
           {
             "feature": "ICA_out",
-            "value": 2.41
-          },
-          {
-            "feature": "PM10_out",
-            "value": 0.94
+            "value": 2.35
           },
           {
             "feature": "PM2.5_out",
-            "value": 0.93
+            "value": 0.58
           },
           {
             "feature": "PM10_zbe",
-            "value": 0.35
+            "value": 0.22
           },
           {
-            "feature": "NO2_out_diff_7d",
-            "value": 0.35
+            "feature": "PM10_zbe_lag_30d",
+            "value": 0.18
+          },
+          {
+            "feature": "presion_out",
+            "value": 0.18
           }
         ],
         "negative_top": [
           {
-            "feature": "NO2_zbe",
-            "value": -0.23
-          },
-          {
-            "feature": "PM10_zbe_lag_30d",
-            "value": -0.21
-          },
-          {
-            "feature": "fc_wind_gusts_10m_d1",
-            "value": -0.17
-          },
-          {
             "feature": "fc_precipitation_acum_3d_d1",
-            "value": -0.12
+            "value": -0.36
           },
           {
-            "feature": "fc_precipitation_acum_7d_d3",
+            "feature": "PM2.5_out_roll_mean_30d",
+            "value": -0.27
+          },
+          {
+            "feature": "fc_precipitation_acum_3d_d3",
+            "value": -0.18
+          },
+          {
+            "feature": "NO2_zbe_lag_14d",
+            "value": -0.18
+          },
+          {
+            "feature": "fc_temperature_2m_d2",
             "value": -0.12
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5630, Requested 450. Please try again in 800ms. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
-          "eu": "API errorea"
+          "es": "Según la predicción, la calidad del aire en la zona exterior de Vitoria-Gasteiz será moderadamente buena, con un nivel de PM2.5 de 9.9 µg/m³. Sin embargo, hay factores que pueden influir en la calidad del aire, como la temperatura y la humedad.",
+          "eu": "Gutxika dauden airearen kalitatearen aurreikuspenaren arabera, Vitoria-Gasteizen kanpoko eremuan 9.9 µg/m³ PM2.5 maila izango da. Baina, tenperatura eta umiditate bezalako faktore batzuk airearen kalitatea eragin dezakete."
         }
       }
     },
     "ICA_zbe_d1": {
-      "prediction_v1": 38.65,
-      "prediction": 43.95,
-      "lower": 35.34,
-      "upper": 52.55,
+      "prediction_v1": 32.12,
+      "prediction": 35.36,
+      "lower": 26.76,
+      "upper": 43.97,
       "rmse_cv": 6.722,
-      "correction": 5.3,
+      "correction": 3.25,
       "foresight": {
-        "base_value": 21.22,
+        "base_value": 21.24,
         "positive_top": [
           {
             "feature": "PM2.5 (Ensemble)",
-            "value": -11.73
+            "value": -14.49
           }
         ],
         "negative_top": [],
         "narrative": {
-          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (2.0 µg/m³), PM10 (33.6 µg/m³) y PM2.5 (12.8 µg/m³).",
-          "eu": "Airearen Kalitate Indizea (ICA) NO2 (2.0 µg/m³), PM10 (33.6 µg/m³) eta PM2.5 (12.8 µg/m³) aztertu ondoren lortu da."
+          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (2.3 µg/m³), PM10 (26.0 µg/m³) y PM2.5 (10.8 µg/m³).",
+          "eu": "Airearen Kalitate Indizea (ICA) NO2 (2.3 µg/m³), PM10 (26.0 µg/m³) eta PM2.5 (10.8 µg/m³) aztertu ondoren lortu da."
         }
       }
     },
     "ICA_out_d1": {
-      "prediction_v1": 29.22,
-      "prediction": 30.39,
-      "lower": 20.16,
-      "upper": 40.61,
+      "prediction_v1": 25.31,
+      "prediction": 25.57,
+      "lower": 15.34,
+      "upper": 35.79,
       "rmse_cv": 7.987,
-      "correction": 1.17,
+      "correction": 0.26,
       "foresight": {
-        "base_value": 19.89,
+        "base_value": 19.91,
         "positive_top": [
           {
             "feature": "PM2.5 (Ensemble)",
-            "value": -16.23
+            "value": -20.42
           }
         ],
         "negative_top": [],
         "narrative": {
-          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (3.2 µg/m³), PM10 (21.4 µg/m³) y PM2.5 (12.2 µg/m³).",
-          "eu": "Airearen Kalitate Indizea (ICA) NO2 (3.2 µg/m³), PM10 (21.4 µg/m³) eta PM2.5 (12.2 µg/m³) aztertu ondoren lortu da."
+          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (3.7 µg/m³), PM10 (16.7 µg/m³) y PM2.5 (10.1 µg/m³).",
+          "eu": "Airearen Kalitate Indizea (ICA) NO2 (3.7 µg/m³), PM10 (16.7 µg/m³) eta PM2.5 (10.1 µg/m³) aztertu ondoren lortu da."
         }
       }
     }
