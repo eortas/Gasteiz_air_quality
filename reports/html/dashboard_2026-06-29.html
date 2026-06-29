@@ -1104,15 +1104,7 @@ function renderDashboard3() {
       errorText = `${error > 0 ? '+' : ''}${error}%`;
       const errorColor = error > 0 ? "var(--red)" : "var(--green)";
       const absError = Math.abs(error);
-      const absValDiff = Math.abs(lastReal - lastPred);
-      
-      let isLowAbsError = false;
-      if (currentContV10 === 'ICA' && absValDiff <= 5.0) { isLowAbsError = true; }
-      else if (currentContV10 === 'NO2' && absValDiff <= 4.0) { isLowAbsError = true; }
-      else if (currentContV10 === 'PM10' && absValDiff <= 6.0) { isLowAbsError = true; }
-      else if (currentContV10 === 'PM2.5' && absValDiff <= 4.0) { isLowAbsError = true; }
-      
-      if (absError <= 10 || isLowAbsError) { interpretColor = "var(--green)"; interpret = t.backExcel; } 
+      if (absError <= 10) { interpretColor = "var(--green)"; interpret = t.backExcel; } 
       else if (absError <= 20) { interpretColor = "var(--green)"; interpret = t.backGood; } 
       else if (absError <= 35) { interpretColor = "var(--green)"; interpret = t.backAccept; } 
       else { interpretColor = "var(--yellow)"; interpret = t.backReview; }

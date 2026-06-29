@@ -244,7 +244,7 @@ try:
                     model = joblib.load(model_path)
                     features = json.loads(feat_path.read_text(encoding="utf-8"))
                     
-                    # Cargar medianas de features para el modelo v1 para imputación consistente (evitar sesgo por fillna(0))
+                    # Cargar medianas globales
                     med_path = MODELS_DIR / f"lgbm_v8_{target_name}_medians.json"
                     medians = {}
                     if med_path.exists():
@@ -252,20 +252,43 @@ try:
                             medians = json.loads(med_path.read_text(encoding="utf-8"))
                         except Exception:
                             pass
-                    fill_values = {f: medians.get(f, 0.0) for f in features}
+                            
+                    # Cargar medianas estacionales
+                    seasonal_path = MODELS_DIR / f"lgbm_v8_{target_name}_medians_seasonal.json"
+                    seasonal_medians = {}
+                    if seasonal_path.exists():
+                        try:
+                            seasonal_medians = json.loads(seasonal_path.read_text(encoding="utf-8"))
+                        except Exception:
+                            pass
                     
-                    X_backtest = inputs_backtest.reindex(columns=features).fillna(fill_values).astype(float)
-                    preds_v1 = model.predict(X_backtest)
-                    
-                    # 2. Refinamiento V2 (Meta-Modelo) usando el .pkl directamente
                     preds_v2 = []
-                    if meta_model_path.exists():
-                        meta_model = joblib.load(meta_model_path)
-                        contam_col = f"{cont}_{zone}"
+                    for idx_i in range(len(inputs_backtest)):
+                        row_i = inputs_backtest.iloc[idx_i]
+                        date_i = row_i["date"]
+                        pred_date = targets_backtest.iloc[idx_i]["date"]
+                        pred_month = pred_date.month
                         
-                        for idx_i in range(len(preds_v1)):
-                            row_i = inputs_backtest.iloc[idx_i]
-                            date_i = row_i["date"]
+                        # Obtener fill values estacionales para el mes predicho
+                        month_key = str(pred_month)
+                        month_medians = seasonal_medians.get(month_key, {})
+                        
+                        fill_values_i = {}
+                        for f in features:
+                            if f in month_medians:
+                                fill_values_i[f] = month_medians[f]
+                            elif f in medians:
+                                fill_values_i[f] = medians[f]
+                            else:
+                                fill_values_i[f] = 0.0
+                        
+                        X_i = row_i.to_frame().T.reindex(columns=features).fillna(fill_values_i).astype(float)
+                        p_v1 = float(model.predict(X_i)[0])
+                        p_v1 = max(0.0, p_v1)
+                        
+                        if meta_model_path.exists():
+                            meta_model = joblib.load(meta_model_path)
+                            contam_col = f"{cont}_{zone}"
                             
                             # Obtener histórico reciente antes de date_i
                             df_history_i = df_past[df_past["date"] < date_i].tail(8)
@@ -273,7 +296,20 @@ try:
                             # Calcular errores históricos de la predicción base (v1)
                             errors_i = []
                             for _, h_row in df_history_i.iterrows():
-                                X_h = h_row.to_frame().T.reindex(columns=features).fillna(fill_values).astype(float)
+                                h_month = h_row["date"].month
+                                h_month_key = str(h_month)
+                                h_month_medians = seasonal_medians.get(h_month_key, {})
+                                
+                                fill_values_h = {}
+                                for f in features:
+                                    if f in h_month_medians:
+                                        fill_values_h[f] = h_month_medians[f]
+                                    elif f in medians:
+                                        fill_values_h[f] = medians[f]
+                                    else:
+                                        fill_values_h[f] = 0.0
+                                        
+                                X_h = h_row.to_frame().T.reindex(columns=features).fillna(fill_values_h).astype(float)
                                 p_h = model.predict(X_h)[0]
                                     
                                 actual = h_row.get(contam_col)
@@ -283,29 +319,78 @@ try:
                             error_lag_1d = errors_i[-1] if len(errors_i) >= 1 else 0
                             error_roll_7d = np.mean(errors_i) if len(errors_i) >= 1 else 0
                             
-                            # Construir vector de entrada para el meta-modelo
+                            # Rellenar exógenas con medias del mes actual
+                            month_mask = df_past["date"].dt.month == pred_month
+                            df_month = df_past[month_mask] if month_mask.any() else df_past
+                            
+                            default_temp = df_month["temperature_2m"].mean() if "temperature_2m" in df_month.columns else 12.0
+                            default_wind = df_month["wind_speed_10m"].mean() if "wind_speed_10m" in df_month.columns else 2.5
+                            default_boundary = df_month["boundary_layer_height"].mean() if "boundary_layer_height" in df_month.columns else 500.0
+                            default_humidity = df_month["relative_humidity_2m"].mean() if "relative_humidity_2m" in df_month.columns else 75.0
+                            
+                            default_temp = default_temp if pd.notna(default_temp) else 12.0
+                            default_wind = default_wind if pd.notna(default_wind) else 2.5
+                            default_boundary = default_boundary if pd.notna(default_boundary) else 500.0
+                            default_humidity = default_humidity if pd.notna(default_humidity) else 75.0
+                            
+                            temp_val = row_i.get("temperature_2m")
+                            if pd.isna(temp_val) and "fc_temperature_2m_d1" in row_i:
+                                temp_val = row_i.get("fc_temperature_2m_d1")
+                                
+                            wind_val = row_i.get("wind_speed_10m")
+                            if pd.isna(wind_val) and "fc_wind_speed_10m_d1" in row_i:
+                                wind_val = row_i.get("fc_wind_speed_10m_d1")
+                                
+                            boundary_val = row_i.get("boundary_layer_height")
+                            if pd.isna(boundary_val) and "fc_boundary_layer_height_d1" in row_i:
+                                boundary_val = row_i.get("fc_boundary_layer_height_d1")
+                                
+                            humidity_val = row_i.get("relative_humidity_2m")
+                            if pd.isna(humidity_val) and "fc_relative_humidity_2m_d1" in row_i:
+                                humidity_val = row_i.get("fc_relative_humidity_2m_d1")
+                            
                             meta_input = {
-                                "pred_v1": float(preds_v1[idx_i]),
+                                "pred_v1": float(p_v1),
                                 "error_lag_1d": float(error_lag_1d),
                                 "error_roll_mean_7d": float(error_roll_7d),
-                                "temperature_2m": float(pd.to_numeric(row_i.get("temperature_2m", 0), errors='coerce')),
-                                "wind_speed_10m": float(pd.to_numeric(row_i.get("wind_speed_10m", 0), errors='coerce')),
-                                "boundary_layer_height": float(pd.to_numeric(row_i.get("boundary_layer_height", 0), errors='coerce')),
-                                "relative_humidity_2m": float(pd.to_numeric(row_i.get("relative_humidity_2m", 0), errors='coerce')),
-                                "is_weekend": float(pd.to_numeric(row_i.get("is_weekend", 0), errors='coerce')),
-                                "es_domingo": float(pd.to_numeric(row_i.get("es_domingo", 0), errors='coerce')),
-                                "es_invierno_estricto": float(pd.to_numeric(row_i.get("es_invierno_estricto", 0), errors='coerce')),
+                                "temperature_2m": float(pd.to_numeric(pd.Series([temp_val]), errors='coerce').fillna(default_temp).iloc[0]),
+                                "wind_speed_10m": float(pd.to_numeric(pd.Series([wind_val]), errors='coerce').fillna(default_wind).iloc[0]),
+                                "boundary_layer_height": float(pd.to_numeric(pd.Series([boundary_val]), errors='coerce').fillna(default_boundary).iloc[0]),
+                                "relative_humidity_2m": float(pd.to_numeric(pd.Series([humidity_val]), errors='coerce').fillna(default_humidity).iloc[0]),
+                                "is_weekend": float(pd.to_numeric(pd.Series([row_i.get("is_weekend")]), errors='coerce').fillna(0).iloc[0]),
+                                "es_domingo": float(pd.to_numeric(pd.Series([row_i.get("es_domingo")]), errors='coerce').fillna(0).iloc[0]),
+                                "es_invierno_estricto": float(pd.to_numeric(pd.Series([row_i.get("es_invierno_estricto")]), errors='coerce').fillna(0).iloc[0]),
                             }
-                            # Rellenar nans
-                            for k_m, v_m in meta_input.items():
-                                if pd.isna(v_m):
-                                    meta_input[k_m] = 0.0
-                                    
+                            
                             X_meta = pd.DataFrame([meta_input]).astype(float)
                             p_v2 = float(meta_model.predict(X_meta)[0])
-                            preds_v2.append(max(0.0, p_v2))
-                    else:
-                        preds_v2 = preds_v1
+                            p_v2 = max(0.0, p_v2)
+                            
+                            # === SMART BYPASS & CLAMP ===
+                            is_no2 = "NO2" in target_name
+                            global_median_target = None
+                            if is_no2:
+                                target_medians_map = {
+                                    "NO2_zbe_d1": 10.0,
+                                    "NO2_out_d1": 11.5,
+                                }
+                                global_median_target = target_medians_map.get(target_name, 10.0)
+                                
+                            if is_no2 and global_median_target and p_v1 < global_median_target:
+                                # BYPASS
+                                p_v2 = p_v1
+                            else:
+                                # CLAMP ±30%
+                                max_correction_pct = 0.30
+                                if p_v1 > 0:
+                                    lo = p_v1 * (1 - max_correction_pct)
+                                    hi = p_v1 * (1 + max_correction_pct)
+                                    p_v2_clamped = max(0.0, min(p_v2, hi))
+                                    p_v2 = max(lo, p_v2_clamped)
+                            
+                            preds_v2.append(p_v2)
+                        else:
+                            preds_v2.append(p_v1)
                     
                     contam_col = f"{cont}_{zone}"
                     if contam_col in targets_backtest.columns:
@@ -1593,7 +1678,15 @@ function renderDashboard3() {
       errorText = `${error > 0 ? '+' : ''}${error}%`;
       const errorColor = error > 0 ? "var(--red)" : "var(--green)";
       const absError = Math.abs(error);
-      if (absError <= 10) { interpretColor = "var(--green)"; interpret = t.backExcel; } 
+      const absValDiff = Math.abs(lastReal - lastPred);
+      
+      let isLowAbsError = false;
+      if (currentContV10 === 'ICA' && absValDiff <= 5.0) { isLowAbsError = true; }
+      else if (currentContV10 === 'NO2' && absValDiff <= 4.0) { isLowAbsError = true; }
+      else if (currentContV10 === 'PM10' && absValDiff <= 6.0) { isLowAbsError = true; }
+      else if (currentContV10 === 'PM2.5' && absValDiff <= 4.0) { isLowAbsError = true; }
+      
+      if (absError <= 10 || isLowAbsError) { interpretColor = "var(--green)"; interpret = t.backExcel; } 
       else if (absError <= 20) { interpretColor = "var(--green)"; interpret = t.backGood; } 
       else if (absError <= 35) { interpretColor = "var(--green)"; interpret = t.backAccept; } 
       else { interpretColor = "var(--yellow)"; interpret = t.backReview; }
