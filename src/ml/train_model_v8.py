@@ -385,6 +385,25 @@ def train_all(df, feature_cols, target_cols, tune=False):
         with open(MODELS_DIR / f"lgbm_v8_{target_key}_medians.json", "w") as f:
             json.dump(medians_dict, f)
 
+        # A2: Guardar medianas ESTACIONALES (por mes) para imputación en producción
+        # Esto evita el sesgo de usar medianas anuales en verano (NO2 es 2x más bajo)
+        if "date" in df_target.columns:
+            df_target_with_month = df_target.copy()
+            df_target_with_month["_month"] = pd.to_datetime(df_target_with_month["date"], utc=True).dt.month
+            seasonal_medians = {}
+            for month in range(1, 13):
+                month_data = df_target_with_month[df_target_with_month["_month"] == month]
+                if len(month_data) >= 5:
+                    month_meds = month_data[selected].median().fillna(0)
+                    seasonal_medians[str(month)] = {
+                        feat: float(month_meds[feat])
+                        for feat in selected if feat in month_meds.index
+                    }
+            if seasonal_medians:
+                with open(MODELS_DIR / f"lgbm_v8_{target_key}_medians_seasonal.json", "w") as f:
+                    json.dump(seasonal_medians, f)
+                log(f"    [OK] Medianas estacionales guardadas ({len(seasonal_medians)} meses)")
+
     return all_metrics, all_importances, all_selected
 
 

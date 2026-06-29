@@ -116,13 +116,24 @@ def load_models() -> dict:
         model    = joblib.load(model_path)
         features = json.loads(feat_path.read_text(encoding="utf-8"))
 
-        # A1: Cargar medianas de features guardadas durante entrenamiento
+        # A1: Cargar medianas globales de features guardadas durante entrenamiento
         median_path = MODELS_DIR / f"lgbm_v8_{target}_medians.json"
         medians = {}
         if median_path.exists():
             medians = json.loads(median_path.read_text(encoding="utf-8"))
 
-        models[target] = {"model": model, "features": features, "medians": medians}
+        # A2: Cargar medianas ESTACIONALES (por mes) para imputación correcta
+        seasonal_path = MODELS_DIR / f"lgbm_v8_{target}_medians_seasonal.json"
+        seasonal_medians = {}
+        if seasonal_path.exists():
+            seasonal_medians = json.loads(seasonal_path.read_text(encoding="utf-8"))
+
+        models[target] = {
+            "model": model,
+            "features": features,
+            "medians": medians,
+            "seasonal_medians": seasonal_medians,
+        }
 
     if missing:
         log(f"\n  ? Archivos no encontrados:")
@@ -134,9 +145,36 @@ def load_models() -> dict:
     log(f"  [OK] {len(models)} modelos cargados (LightGBM)")
     for target, m in models.items():
         medianas_status = "sí" if m.get("medians") else "no"
-        log(f"     {target:<20} - {len(m['features'])} features, medianas: {medianas_status}")
+        seasonal_status = f"{len(m.get('seasonal_medians', {}))} meses" if m.get("seasonal_medians") else "no"
+        log(f"     {target:<20} - {len(m['features'])} features, medianas: {medianas_status}, estacionales: {seasonal_status}")
 
     return models
+
+
+def get_seasonal_fill_values(features: list, medians: dict, seasonal_medians: dict,
+                              pred_month: int) -> dict:
+    """
+    Devuelve los valores de imputación para features NaN.
+    Usa medianas del mes de predicción si están disponibles,
+    con fallback a medianas globales.
+    
+    Esto es CRÍTICO para NO2, que tiene estacionalidad extrema:
+    la mediana anual de NO2_zbe es ~10, pero en verano es ~4.
+    Usar la mediana anual en verano infla las predicciones.
+    """
+    month_key = str(pred_month)
+    month_medians = seasonal_medians.get(month_key, {})
+
+    fill_values = {}
+    for f in features:
+        # Prioridad: mediana del mes > mediana global > 0
+        if f in month_medians:
+            fill_values[f] = month_medians[f]
+        elif f in medians:
+            fill_values[f] = medians[f]
+        else:
+            fill_values[f] = 0
+    return fill_values
 
 
 # ??? 2. CARGAR ROW DE PREDICCI?N ?????????????????????????????????????????????
@@ -300,32 +338,34 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
     """
     Usa los meta-modelos Ridge para corregir las predicciones v1.
     Calcula error_lag_1d y error_roll_mean_7d usando el histórico reciente.
+    
+    FIX v8.1: Clamp del meta-modelo para NO2 en períodos de valores bajos.
+    El meta-modelo Ridge tiene un intercepto alto (~7.6 para NO2_zbe) que
+    infla las predicciones cuando los valores reales son muy bajos (verano).
     """
     refined_results = {}
     
     # 1. Calcular errores recientes para las features del meta-modelo
-    # Necesitamos las predicciones del modelo 1 para los últimos 8 días
-    # y los valores reales para compararlos.
-    # El histórico para calcular errores debe tener datos reales COMPLETOS.
-    # Como hoy (t) aún no ha terminado, no podemos usar ninguna fila del histórico
-    # cuyo target sea hoy (t) o posterior. El último target completo es ayer (t-1).
-    # Si ejecutamos de madrugada (02:00 AM), ayer (t-1) está completo.
-    # Por tanto, filtramos el histórico para quedarnos solo con filas de fecha <= pred_date - 2 días.
     cutoff_date = pred_date - pd.Timedelta(days=2)
     df_history_clean = df_history[df_history["date"] <= cutoff_date].sort_values("date").reset_index(drop=True)
     history_8d = df_history_clean.tail(8).copy()
     
     # Calcular medias históricas de clima para imputación robusta
-    mean_temp = df_history["temperature_2m"].mean()
-    mean_wind = df_history["wind_speed_10m"].mean()
-    mean_boundary = df_history["boundary_layer_height"].mean()
-    mean_humidity = df_history["relative_humidity_2m"].mean()
+    # Usar medias del mes actual para coherencia estacional
+    pred_month = pred_date.month
+    month_mask = df_history["date"].dt.month == pred_month
+    df_month = df_history[month_mask] if month_mask.any() else df_history
     
-    # Valores por defecto por si el dataset histórico estuviese vacío de climatología
-    default_temp = mean_temp if pd.notna(mean_temp) else 12.0
-    default_wind = mean_wind if pd.notna(mean_wind) else 2.5
-    default_boundary = mean_boundary if pd.notna(mean_boundary) else 500.0
-    default_humidity = mean_humidity if pd.notna(mean_humidity) else 75.0
+    default_temp = df_month["temperature_2m"].mean() if "temperature_2m" in df_month.columns else 12.0
+    default_wind = df_month["wind_speed_10m"].mean() if "wind_speed_10m" in df_month.columns else 2.5
+    default_boundary = df_month["boundary_layer_height"].mean() if "boundary_layer_height" in df_month.columns else 500.0
+    default_humidity = df_month["relative_humidity_2m"].mean() if "relative_humidity_2m" in df_month.columns else 75.0
+    
+    # Asegurar que no son NaN
+    default_temp = default_temp if pd.notna(default_temp) else 12.0
+    default_wind = default_wind if pd.notna(default_wind) else 2.5
+    default_boundary = default_boundary if pd.notna(default_boundary) else 500.0
+    default_humidity = default_humidity if pd.notna(default_humidity) else 75.0
     
     for target, r in results.items():
         model_meta_path = MODELS_DIR / f"meta_model_{target}.pkl"
@@ -342,7 +382,7 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             model_v1 = joblib.load(m1_path)
             feats_v1 = json.loads(f1_path.read_text(encoding="utf-8"))
             
-            # Cargar medianas de features para el modelo v1 para imputación consistente (evitar sesgo por fillna(0))
+            # Cargar medianas de features para el modelo v1
             med1_path = MODELS_DIR / f"lgbm_v8_{target}_medians.json"
             medians_v1 = {}
             if med1_path.exists():
@@ -358,9 +398,6 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
                 X_h = h_row.to_frame().T.reindex(columns=feats_v1).fillna(fill_values).astype(float)
                 p_h = float(model_v1.predict(X_h)[0])
                 
-                # Buscar valor real en el target correspondiente (mismo día, d1 shift)
-                # En features_daily, el target_XXX_d1 es el valor del día SIGUIENTE.
-                # Así que el error de "hoy" (t) lo vemos comparando la predicción hecha en t-1 con el target en t-1.
                 actual = h_row.get(f"target_{target}") 
                 if pd.notna(actual):
                     errors.append(actual - p_h)
@@ -368,8 +405,7 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             error_lag_1d = errors[-1] if len(errors) >= 1 else 0
             error_roll_7d = np.mean(errors) if len(errors) >= 1 else 0
             
-            # Para la predicción de mañana, las columnas observadas de clima están vacías (NaN)
-            # y debemos leer el pronóstico descargado (las columnas fc_*_d1)
+            # Leer valores de clima del pronóstico o de la fila
             temp_val = row["temperature_2m"].iloc[0]
             if pd.isna(temp_val) and "fc_temperature_2m_d1" in row.columns:
                 temp_val = row["fc_temperature_2m_d1"].iloc[0]
@@ -403,8 +439,50 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             pred_v2 = float(meta_model.predict(X_meta)[0])
             pred_v2 = max(0.0, pred_v2)
             
-            # El meta-modelo ya reduce el sesgo, mantenemos el RMSE_CV original para el IC
-            # aunque t?cnicamente podr?amos usar el meta_rmse si lo guardamos.
+            # === FIX v8.1: SMART META-MODEL BYPASS + CLAMP ===
+            # El backtest demuestra que el meta-modelo EMPEORA el NO2:
+            #   NO2_zbe v1: Bias +7.6% vs v2(meta): Bias +19.2% (últimos 30d)
+            #   NO2_out v1: Bias -0.2% vs v2(meta): Bias -12.5%
+            # Para PM10/PM2.5 el meta tampoco ayuda mucho (sesgo del +8%).
+            #
+            # Estrategia: bypass del meta para NO2 en período de valores bajos
+            # y clamp agresivo para el resto.
+            pred_v1 = float(r["prediction"])
+            
+            # Detectar si es NO2 y está en período de valores bajos (verano)
+            is_no2 = "NO2" in target
+            
+            # Cargar mediana global del target para determinar si v1 es "bajo"
+            global_median_target = None
+            if is_no2:
+                # Las medianas globales de NO2 están alrededor de 10-12
+                # Si v1 < mediana global, estamos en verano y el meta-modelo falla
+                target_medians_map = {
+                    "NO2_zbe_d1": 10.0,
+                    "NO2_out_d1": 11.5,
+                }
+                global_median_target = target_medians_map.get(target, 10.0)
+            
+            if is_no2 and global_median_target and pred_v1 < global_median_target:
+                # BYPASS: usar v1 directamente, el meta-modelo empeora las cosas
+                log(f"  [BYPASS] {target}: v1={pred_v1:.2f} < mediana={global_median_target:.1f} "
+                    f"-> usando v1 directamente (meta={pred_v2:.2f} descartado)")
+                pred_v2 = pred_v1
+            else:
+                # CLAMP: para el resto, limitar corrección a ±30%
+                max_correction_pct = 0.30
+                
+                if pred_v1 > 0:
+                    lower_bound = pred_v1 * (1 - max_correction_pct)
+                    upper_bound = pred_v1 * (1 + max_correction_pct)
+                    pred_v2_clamped = max(0.0, min(pred_v2, upper_bound))
+                    pred_v2_clamped = max(lower_bound, pred_v2_clamped)
+                    
+                    if abs(pred_v2 - pred_v2_clamped) > 0.01:
+                        log(f"  [CLAMP] {target}: meta={pred_v2:.2f} -> clamped={pred_v2_clamped:.2f} "
+                            f"(v1={pred_v1:.2f}, rango=[{lower_bound:.2f}, {upper_bound:.2f}])")
+                        pred_v2 = pred_v2_clamped
+            
             refined_results[target] = {
                 "prediction_v1": r["prediction"],
                 "prediction":    round(pred_v2, 2),
@@ -550,14 +628,19 @@ def add_deterministic_ica(results: dict):
 
 
 # ??? 4. PREDECIR ??????????????????????????????????????????????????????????????
-def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> dict:
+def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
+            pred_date: pd.Timestamp = None) -> dict:
     """
     Genera predicciones para los targets usando sus respectivas features.
     Si forecast_override tiene features fc_*_d1 reales, las sustituye en la fila.
+    Usa medianas estacionales (del mes de pred_date) para imputar NaN.
     """
     results = {}
 
-    # Aplicar pron?stico real si est? disponible
+    # Determinar el mes de predicción para medianas estacionales
+    pred_month = pred_date.month if pred_date is not None else datetime.now().month
+
+    # Aplicar pronóstico real si está disponible
     if forecast_override:
         row = row.copy()
         for feat, val in forecast_override.items():
@@ -567,6 +650,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
         model    = m["model"]
         features = m["features"]
         medians  = m.get("medians", {})
+        seasonal_medians = m.get("seasonal_medians", {})
 
         # Construir vector de entrada con las features del modelo
         missing_features = [f for f in features if f not in row.columns]
@@ -574,11 +658,19 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
             log(f"  [WARN]  {target}: {len(missing_features)} features no encontradas en parquet")
             log(f"       Primeras: {missing_features[:5]}")
 
-        # A1: Usar medianas guardadas del entrenamiento en vez de fill_value=0
-        fill_values = {f: medians.get(f, 0) for f in features}
-        X = row.reindex(columns=features).fillna(fill_values).astype(float)
+        # A2: Usar medianas ESTACIONALES del mes actual (no anuales)
+        # Esto es crítico para NO2 que tiene estacionalidad 2x
+        fill_values = get_seasonal_fill_values(features, medians, seasonal_medians, pred_month)
+
+        # Contar features imputadas para diagnóstico
+        X_raw = row.reindex(columns=features)
+        n_nan = int(X_raw.isna().sum(axis=1).iloc[0])
+        X = X_raw.fillna(fill_values).astype(float)
         pred = float(model.predict(X)[0])
         pred = max(0.0, pred)  # los contaminantes no pueden ser negativos
+
+        if n_nan > 0:
+            log(f"  [INFO] {target}: {n_nan}/{len(features)} features imputadas con mediana mes {pred_month}")
         
         # Calcular SHAP / Feature Contributions
         try:
@@ -589,7 +681,6 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None) -> 
             feats_impact.sort(key=lambda x: abs(x[1]), reverse=True)
             
             # Asegurarnos de tener al menos las top features para el gráfico
-            # incluso si el impacto es casi cero, para evitar gráficos vacíos
             positive_feats = [f for f in feats_impact if f[1] >= 0]
             negative_feats = [f for f in feats_impact if f[1] < 0]
             
@@ -690,33 +781,65 @@ def main():
         section("1. Cargando modelos v8")
     models = load_models()
 
-    # 2. Fila de predicci?n
+    # 2. Fila de predicción
     target_date = pd.Timestamp(date_arg) if date_arg else None
     if not json_only:
-        section("2. Preparando fila de predicci?n")
+        section("2. Preparando fila de predicción")
     row, pred_date = load_prediction_row(target_date)
 
-    # 3. Pron?stico meteorol?gico (opcional)
+    # 3. Pronóstico meteorológico (opcional)
     forecast_override = {}
     if with_forecast:
         if not json_only:
-            section("3. Descargando pron?stico Open-Meteo")
+            section("3. Descargando pronóstico Open-Meteo")
         forecast_override = fetch_forecast_d1(pred_date)
 
-    # Aplicar pronóstico real a row si está disponible para que tanto predict como refine_with_meta_models lo usen
+    # Aplicar pronóstico real a row si está disponible
     if forecast_override:
         row = row.copy()
         for feat, val in forecast_override.items():
             row[feat] = val
 
-    # 4. Predecir
-    results = predict(models, row, None)
+    # FIX v8.1: Propagar variables fc_* del pronóstico a variables base cuando son NaN
+    # Esto es CRÍTICO: sin esto, variables como temperature_2m, HDD, wind_speed_10m
+    # quedan NaN en la fila de producción y se imputan con medianas que sesgan NO2.
+    fc_to_base_map = {
+        "fc_temperature_2m_d1": "temperature_2m",
+        "fc_wind_speed_10m_d1": "wind_speed_10m",
+        "fc_wind_gusts_10m_d1": "wind_gusts_10m",
+        "fc_wind_direction_10m_d1": "wind_direction_10m",
+        "fc_boundary_layer_height_d1": "boundary_layer_height",
+        "fc_cloud_cover_d1": "cloud_cover",
+        "fc_relative_humidity_2m_d1": "relative_humidity_2m",
+        "fc_precipitation_d1": "precipitation",
+        "fc_rain_d1": "rain",
+        "fc_sunshine_duration_d1": "sunshine_duration",
+        "fc_weather_code_d1": "weather_code",
+        "fc_dew_point_d1": "dew_point",
+        "fc_ventilation_index_d1": "ventilation_index",
+        "fc_HDD_d1": "HDD",
+        "fc_wind_u_d1": "wind_u",
+        "fc_wind_v_d1": "wind_v",
+    }
+    propagated = 0
+    for fc_col, base_col in fc_to_base_map.items():
+        if base_col in row.columns and fc_col in row.columns:
+            if pd.isna(row[base_col].iloc[0]) and pd.notna(row[fc_col].iloc[0]):
+                row = row.copy() if propagated == 0 else row
+                row[base_col] = row[fc_col].iloc[0]
+                propagated += 1
+    if propagated > 0 and not json_only:
+        log(f"  [FIX] Propagadas {propagated} variables fc_*_d1 -> base (relleno de NaN)")
+
+    # 4. Predecir (con medianas estacionales)
+    results = predict(models, row, None, pred_date=pred_date)
 
     # 4b. Refinar con Meta-Modelos
     if "--no-meta" not in sys.argv:
         if not json_only:
-            section("4. Refinando con Meta-Modelos (v2)")
-        df_history = pd.read_parquet(DATASET_PATH) # Necesitamos el histórico para errores
+            section("4. Refinando con Meta-Modelos (v2) + Clamp v8.1")
+        df_history = pd.read_parquet(DATASET_PATH)
+        df_history["date"] = pd.to_datetime(df_history["date"], utc=True)
         results = refine_with_meta_models(results, row, df_history, pred_date)
 
     # 5. Mostrar o volcar JSON
