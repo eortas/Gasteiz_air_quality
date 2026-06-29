@@ -931,7 +931,7 @@ html_template = """<!DOCTYPE html>
     <div class="did-section" style="padding: 0;">
       <div class="did-title" data-i18n="backtestTitle"><strong>Validación de Ayer</strong> — Backtesting de precisión</div>
       <table>
-        <thead><tr><th data-i18n="colParam">Parámetro</th><th data-i18n="colPred">Predicción Ayer (v8)</th><th data-i18n="colReal">Medición Real</th><th data-i18n="colDev">Desviación</th><th data-i18n="colStatus">Estado</th></tr></thead>
+        <thead><tr><th data-i18n="colParam">Parámetro</th><th data-i18n="colPred">Predicción Ayer (v8)</th><th data-i18n="colReal">Medición Real</th><th data-i18n="colStatus">Estado</th></tr></thead>
         <tbody id="backtestTable"></tbody>
       </table>
     </div>
@@ -1664,19 +1664,15 @@ function renderDashboard3() {
 
   const lastRealDraw = d.real[d.real.length - 1]; 
   const lastPred = d.pred[d.pred.length - 1] || 0;
-  let realText, errorText, interpret, interpretColor;
+  let realText, interpret;
   
   if (lastRealDraw === null || lastRealDraw === undefined) {
       realText = currentLang === 'es' ? "N/D (Pendiente)" : "E/D (Zain)";
-      errorText = "N/D";
-      interpret = t.backWait;
-      interpretColor = "var(--muted)";
+      interpret = "⏳";
   } else {
       const lastReal = lastRealDraw;
       const error = lastPred > 0 ? (((lastReal - lastPred) / lastPred) * 100).toFixed(1) : 0;
       realText = currentContV10 === 'ICA' ? `${lastReal.toFixed(1)}` : `${lastReal.toFixed(1)} µg/m³`;
-      errorText = `${error > 0 ? '+' : ''}${error}%`;
-      const errorColor = error > 0 ? "var(--red)" : "var(--green)";
       const absError = Math.abs(error);
       const absValDiff = Math.abs(lastReal - lastPred);
       
@@ -1686,10 +1682,13 @@ function renderDashboard3() {
       else if (currentContV10 === 'PM10' && absValDiff <= 6.0) { isLowAbsError = true; }
       else if (currentContV10 === 'PM2.5' && absValDiff <= 4.0) { isLowAbsError = true; }
       
-      if (absError <= 10 || isLowAbsError) { interpretColor = "var(--green)"; interpret = t.backExcel; } 
-      else if (absError <= 20) { interpretColor = "var(--green)"; interpret = t.backGood; } 
-      else if (absError <= 35) { interpretColor = "var(--green)"; interpret = t.backAccept; } 
-      else { interpretColor = "var(--yellow)"; interpret = t.backReview; }
+      if (isLowAbsError) {
+          interpret = "🟡"; // Amarillo para la tolerancia especial de baja concentracion (mas honesto)
+      } else if (absError <= 35) {
+          interpret = "🟢"; // Verde para precision aceptable/buena/excelente normal
+      } else {
+          interpret = "🔴"; // Rojo si esta fuera de rango y no es baja concentracion
+      }
 
       const predText = currentContV10 === 'ICA' ? `${lastPred.toFixed(1)}` : `${lastPred.toFixed(1)} µg/m³`;
 
@@ -1698,8 +1697,7 @@ function renderDashboard3() {
           <td><strong>${currentContV10} (${currentZoneV10.toUpperCase()})</strong></td>
           <td>${predText}</td>
           <td>${realText}</td>
-          <td style="color:${errorColor}; font-weight:bold;">${errorText}</td>
-          <td style="color:${interpretColor}; font-weight:bold;">${interpret}</td>
+          <td style="font-size: 1.25rem; text-align: center; line-height: 1;">${interpret}</td>
         </tr>
       `;
   }
