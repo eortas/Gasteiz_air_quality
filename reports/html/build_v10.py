@@ -1682,12 +1682,12 @@ function renderDashboard3() {
       else if (currentContV10 === 'PM10' && absValDiff <= 6.0) { isLowAbsError = true; }
       else if (currentContV10 === 'PM2.5' && absValDiff <= 4.0) { isLowAbsError = true; }
       
-      if (isLowAbsError) {
-          interpret = "🟡"; // Amarillo para la tolerancia especial de baja concentracion (mas honesto)
-      } else if (absError <= 35) {
+      if (absError <= 35) {
           interpret = "🟢"; // Verde para precision aceptable/buena/excelente normal
+      } else if (isLowAbsError) {
+          interpret = "🟡"; // Amarillo para la tolerancia especial de baja concentracion (mas honesto)
       } else {
-          interpret = "🟡"; // Amarillo en lugar de rojo para desviaciones mayores
+          interpret = "🔴"; // Rojo para desviaciones mayores
       }
 
       const predText = currentContV10 === 'ICA' ? `${lastPred.toFixed(1)}` : `${lastPred.toFixed(1)} µg/m³`;
