@@ -1687,7 +1687,7 @@ function renderDashboard3() {
       } else if (absError <= 35) {
           interpret = "🟢"; // Verde para precision aceptable/buena/excelente normal
       } else {
-          interpret = "🔴"; // Rojo si esta fuera de rango y no es baja concentracion
+          interpret = "🟡"; // Amarillo en lugar de rojo para desviaciones mayores
       }
 
       const predText = currentContV10 === 'ICA' ? `${lastPred.toFixed(1)}` : `${lastPred.toFixed(1)} µg/m³`;
