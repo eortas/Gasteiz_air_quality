@@ -1015,9 +1015,9 @@ function renderDashboard3() {
   else if (riskLevel === 1) { badge.innerText = t.v10Mod; badge.style.color = "var(--yellow)"; badge.style.borderColor = "var(--yellow)"; badge.style.backgroundColor = getCssVar('--yellow')+"1A"; }
   else { badge.innerText = t.v10Bad; badge.style.color = "var(--red)"; badge.style.borderColor = "var(--red)"; badge.style.backgroundColor = getCssVar('--red')+"1A"; }
 
-  document.getElementById('val-no2').innerHTML = `${no2.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
-  document.getElementById('val-pm25').innerHTML = `${pm25.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
-  document.getElementById('val-pm10').innerHTML = `${pm10.toFixed(1)} <span style="font-size:10px; color:var(--accent); vertical-align:middle; border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:5px">V2 REFINADO</span>`;
+  document.getElementById('val-no2').innerHTML = `${no2.toFixed(1)}`;
+  document.getElementById('val-pm25').innerHTML = `${pm25.toFixed(1)}`;
+  document.getElementById('val-pm10').innerHTML = `${pm10.toFixed(1)}`;
 
   const d = perfStats[currentZoneV10][currentContV10] || {labels:[], real:[], pred:[]};
   const ctx = document.getElementById('perfChart').getContext('2d');
