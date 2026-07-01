@@ -1,403 +1,403 @@
 {
-  "prediction_date": "2026-07-01",
-  "generated_at": "2026-06-30T09:47:46.989233+00:00",
+  "prediction_date": "2026-07-02",
+  "generated_at": "2026-07-01T01:48:43.301756+00:00",
   "model_version": "v8",
   "targets": {
     "NO2_zbe_d1": {
-      "prediction_v1": 7.23,
-      "prediction": 7.23,
-      "lower": 2.22,
-      "upper": 12.24,
+      "prediction_v1": 7.85,
+      "prediction": 7.85,
+      "lower": 2.84,
+      "upper": 12.86,
       "rmse_cv": 3.915,
       "correction": 0.0,
       "foresight": {
-        "base_value": 10.67,
+        "base_value": 10.66,
         "positive_top": [
           {
             "feature": "fc_wind_gusts_10m_d1",
-            "value": 1.19
+            "value": 2.09
           },
           {
             "feature": "exp_traffic_volume_d1",
-            "value": 0.51
-          },
-          {
-            "feature": "ICA_out",
-            "value": 0.24
-          },
-          {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.21
+            "value": 0.57
           },
           {
             "feature": "PM2.5_out_diff_7d",
-            "value": 0.14
+            "value": 0.23
+          },
+          {
+            "feature": "viento_dir_out",
+            "value": 0.22
+          },
+          {
+            "feature": "PM10_out_roll_std_30d",
+            "value": 0.21
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_zbe",
-            "value": -2.01
+            "value": -3.01
           },
           {
             "feature": "NO2_zbe_roll_mean_7d",
-            "value": -1.48
-          },
-          {
-            "feature": "PM10_zbe_roll_mean_14d",
-            "value": -0.36
+            "value": -1.26
           },
           {
             "feature": "fc_HDD_d1",
-            "value": -0.32
+            "value": -0.53
           },
           {
-            "feature": "fc_wind_direction_10m_d1",
-            "value": -0.29
+            "feature": "PM10_zbe_roll_mean_14d",
+            "value": -0.51
+          },
+          {
+            "feature": "NO2_zbe_roll_max_3d",
+            "value": -0.3
           }
         ],
         "narrative": {
-          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz se encuentra afectada por la presencia de NO2, con una predicción de 7.2 µg/m³. La base de este valor es de 10.7, lo que indica que la calidad del aire es inferior a la media.",
-          "eu": "Vitoria-Gasteizeneko ZBE eremuan NO2 kontsentrakoa da kalitatea airearen egoeraa eragiten duena, 7,2 µg/m³-ko emisioa da predikzioa. 10,7 da emisio hau oinarri duena, hau da, airearen kalitatea batez bestekoaren beheko aldean dagoela adierazten du."
+          "es": "La calidad del aire en la zona ZBE de Vitoria-Gasteiz se predice que será moderadamente contaminada debido a la presencia de NO2. La predicción de 7,8 µg/m³ supera la base de 10,7 µg/m³, lo que indica un nivel de contaminación elevado.",
+          "eu": "Vitoria-Gasteizeko ZBE eremuan airearen kalitatea NO2 kontzentrazioaren ondorioz kontaminatua izango da. 7,8 µg/m³ko predikzioa 10,7 µg/m³ko oinarriaren gainetik dago, hau da, kontaminazio maila handia da."
         }
       }
     },
     "NO2_out_d1": {
-      "prediction_v1": 6.4,
-      "prediction": 6.4,
-      "lower": 0.65,
-      "upper": 12.15,
+      "prediction_v1": 5.5,
+      "prediction": 5.5,
+      "lower": 0,
+      "upper": 11.25,
       "rmse_cv": 4.49,
       "correction": 0.0,
       "foresight": {
-        "base_value": 12.45,
+        "base_value": 12.44,
         "positive_top": [
           {
             "feature": "fc_wind_speed_10m_d1",
-            "value": 0.99
+            "value": 1.4
           },
           {
-            "feature": "fc_wind_gusts_10m_d1",
-            "value": 0.96
+            "feature": "PM10_zbe_lag_2d",
+            "value": 0.25
           },
           {
             "feature": "exp_traffic_volume_d1",
-            "value": 0.13
+            "value": 0.14
           },
           {
-            "feature": "fc_wind_v_d1",
-            "value": 0.11
+            "feature": "fc_ventilation_index_d1",
+            "value": 0.12
           },
           {
             "feature": "relative_humidity_2m",
-            "value": 0.08
+            "value": 0.12
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_out",
-            "value": -4.35
+            "value": -4.68
           },
           {
             "feature": "fc_temperature_2m_d1",
-            "value": -0.87
+            "value": -0.92
           },
           {
             "feature": "NO2_zbe_roll_mean_7d",
-            "value": -0.52
+            "value": -0.68
+          },
+          {
+            "feature": "fc_dew_point_d1",
+            "value": -0.39
           },
           {
             "feature": "fc_HDD_d1",
-            "value": -0.47
-          },
-          {
-            "feature": "doy_cos",
-            "value": -0.28
+            "value": -0.36
           }
         ],
         "narrative": {
-          "es": "El análisis ambiental indica que la concentración de NO2 en la zona exterior de Vitoria-Gasteiz se espera que sea de 6,4 µg/m³, lo que es inferior a la base de 12,4 µg/m³. Los factores que contribuyen a esta disminución son la temperatura alta y la acumulación reciente de NO2.",
-          "eu": "Analisi ambientala diozkien NO2 kontzentrazioa Vitoria-Gasteizeko kanpoaldean 6,4 µg/m³ izango dela uste dute, 12,4 µg/m³ bazekoa baino txikiagoa. Tenperatura altua eta NO2 kontzentrazioa azkeneko egunetan jasotakoaren beherakada dira faktoreak."
+          "es": "La calidad del aire en Vitoria-Gasteiz está siendo afectada por la presencia de óxido de nitrógeno (NO2) en niveles moderadamente altos. La predicción para la zona exterior (OUT) es de 5,5 µg/m³, lo que supera ligeramente la base de 12,4 µg/m³.",
+          "eu": "Vitoria-Gasteizeneko airearen kalitatea NO2ren presentzia dela eta moderatuan altuak diren maila batean dago. Zona kanpokoaren (OUT) aurreikuspena 5,5 µg/m³koa da, basearen 12,4 µg/m³ baino altuagoa dena."
         }
       }
     },
     "PM10_zbe_d1": {
-      "prediction_v1": 8.93,
-      "prediction": 9.44,
-      "lower": 4.02,
-      "upper": 14.87,
+      "prediction_v1": 11.99,
+      "prediction": 12.53,
+      "lower": 7.11,
+      "upper": 17.96,
       "rmse_cv": 4.239,
-      "correction": 0.51,
+      "correction": 0.54,
       "foresight": {
-        "base_value": 12.71,
+        "base_value": 12.7,
         "positive_top": [
           {
-            "feature": "NO2_zbe_roll_max_14d",
-            "value": 0.35
+            "feature": "fc_wind_gusts_10m_d1",
+            "value": 0.39
+          },
+          {
+            "feature": "fc_precipitation_acum_3d_d1",
+            "value": 0.36
           },
           {
             "feature": "ICA_zbe_diff_7d",
-            "value": 0.35
+            "value": 0.31
           },
           {
-            "feature": "fc_precipitation_d1",
-            "value": 0.32
+            "feature": "fc_precipitation_acum_3d_d3",
+            "value": 0.29
           },
           {
-            "feature": "exp_traffic_occupancy_d1",
-            "value": 0.27
-          },
-          {
-            "feature": "PM10_zbe_diff_30d",
-            "value": 0.18
+            "feature": "cloud_cover",
+            "value": 0.28
           }
         ],
         "negative_top": [
           {
             "feature": "PM10_zbe",
-            "value": -2.4
+            "value": -1.63
           },
           {
             "feature": "ICA_zbe",
-            "value": -1.0
-          },
-          {
-            "feature": "fc_precipitation_acum_3d_d1",
-            "value": -0.5
-          },
-          {
-            "feature": "PM2.5_zbe_lag_3d",
-            "value": -0.42
+            "value": -0.79
           },
           {
             "feature": "fc_sunshine_duration_d3",
-            "value": -0.27
+            "value": -0.25
+          },
+          {
+            "feature": "traffic_volume_lag_7d",
+            "value": -0.18
+          },
+          {
+            "feature": "fc_cloud_cover_d2",
+            "value": -0.16
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5570, Requested 868. Please try again in 4.38s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
-          "eu": "API errorea"
+          "es": "El nivel de contaminación por PM10 en la zona ZBE de Vitoria-Gasteiz se espera que sea de 12,0 µg/m³, ligeramente por debajo de la base de 12,7 µg/m³. La predicción se ve influenciada por factores que aumentan la contaminación, como las ráfagas de viento y la precipitación acumulada en los últimos días.",
+          "eu": "ZBE eremuko PM10 kontaminazio-maila 12,0 µg/m³ izango da, 12,7 µg/m³eko oinarriaren beherago. Aurreikuspena haize-rafagak eta hiru egunetako euria kumulatua bezalako faktorek handitzen duten kontaminazioari esker eragingo dio."
         }
       }
     },
     "PM10_out_d1": {
-      "prediction_v1": 10.73,
-      "prediction": 10.94,
-      "lower": 5.55,
-      "upper": 16.32,
+      "prediction_v1": 12.17,
+      "prediction": 12.18,
+      "lower": 6.79,
+      "upper": 17.56,
       "rmse_cv": 4.208,
-      "correction": 0.21,
+      "correction": 0.01,
       "foresight": {
         "base_value": 10.6,
         "positive_top": [
           {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.59
-          },
-          {
             "feature": "wind_v",
-            "value": 0.51
+            "value": 0.56
           },
           {
-            "feature": "relative_humidity_2m",
-            "value": 0.43
+            "feature": "fc_wind_speed_10m_d1",
+            "value": 0.44
           },
           {
-            "feature": "fc_precipitation_d1",
-            "value": 0.4
+            "feature": "ICA_zbe_diff_7d",
+            "value": 0.36
           },
           {
-            "feature": "sunshine_duration",
-            "value": 0.3
+            "feature": "PM10_zbe_diff_7d",
+            "value": 0.31
+          },
+          {
+            "feature": "precipitation_acum_3d",
+            "value": 0.31
           }
         ],
         "negative_top": [
           {
-            "feature": "ICA_out",
-            "value": -1.29
-          },
-          {
             "feature": "PM10_out",
-            "value": -1.23
+            "value": -0.73
           },
           {
-            "feature": "NO2_zbe_lag_14d",
-            "value": -0.38
+            "feature": "ICA_out",
+            "value": -0.62
           },
           {
             "feature": "PM2.5_out",
-            "value": -0.34
+            "value": -0.24
           },
           {
-            "feature": "NO2_out_roll_std_3d",
-            "value": -0.34
+            "feature": "ICA_zbe_lag_3d",
+            "value": -0.23
+          },
+          {
+            "feature": "fc_relative_humidity_2m_d1",
+            "value": -0.2
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5561, Requested 854. Please try again in 4.15s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5924, Requested 465. Please try again in 3.89s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
           "eu": "API errorea"
         }
       }
     },
     "PM2.5_zbe_d1": {
-      "prediction_v1": 6.47,
-      "prediction": 6.06,
-      "lower": 2.62,
-      "upper": 9.49,
+      "prediction_v1": 7.36,
+      "prediction": 6.81,
+      "lower": 3.38,
+      "upper": 10.24,
       "rmse_cv": 2.68,
-      "correction": -0.41,
+      "correction": -0.55,
       "foresight": {
         "base_value": 7.51,
         "positive_top": [
           {
-            "feature": "PM10_zbe_diff_7d",
-            "value": 0.38
+            "feature": "fc_wind_gusts_10m_d1",
+            "value": 0.41
           },
           {
             "feature": "wind_v",
-            "value": 0.27
-          },
-          {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.22
+            "value": 0.32
           },
           {
             "feature": "fc_wind_u_d1",
+            "value": 0.21
+          },
+          {
+            "feature": "weather_code",
             "value": 0.17
           },
           {
             "feature": "wind_speed_10m",
-            "value": 0.15
+            "value": 0.17
           }
         ],
         "negative_top": [
           {
             "feature": "PM2.5_zbe",
-            "value": -1.08
+            "value": -0.89
           },
           {
             "feature": "ICA_out",
-            "value": -0.56
+            "value": -0.61
           },
           {
             "feature": "ICA_zbe",
-            "value": -0.34
+            "value": -0.26
           },
           {
             "feature": "PM2.5_out",
-            "value": -0.2
+            "value": -0.24
           },
           {
-            "feature": "NO2_zbe_lag_30d",
-            "value": -0.17
+            "feature": "fc_relative_humidity_2m_d1",
+            "value": -0.15
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5552, Requested 857. Please try again in 4.09s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5914, Requested 400. Please try again in 3.14s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
           "eu": "API errorea"
         }
       }
     },
     "PM2.5_out_d1": {
-      "prediction_v1": 6.05,
-      "prediction": 6.06,
-      "lower": 2.07,
-      "upper": 10.04,
+      "prediction_v1": 6.82,
+      "prediction": 6.37,
+      "lower": 2.39,
+      "upper": 10.36,
       "rmse_cv": 3.111,
-      "correction": 0.01,
+      "correction": -0.45,
       "foresight": {
-        "base_value": 7.04,
+        "base_value": 7.05,
         "positive_top": [
           {
-            "feature": "PM10_out_lag_7d",
-            "value": 0.35
-          },
-          {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.31
+            "feature": "fc_wind_gusts_10m_d1",
+            "value": 0.34
           },
           {
             "feature": "wind_v",
-            "value": 0.22
+            "value": 0.24
           },
           {
-            "feature": "sunshine_duration",
+            "feature": "PM10_out_diff_30d",
+            "value": 0.2
+          },
+          {
+            "feature": "wind_speed_10m",
             "value": 0.18
           },
           {
-            "feature": "fc_wind_u_d1",
-            "value": 0.14
+            "feature": "sunshine_duration",
+            "value": 0.17
           }
         ],
         "negative_top": [
           {
             "feature": "ICA_out",
-            "value": -1.31
+            "value": -0.91
           },
           {
             "feature": "PM2.5_out",
-            "value": -1.26
+            "value": -0.58
           },
           {
-            "feature": "fc_precipitation_acum_3d_d1",
-            "value": -0.11
+            "feature": "ICA_zbe",
+            "value": -0.14
           },
           {
-            "feature": "PM2.5_zbe_roll_max_30d",
+            "feature": "PM10_out",
+            "value": -0.12
+          },
+          {
+            "feature": "fc_relative_humidity_2m_d1",
             "value": -0.1
-          },
-          {
-            "feature": "ICA_zbe_lag_2d",
-            "value": -0.08
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5543, Requested 467. Please try again in 100ms. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5903, Requested 462. Please try again in 3.65s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
           "eu": "API errorea"
         }
       }
     },
     "ICA_zbe_d1": {
-      "prediction_v1": 16.51,
-      "prediction": 16.34,
-      "lower": 7.73,
-      "upper": 24.94,
+      "prediction_v1": 20.19,
+      "prediction": 19.84,
+      "lower": 11.24,
+      "upper": 28.45,
       "rmse_cv": 6.722,
-      "correction": -0.18,
+      "correction": -0.35,
       "foresight": {
-        "base_value": 21.26,
+        "base_value": 21.25,
         "positive_top": [
           {
             "feature": "PM2.5 (Ensemble)",
-            "value": -21.21
+            "value": -20.15
           }
         ],
         "negative_top": [],
         "narrative": {
-          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (7.2 µg/m³), PM10 (9.4 µg/m³) y PM2.5 (6.1 µg/m³).",
-          "eu": "Airearen Kalitate Indizea (ICA) NO2 (7.2 µg/m³), PM10 (9.4 µg/m³) eta PM2.5 (6.1 µg/m³) aztertu ondoren lortu da."
+          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (7.8 µg/m³), PM10 (12.5 µg/m³) y PM2.5 (6.8 µg/m³).",
+          "eu": "Airearen Kalitate Indizea (ICA) NO2 (7.8 µg/m³), PM10 (12.5 µg/m³) eta PM2.5 (6.8 µg/m³) aztertu ondoren lortu da."
         }
       }
     },
     "ICA_out_d1": {
-      "prediction_v1": 16.68,
-      "prediction": 16.74,
-      "lower": 6.51,
-      "upper": 26.96,
+      "prediction_v1": 18.34,
+      "prediction": 17.4,
+      "lower": 7.18,
+      "upper": 27.62,
       "rmse_cv": 7.987,
-      "correction": 0.05,
+      "correction": -0.94,
       "foresight": {
-        "base_value": 19.91,
+        "base_value": 19.9,
         "positive_top": [
           {
             "feature": "PM2.5 (Ensemble)",
-            "value": -28.89
+            "value": -28.21
           }
         ],
         "negative_top": [],
         "narrative": {
-          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (6.4 µg/m³), PM10 (10.9 µg/m³) y PM2.5 (6.1 µg/m³).",
-          "eu": "Airearen Kalitate Indizea (ICA) NO2 (6.4 µg/m³), PM10 (10.9 µg/m³) eta PM2.5 (6.1 µg/m³) aztertu ondoren lortu da."
+          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (5.5 µg/m³), PM10 (12.2 µg/m³) y PM2.5 (6.4 µg/m³).",
+          "eu": "Airearen Kalitate Indizea (ICA) NO2 (5.5 µg/m³), PM10 (12.2 µg/m³) eta PM2.5 (6.4 µg/m³) aztertu ondoren lortu da."
         }
       }
     }
