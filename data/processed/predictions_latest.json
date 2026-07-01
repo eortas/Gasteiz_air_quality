@@ -1,72 +1,72 @@
 {
   "prediction_date": "2026-07-02",
-  "generated_at": "2026-07-01T14:08:41.706594+00:00",
+  "generated_at": "2026-07-01T14:29:15.624640+00:00",
   "model_version": "v8",
   "targets": {
     "NO2_zbe_d1": {
-      "prediction_v1": 6.83,
-      "prediction": 6.83,
-      "lower": 1.82,
-      "upper": 11.84,
+      "prediction_v1": 5.66,
+      "prediction": 5.66,
+      "lower": 0.65,
+      "upper": 10.67,
       "rmse_cv": 3.915,
       "correction": 0.0,
       "foresight": {
         "base_value": 10.66,
         "positive_top": [
           {
-            "feature": "exp_traffic_volume_d1",
-            "value": 0.58
+            "feature": "ICA_zbe_lag_1d",
+            "value": 0.45
           },
           {
             "feature": "viento_dir_out",
-            "value": 0.5
+            "value": 0.37
           },
           {
-            "feature": "PM10_out_roll_std_30d",
+            "feature": "ICA_out_lag_2d",
+            "value": 0.23
+          },
+          {
+            "feature": "fc_temperature_2m_d1",
             "value": 0.17
           },
           {
-            "feature": "PM2.5_out_diff_7d",
-            "value": 0.17
-          },
-          {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.13
+            "feature": "PM10_out_roll_mean_30d",
+            "value": 0.15
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_zbe",
-            "value": -2.14
+            "value": -2.4
           },
           {
             "feature": "NO2_zbe_roll_mean_7d",
-            "value": -1.28
+            "value": -0.93
+          },
+          {
+            "feature": "NO2_zbe_roll_mean_14d",
+            "value": -0.41
           },
           {
             "feature": "PM10_zbe_roll_mean_14d",
-            "value": -0.47
+            "value": -0.4
           },
           {
             "feature": "fc_HDD_d1",
-            "value": -0.46
-          },
-          {
-            "feature": "NO2_zbe_roll_max_3d",
-            "value": -0.32
+            "value": -0.38
           }
         ],
         "narrative": {
-          "es": "La predicción de 6.8 µg/m³ de NO2 en la zona ZBE se ve influenciada principalmente por el volumen de tráfico del día anterior, que incrementa la emisión de NO2. También contribuye el viento proveniente del exterior y la variabilidad reciente de PM10. Por otro lado, la presencia de NO2 acumulado en la zona y su variación reciente, junto con una acumulación de PM10, actúan como factores que reducen la concentración. Este valor predicho es claramente inferior al valor base histórico de 10.7 µg/m³, lo que sugiere una mejora en la calidad del aire en esta zona.",
-          "eu": "NO2-ren 6.8 µg/m³-ren aurreikuspena ZBE eremuaren kasuan, d1 tráficoaren bolumena izan da eragin handiena izan dena, NO2 emisioa handitzen duelako. Gainera, kanpoko airearen irigidura eta PM10ren aldakortasun azkena ere lagun du. Bestalde, NO2 eta PM10ren bildura berriak eragin negatiboak dituzte. Aurreikuspen balio hau 10.7 µg/m³ko historikotik jaitsi da, airearen kalitatea hobetzen ari dela adierazten duena."
+          "es": "La predicción de 5.7 µg/m³ de NO2 en la zona ZBE es significativamente menor que el valor base histórico de 10.7 µg/m³, lo que sugiere una mejora en la calidad del aire. Las variables que más influyen son la acumulación reciente de NO2 (-0.93), que reduce la concentración al reflejar una disminución progresiva del contaminante, y el ICA_zbe_lag_1d (+0.45), que indica un efecto positivo del índice de contaminación del día anterior en la zona ZBE.",
+          "eu": "NO2-ren 5,7 µg/m³-ren predikzioa ZBE eremuarentzat 10,7 µg/m³ko historikoaren balore osoan baino askoz txikiagoa da, airearen kalitatean hobekuntza adierazten duena. Eragina handiena duten aldagaiak NO2-ren bildura lehenetsia da (-0,93), kontsumoan jaitsiera adierazten duena, eta ICA_zbe_lag_1d (+0,45), aurreko eguneko kontaminazio indizearen eragina adierazten duena ZBE eremuan."
         }
       }
     },
     "NO2_out_d1": {
-      "prediction_v1": 3.86,
-      "prediction": 3.86,
+      "prediction_v1": 3.81,
+      "prediction": 3.81,
       "lower": 0,
-      "upper": 9.61,
+      "upper": 9.56,
       "rmse_cv": 4.49,
       "correction": 0.0,
       "foresight": {
@@ -74,330 +74,330 @@
         "positive_top": [
           {
             "feature": "exp_traffic_volume_d1",
-            "value": 0.14
-          },
-          {
-            "feature": "viento_dir_out",
-            "value": 0.14
-          },
-          {
-            "feature": "PM2.5_out_diff_7d",
-            "value": 0.12
-          },
-          {
-            "feature": "PM10_zbe_lag_2d",
-            "value": 0.09
+            "value": 0.19
           },
           {
             "feature": "PM10_out_lag_2d",
+            "value": 0.19
+          },
+          {
+            "feature": "PM10_zbe_lag_2d",
+            "value": 0.16
+          },
+          {
+            "feature": "viento_dir_out",
+            "value": 0.12
+          },
+          {
+            "feature": "presion_zbe",
             "value": 0.07
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_out",
-            "value": -4.21
+            "value": -4.53
           },
           {
             "feature": "fc_temperature_2m_d1",
-            "value": -1.14
+            "value": -1.06
           },
           {
             "feature": "NO2_zbe_roll_mean_7d",
-            "value": -0.8
+            "value": -0.79
           },
           {
-            "feature": "fc_HDD_d1",
-            "value": -0.45
+            "feature": "fc_wind_gusts_10m_d1",
+            "value": -0.67
           },
           {
             "feature": "doy_cos",
-            "value": -0.37
+            "value": -0.38
           }
         ],
         "narrative": {
-          "es": "La predicción de 3.9 µg/m³ de NO2 en la zona OUT es considerablemente menor que el valor base histórico de 12.4 µg/m³, lo que sugiere una disminución notable en la concentración. Las variables que más influyen en esta predicción son el volumen de tráfico del día anterior, la dirección del viento en la zona OUT y la diferencia semanal de PM2.5, que aumentan ligeramente la concentración. Por el contrario, la acumulación reciente de NO2, la temperatura alta y los niveles previos de NO2 en la zona actúan reduciendo la concentración. En este caso, el efecto negativo de estas últimas variables es más fuerte, lo que explica la predicción baja.",
-          "eu": "NO2-ren 3.9 µg/m³-ren aurreikuspena OUT eremuarentzat historikoki 12.4 µg/m³ den balore oso txikia da, NO2-ren kontzentrazioan murrizketa handia adierazten duena. Aurreikuspen honetan eragiten duten aldagai garrantzitsuenak aurreko eguneko trafikoen kantitatea, OUT eremuko airearen norabidea eta PM2.5-ren diferentzia astekoa dira, kontzentrazioa lehenetsi ohi dutelak. Berrantoko, NO2-ren bilduma txikia, tenperatura altua eta NO2-ren maila lehenekoak kontzentrazioa murrizten dute. Kasu honetan, azken aldagai horiek eragina handiagoa dute, aurreikuspen txikia azaltzen duelako."
+          "es": "La predicción de 3.8 µg/m³ de NO2 en la zona OUT es significativamente menor que el valor base histórico de 12.4 µg/m³. Las variables que más influyen en esta predicción son el volumen de tráfico del día anterior, que incrementa ligeramente la concentración, y la acumulación reciente de NO2, que reduce el valor predicho. Además, la temperatura alta también contribuye a disminuir la concentración. Estos factores indican que, aunque el tráfico sigue teniendo un efecto positivo, otros elementos como la dilución por calor y la disminución natural del NO2 están compensando su impacto.",
+          "eu": "NO2-ren 3,8 µg/m³-ren aurreikuspena OUT eremuarentzat 12,4 µg/m³ko historikoaren balore oso baxuagoa da. Aurreikuspen honetan eragiten duten aldagai garrantzitsuenak aurreko eguneko trafikoaren kantitatea da, NO2-ren konzentrazioa nahi aski igotzen duelako, eta NO2-ren bilduma berriagoa, aurreikuspena behera eramaten duelako. Gainera, tenperatura altua ere NO2-ren konzentrazioa murrizten du. Faktore horiek adierazten dute trafikok oraindik eragina duela, beste elementu batzuk, hala nola beroaren eraginak, NO2-ren eragina kompensoatzen ari direla."
         }
       }
     },
     "PM10_zbe_d1": {
-      "prediction_v1": 9.84,
-      "prediction": 9.45,
-      "lower": 4.02,
-      "upper": 14.87,
+      "prediction_v1": 11.53,
+      "prediction": 11.71,
+      "lower": 6.29,
+      "upper": 17.14,
       "rmse_cv": 4.239,
-      "correction": -0.39,
+      "correction": 0.18,
       "foresight": {
         "base_value": 12.7,
         "positive_top": [
           {
             "feature": "fc_precipitation_acum_3d_d1",
-            "value": 0.74
+            "value": 0.59
           },
           {
-            "feature": "NO2_zbe_lag_1d",
-            "value": 0.4
+            "feature": "ICA_zbe_diff_30d",
+            "value": 0.48
           },
           {
-            "feature": "ICA_zbe_lag_14d",
-            "value": 0.28
+            "feature": "presion_out",
+            "value": 0.45
           },
           {
             "feature": "fc_precipitation_acum_3d_d3",
-            "value": 0.2
+            "value": 0.3
           },
           {
-            "feature": "exp_traffic_occupancy_d1",
-            "value": 0.19
+            "feature": "PM10_out_diff_7d",
+            "value": 0.23
           }
         ],
         "negative_top": [
           {
             "feature": "PM10_zbe",
-            "value": -2.4
+            "value": -2.42
           },
           {
             "feature": "ICA_zbe",
-            "value": -0.49
+            "value": -0.68
           },
           {
-            "feature": "fc_sunshine_duration_d3",
-            "value": -0.4
+            "feature": "traffic_volume_lag_7d",
+            "value": -0.27
           },
           {
-            "feature": "PM2.5_zbe_lag_3d",
-            "value": -0.35
+            "feature": "NO2_zbe_diff_30d",
+            "value": -0.27
           },
           {
-            "feature": "fc_wind_gusts_10m_d1",
-            "value": -0.21
+            "feature": "fc_ventilation_index_d1",
+            "value": -0.25
           }
         ],
         "narrative": {
-          "es": "La predicción de PM10 en la zona ZBE es de 9.8 µg/m³, por debajo del valor base histórico de 12.7 µg/m³. Las variables que más influyen en esta predicción son la precipitación acumulada en los últimos 3 días, que favorece la acumulación de PM10, y los niveles pasados de NO2 y Índice Climático de Aire (ICA), que también incrementan ligeramente la concentración. Por otro lado, la presencia directa de PM10 en la zona, junto con el ICA reciente y la duración de la radiación solar en los últimos 3 días, actúan reduciendo la concentración de PM10.",
-          "eu": "PM10-ren predikzioa ZBE eremuaren kasuan 9,8 µg/m³ da, historikoki 12,7 µg/m³ izanik. Gertaera horretan eragiten duten aldagai garrantzitsuenak 3 eguneko euriaren akumulatua da, PM10-ren bildatzea eragiten duena, eta NO2 eta Airearen Klimatiko Indizearen (ICA) aurreko mailak, PM10-konzentrazioa lehenetsi egiten dutelak. Bestalde, ZBE-ko PM10-aren uneko balioa, ICA-aren balio berriak eta 3 eguneko argi zuntzaren iraupena PM10-konzentrazioa murrizten dute."
+          "es": "La predicción de PM10 para la zona ZBE es de 11.5 µg/m³, ligeramente por debajo del valor base histórico de 12.7 µg/m³. Las variables que más influyen en esta predicción son la precipitación acumulada en los últimos 3 días (fc_precipitation_acum_3d_d1), que favorece la dispersión de partículas, y la presión exterior (presion_out), que también contribuye a mejorar la calidad del aire. Por el contrario, la concentración actual de PM10 en la zona (PM10_zbe) tiene un efecto negativo importante, reduciendo la predicción. Además, el volumen de tráfico de los últimos 7 días (traffic_volume_lag_7d) también tiene un efecto reducido, pero contribuye a disminuir la concentración.",
+          "eu": "PM10-ren predikzioa ZBE eremuan 11.5 µg/m³ da, historikoki oinarritutako 12.7 µg/m³ balorearen azpitik. Garrantzitsuenak diren aldagaiak 3 eguneko bildutako prezipitazioa (fc_precipitation_acum_3d_d1), partikulen zabalkundea lagundatzen duen, eta kanpoko presioa (presion_out), airearen kalitatea hobetzen duen. Alde batetik, PM10-ren uneko konzentrazioa ZBE eremuan (PM10_zbe) eragin negatibo handia du, predikzioa murrizten duelarik. Gainera, azken 7 eguneko trafikoaren kantitatea (traffic_volume_lag_7d) ere eragina du, baina maila txikian, konzentrazioa murrizten duelarik."
         }
       }
     },
     "PM10_out_d1": {
-      "prediction_v1": 10.43,
-      "prediction": 10.14,
-      "lower": 4.75,
-      "upper": 15.53,
+      "prediction_v1": 9.57,
+      "prediction": 9.4,
+      "lower": 4.01,
+      "upper": 14.78,
       "rmse_cv": 4.208,
-      "correction": -0.29,
+      "correction": -0.17,
       "foresight": {
         "base_value": 10.6,
         "positive_top": [
           {
-            "feature": "precipitation_acum_3d",
-            "value": 0.5
+            "feature": "wind_v",
+            "value": 0.44
+          },
+          {
+            "feature": "PM2.5_zbe_roll_max_30d",
+            "value": 0.29
+          },
+          {
+            "feature": "fc_precipitation_acum_3d_d3",
+            "value": 0.25
+          },
+          {
+            "feature": "fc_boundary_layer_height_d2",
+            "value": 0.23
           },
           {
             "feature": "fc_precipitation_acum_3d_d1",
-            "value": 0.31
-          },
-          {
-            "feature": "PM2.5_out_diff_7d",
-            "value": 0.31
-          },
-          {
-            "feature": "wind_v",
-            "value": 0.29
-          },
-          {
-            "feature": "ICA_zbe_diff_7d",
-            "value": 0.29
+            "value": 0.23
           }
         ],
         "negative_top": [
           {
             "feature": "ICA_out",
-            "value": -1.4
+            "value": -1.34
           },
           {
             "feature": "PM10_out",
-            "value": -0.79
+            "value": -0.97
           },
           {
-            "feature": "PM2.5_out",
-            "value": -0.32
-          },
-          {
-            "feature": "PM10_zbe",
-            "value": -0.13
+            "feature": "NO2_zbe_lag_14d",
+            "value": -0.24
           },
           {
             "feature": "fc_ventilation_index_d1",
-            "value": -0.11
+            "value": -0.22
+          },
+          {
+            "feature": "PM10_zbe",
+            "value": -0.22
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3-32b` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5991, Requested 1172. Please try again in 11.629999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3-32b` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5458, Requested 896. Please try again in 3.54s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
           "eu": "API errorea"
         }
       }
     },
     "PM2.5_zbe_d1": {
-      "prediction_v1": 6.43,
-      "prediction": 5.79,
-      "lower": 2.36,
-      "upper": 9.22,
+      "prediction_v1": 6.63,
+      "prediction": 6.08,
+      "lower": 2.65,
+      "upper": 9.51,
       "rmse_cv": 2.68,
-      "correction": -0.64,
+      "correction": -0.55,
       "foresight": {
         "base_value": 7.51,
         "positive_top": [
           {
-            "feature": "wind_v",
-            "value": 0.3
+            "feature": "fc_precipitation_acum_3d_d3",
+            "value": 0.22
           },
           {
             "feature": "PM10_zbe_diff_7d",
             "value": 0.21
           },
           {
-            "feature": "fc_wind_u_d1",
+            "feature": "wind_v",
             "value": 0.17
           },
           {
-            "feature": "fc_precipitation_acum_3d_d3",
+            "feature": "NO2_zbe_roll_mean_7d",
             "value": 0.16
           },
           {
-            "feature": "PM10_out_diff_7d",
-            "value": 0.16
+            "feature": "fc_boundary_layer_height_d2",
+            "value": 0.14
           }
         ],
         "negative_top": [
           {
-            "feature": "ICA_out",
-            "value": -0.65
-          },
-          {
             "feature": "PM2.5_zbe",
-            "value": -0.5
-          },
-          {
-            "feature": "ICA_zbe",
-            "value": -0.42
-          },
-          {
-            "feature": "fc_wind_gusts_10m_d1",
-            "value": -0.28
+            "value": -0.52
           },
           {
             "feature": "PM2.5_out",
-            "value": -0.21
+            "value": -0.41
+          },
+          {
+            "feature": "ICA_zbe",
+            "value": -0.38
+          },
+          {
+            "feature": "ICA_out",
+            "value": -0.34
+          },
+          {
+            "feature": "fc_relative_humidity_2m_d1",
+            "value": -0.15
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3-32b` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5982, Requested 1163. Please try again in 11.45s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3-32b` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5456, Requested 1173. Please try again in 6.29s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
           "eu": "API errorea"
         }
       }
     },
     "PM2.5_out_d1": {
-      "prediction_v1": 5.48,
-      "prediction": 5.02,
-      "lower": 1.04,
-      "upper": 9.0,
+      "prediction_v1": 6.35,
+      "prediction": 6.16,
+      "lower": 2.18,
+      "upper": 10.14,
       "rmse_cv": 3.111,
-      "correction": -0.46,
+      "correction": -0.19,
       "foresight": {
-        "base_value": 7.04,
+        "base_value": 7.05,
         "positive_top": [
           {
             "feature": "wind_v",
-            "value": 0.39
+            "value": 0.47
+          },
+          {
+            "feature": "PM2.5_zbe_roll_max_30d",
+            "value": 0.34
+          },
+          {
+            "feature": "PM10_out_lag_7d",
+            "value": 0.26
           },
           {
             "feature": "sunshine_duration",
             "value": 0.25
           },
           {
-            "feature": "fc_precipitation_acum_3d_d3",
+            "feature": "fc_precipitation_acum_3d_d1",
             "value": 0.18
-          },
-          {
-            "feature": "fc_precipitation_acum_3d_d2",
-            "value": 0.17
-          },
-          {
-            "feature": "NO2_out_roll_std_30d",
-            "value": 0.15
           }
         ],
         "negative_top": [
           {
             "feature": "ICA_out",
-            "value": -1.11
+            "value": -0.95
           },
           {
             "feature": "PM2.5_out",
-            "value": -0.57
+            "value": -0.53
           },
           {
-            "feature": "PM10_out",
-            "value": -0.23
+            "feature": "NO2_out_diff_7d",
+            "value": -0.15
           },
           {
-            "feature": "fc_ventilation_index_d1",
-            "value": -0.18
+            "feature": "fc_wind_speed_10m_d1",
+            "value": -0.15
           },
           {
-            "feature": "fc_wind_gusts_10m_d1",
+            "feature": "PM10_zbe_roll_mean_7d",
             "value": -0.13
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3-32b` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5972, Requested 1162. Please try again in 11.34s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3-32b` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5447, Requested 1173. Please try again in 6.2s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
           "eu": "API errorea"
         }
       }
     },
     "ICA_zbe_d1": {
-      "prediction_v1": 17.12,
-      "prediction": 15.92,
-      "lower": 7.32,
-      "upper": 24.53,
+      "prediction_v1": 18.58,
+      "prediction": 17.95,
+      "lower": 9.35,
+      "upper": 26.56,
       "rmse_cv": 6.722,
-      "correction": -1.2,
+      "correction": -0.63,
       "foresight": {
         "base_value": 21.25,
         "positive_top": [
           {
             "feature": "PM2.5 (Ensemble)",
-            "value": -21.57
+            "value": -21.17
           }
         ],
         "negative_top": [],
         "narrative": {
-          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (6.8 µg/m³), PM10 (9.4 µg/m³) y PM2.5 (5.8 µg/m³).",
-          "eu": "Airearen Kalitate Indizea (ICA) NO2 (6.8 µg/m³), PM10 (9.4 µg/m³) eta PM2.5 (5.8 µg/m³) aztertu ondoren lortu da."
+          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (5.7 µg/m³), PM10 (11.7 µg/m³) y PM2.5 (6.1 µg/m³).",
+          "eu": "Airearen Kalitate Indizea (ICA) NO2 (5.7 µg/m³), PM10 (11.7 µg/m³) eta PM2.5 (6.1 µg/m³) aztertu ondoren lortu da."
         }
       }
     },
     "ICA_out_d1": {
-      "prediction_v1": 14.96,
-      "prediction": 13.96,
-      "lower": 3.74,
-      "upper": 24.18,
+      "prediction_v1": 16.64,
+      "prediction": 16.21,
+      "lower": 5.99,
+      "upper": 26.44,
       "rmse_cv": 7.987,
-      "correction": -1.0,
+      "correction": -0.42,
       "foresight": {
         "base_value": 19.9,
         "positive_top": [
           {
             "feature": "PM2.5 (Ensemble)",
-            "value": -31.03
+            "value": -28.65
           }
         ],
         "negative_top": [],
         "narrative": {
-          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (3.9 µg/m³), PM10 (10.1 µg/m³) y PM2.5 (5.0 µg/m³).",
-          "eu": "Airearen Kalitate Indizea (ICA) NO2 (3.9 µg/m³), PM10 (10.1 µg/m³) eta PM2.5 (5.0 µg/m³) aztertu ondoren lortu da."
+          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (3.8 µg/m³), PM10 (9.4 µg/m³) y PM2.5 (6.2 µg/m³).",
+          "eu": "Airearen Kalitate Indizea (ICA) NO2 (3.8 µg/m³), PM10 (9.4 µg/m³) eta PM2.5 (6.2 µg/m³) aztertu ondoren lortu da."
         }
       }
     }
