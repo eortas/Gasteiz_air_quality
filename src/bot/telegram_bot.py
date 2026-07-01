@@ -317,7 +317,7 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 "Content-Type": "application/json"
             },
             json={
-                "model": "llama-3.1-8b-instant",
+                "model": "qwen/qwen3-32b",
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_msg}

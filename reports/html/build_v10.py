@@ -618,7 +618,7 @@ html_template = """<!DOCTYPE html>
 
   * { margin:0; padding:0; box-sizing:border-box; }
 
-  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; min-height: 100vh; }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; min-height: 100vh; overflow-x: hidden; }
 
   /* Contenedor fijo para header y pestañas */
   .header-wrapper { position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -694,7 +694,8 @@ html_template = """<!DOCTYPE html>
   .did-section { padding: 0 48px 40px; }
   .did-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 16px; }
   .did-title strong { color: var(--text); font-size: 13px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
   th { text-align: left; padding: 10px 16px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--surface2); }
   td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
   tr:last-child td { border-bottom: none; }
@@ -721,21 +722,68 @@ html_template = """<!DOCTYPE html>
   .perf-chart-wrap, .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 24px; height: 350px; position: relative; }
   .perf-chart-wrap canvas, .chart-wrap canvas { display: block; width: 100% !important; height: 100% !important; }
 
+  /* ── Foresight grid (desktop) ── */
+  .foresight-grid { display: grid; grid-template-columns: minmax(280px, 1.2fr) minmax(280px, 1.8fr); gap: 40px; }
+
+  /* ── RESPONSIVE: tablet (≤900px) ── */
   @media (max-width: 900px) {
-    .header, .controls, .charts-section, .did-section, .top-nav { padding-left: 20px; padding-right: 20px; }
+    .main-header { padding: 12px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
+    .main-header-title { font-size: 15px; }
+    .header-right { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .main-header-author { display: none; }
+    .top-nav { padding: 0 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; white-space: nowrap; }
+    .top-nav-btn { padding: 12px 14px; font-size: 11px; letter-spacing: 0; white-space: nowrap; }
+    .header { padding: 24px 16px 20px; flex-direction: column; gap: 16px; }
+    .header-left { max-width: 100%; }
+    .legend-global { min-width: 0; width: 100%; flex-direction: row; flex-wrap: wrap; gap: 12px; }
+    .controls { padding: 14px 16px; gap: 8px; }
+    .controls-label { font-size: 10px; }
+    .tab { padding: 5px 10px; font-size: 11px; }
+    .sep { display: none; }
     .summary-grid { grid-template-columns: 1fr 1fr; }
+    .card-value { font-size: 20px; }
     h1 { font-size: 20px; }
-    .v10-risk-grid { flex-direction: column; gap: 20px; }
-    .main-header { padding-left: 20px; padding-right: 20px; flex-direction: column; align-items: flex-start; gap: 12px; }
-    .header-right { width: 100%; justify-content: space-between; }
+    .v10-risk-container { padding: 30px 16px; }
+    .v10-risk-grid { flex-wrap: wrap; gap: 24px 40px; justify-content: center; }
+    .v10-risk-item .val { font-size: 22px; }
+    .v10-risk-badge { font-size: 26px; padding: 10px 22px; }
+    .charts-section { padding: 20px 16px; gap: 28px; }
+    .chart-wrap, .perf-chart-wrap { height: 280px; padding: 16px; }
+    .did-section { padding: 0 16px 28px; }
+    .did-section > div[style*="padding: 0 48px"] { padding: 0 !important; }
+    .map-header { padding: 16px 16px 12px; flex-direction: column; gap: 12px; }
+    .map-legend { min-width: 0; width: 100%; flex-direction: row; flex-wrap: wrap; gap: 10px; }
+    .map-wrap { padding: 16px 16px 24px; }
+    #stationMap { height: 380px; }
+    .foresight-grid { grid-template-columns: 1fr; }
+    .footer { padding: 16px; flex-direction: column; gap: 6px; text-align: center; }
   }
 
-  @media screen and (max-width: 768px) {
-      .chart-wrap, div[style*="position: relative"], canvas { min-height: 350px !important; width: 100% !important; }
+  /* ── RESPONSIVE: móvil (≤600px) ── */
+  @media (max-width: 600px) {
+    .main-header-title { font-size: 13px; }
+    .theme-toggle { font-size: 10px; padding: 5px 10px; height: 28px; }
+    .top-nav-btn { padding: 10px 12px; font-size: 10px; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .card-value { font-size: 22px; }
+    h1 { font-size: 18px; }
+    .v10-risk-container { padding: 20px 12px; }
+    .v10-risk-grid { gap: 16px 24px; }
+    .v10-risk-item .val { font-size: 20px; }
+    .v10-risk-badge { font-size: 22px; padding: 8px 18px; margin-bottom: 20px; }
+    .controls { padding: 10px 12px; }
+    .tab-group { flex-wrap: wrap; }
+    .charts-section { padding: 14px 12px; gap: 20px; }
+    .chart-wrap, .perf-chart-wrap { height: 240px; padding: 12px; }
+    .img-wrap { padding: 12px; }
+    .did-section { padding: 0 12px 20px; }
+    .map-wrap { padding: 12px 12px 20px; }
+    #stationMap { height: 320px; }
+    .footer { padding: 12px; font-size: 10px; }
   }
 
   #stationMap { height: 540px; border-radius: 4px; border: 1px solid var(--border); }
-  .map-header { padding: 32px 48px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+  .map-header { padding: 32px 48px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
   .map-legend { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; min-width: 170px; }
   .map-legend-item { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
   .map-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
@@ -843,7 +891,7 @@ html_template = """<!DOCTYPE html>
 
   <div class="did-section">
     <div class="did-title" data-i18n="didTitle"><strong>Tabla 1</strong> — Difference-in-Differences v8</div>
-    <table><thead><tr><th data-i18n="didCont">Contaminante</th><th>β₃</th><th data-i18n="didPVal">p-valor</th><th>IC 95%</th><th data-i18n="didRel">Efecto relativo</th><th>R²</th><th>n obs</th><th data-i18n="didSig">Significativo</th></tr></thead><tbody id="didTable"></tbody></table>
+    <div class="table-scroll"><table><thead><tr><th data-i18n="didCont">Contaminante</th><th>β₃</th><th data-i18n="didPVal">p-valor</th><th>IC 95%</th><th data-i18n="didRel">Efecto relativo</th><th>R²</th><th>n obs</th><th data-i18n="didSig">Significativo</th></tr></thead><tbody id="didTable"></tbody></table></div>
   </div>
 </div>
 
@@ -930,29 +978,29 @@ html_template = """<!DOCTYPE html>
     
     <div class="did-section" style="padding: 0;">
       <div class="did-title" data-i18n="backtestTitle"><strong>Validación de Ayer</strong> — Backtesting de precisión</div>
-      <table>
+      <div class="table-scroll"><table>
         <thead><tr><th data-i18n="colParam">Parámetro</th><th data-i18n="colPred">Predicción Ayer (v8)</th><th data-i18n="colReal">Medición Real</th><th data-i18n="colStatus">Estado</th></tr></thead>
         <tbody id="backtestTable"></tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 
   <div class="did-section" style="padding: 0 0 40px;">
-    <div class="did-title" style="padding: 0 48px 16px;" data-i18n="perfTitle"><strong>Rendimiento del Modelo v8</strong> — Métricas Cross-Validation (5 Folds)</div>
-    <div style="padding: 0 48px; overflow-x: auto;">
+    <div class="did-title" style="padding: 0 0 16px;" data-i18n="perfTitle"><strong>Rendimiento del Modelo v8</strong> — Métricas Cross-Validation (5 Folds)</div>
+    <div class="table-scroll">
       <table id="metricsTable">
         <thead><tr><th data-i18n="colContZone">Contaminante + Zona</th><th data-i18n="colRMSE">RMSE (µg/m³)</th><th data-i18n="colMAE">MAE (µg/m³)</th><th data-i18n="colR2">R²</th><th data-i18n="colMAPE">MAPE %</th><th data-i18n="colNFeatures">N. Features</th></tr></thead>
         <tbody id="metricsBody"></tbody>
       </table>
     </div>
-    <p style="padding: 12px 48px 0; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace;">
+    <p style="padding: 12px 0 0; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace;">
       <span data-i18n="mapeNote">MAPE calculado solo sobre filas con valor observado > 1 µg/m³.</span>&nbsp;&nbsp;<span data-i18n="mapeThreshold">Umbral aceptación: MAPE < 35%, R² > 0.35.</span>
     </p>
   </div>
 </div>
 
 <div id="view-map" class="view-container">
-  <div class="map-header" style="padding: 16px 48px 16px;">
+  <div class="map-header">
     <div class="header-left">
       <div class="label-tag" data-i18n="mapTag">Vitoria-Gasteiz — Red Sensores Municipales</div>
       <h1 data-i18n="mapTitle">Mapa de <span>Estaciones</span></h1>
@@ -1014,7 +1062,7 @@ html_template = """<!DOCTYPE html>
     </div>
   </div>
 
-  <div class="charts-section" style="display: grid; grid-template-columns: minmax(300px, 1.2fr) minmax(300px, 1.8fr); gap: 40px;">
+  <div class="charts-section foresight-grid">
     <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 30px;">
       <h3 style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent); letter-spacing:1px; margin-bottom:16px; text-transform:uppercase;" data-i18n="fsNarrativeTitle">Explicación de la predicción</h3>
       <div id="fs-narrative" style="font-size:15px; line-height:1.7; color:var(--text); white-space: pre-line;">Cargando narrativa...</div>
@@ -1935,16 +1983,48 @@ function renderForesight() {
   if (narrativeText && typeof narrativeText === 'object') {
     narrativeText = narrativeText[currentLang] || narrativeText['es'] || t.fsNoNarrative;
   }
-  
   if (!narrativeText && fs.error) {
     narrativeText = `Error: ${fs.error}`;
   }
-  narrativeDiv.textContent = narrativeText;
-  
+
+  // Construir vista estructurada: chips de features + narrativa LLM
   const posTop = fs.positive_top || [];
   const negTop = fs.negative_top || [];
-  let factors = [...posTop, ...negTop].sort((a,b) => Math.abs(b.value) - Math.abs(a.value));
-  factors = factors.slice(0, 8); // Top 8 features
+  let allFactors = [...posTop.map(f => ({...f, dir: 'pos'})), ...negTop.map(f => ({...f, dir: 'neg'}))];
+  allFactors.sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+  const topFactors = allFactors.slice(0, 6);
+
+  const chipHtml = topFactors.map(f => {
+    const label = getFeatureLabel(f.feature);
+    const isPos = f.dir === 'pos';
+    const sign = isPos ? '▲' : '▼';
+    const chipColor = isPos
+      ? 'background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.3);color:var(--red)'
+      : 'background:rgba(5,150,105,0.12);border:1px solid rgba(5,150,105,0.3);color:var(--green)';
+    const valStr = isPos ? `+${Math.abs(f.value).toFixed(2)}` : `-${Math.abs(f.value).toFixed(2)}`;
+    return `<div style="display:inline-flex;align-items:center;gap:6px;${chipColor};padding:5px 10px;border-radius:20px;font-size:12px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">
+      <span>${sign}</span>
+      <span style="font-weight:600">${label}</span>
+      <span style="opacity:0.7">(${valStr})</span>
+    </div>`;
+  }).join('');
+
+  const featureSectionTitle = currentLang === 'eu' ? 'Eragin nagusiak' : 'Variables más relevantes';
+  const narrativeSectionTitle = currentLang === 'eu' ? 'Analisia' : 'Análisis';
+
+  narrativeDiv.innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);margin-bottom:10px">${featureSectionTitle}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${chipHtml || '<span style="color:var(--muted);font-size:12px">Sin datos de features</span>'}</div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:8px">${narrativeSectionTitle}</div>
+      <div style="font-size:14px;line-height:1.7;color:var(--text);white-space:pre-line">${narrativeText || ''}</div>
+    </div>
+  `;
+  
+  // Datos para el gráfico de barras (reusa allFactors ya calculado arriba)
+  let factors = allFactors.slice(0, 8); // Top 8 features
   
   const ctx = document.getElementById('fsChart').getContext('2d');
   if (fsChart) fsChart.destroy();

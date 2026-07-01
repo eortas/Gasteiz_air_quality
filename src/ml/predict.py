@@ -531,10 +531,14 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
     neg_str = ", ".join([f"{feat_map.get(f[0], f[0])} ({round(f[1], 2)})" for f in negative_feats[:3]])
 
     prompt = (
-        f"Contaminante: {target.split('_')[0]} | Zona: {target.split('_')[1].upper()} | Predicción: {round(pred_val, 1)} µg/m³ | Base: {round(base_val, 1)}\n"
-        f"Factores ALZA: {pos_str}\n"
-        f"Factores BAJA: {neg_str}\n\n"
-        f"Genera un análisis ambiental breve (2 párrafos cortos) en CASTELLANO y en EUSKERA.\n"
+        f"/no_think\n"
+        f"Contaminante: {target.split('_')[0]} | Zona: {target.split('_')[1].upper()} | Predicción: {round(pred_val, 1)} µg/m³ | Valor base histórico: {round(base_val, 1)} µg/m³\n"
+        f"Variables que AUMENTAN la concentración (SHAP positivo): {pos_str}\n"
+        f"Variables que REDUCEN la concentración (SHAP negativo): {neg_str}\n\n"
+        f"Escribe un análisis ambiental breve (2 párrafos cortos) en CASTELLANO y en EUSKERA que:\n"
+        f"1. Explique cuáles son las variables más relevantes para esta predicción y por qué influyen.\n"
+        f"2. Interprete el valor predicho respecto al valor base histórico.\n"
+        f"Sé concreto sobre el nombre y efecto de cada variable. No uses tecnicismos innecesarios.\n"
         f"Devuelve ÚNICAMENTE un objeto JSON con las claves 'es' y 'eu'.\n"
         f"Ejemplo: {{\"es\": \"texto en castellano\", \"eu\": \"euskarazko testua\"}}"
     )
@@ -547,14 +551,14 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
                 "Content-Type": "application/json"
             },
             json={
-                "model": "llama-3.1-8b-instant",
+                "model": "qwen/qwen3-32b",
                 "messages": [
-                    {"role": "system", "content": "Eres un experto en calidad del aire en Vitoria-Gasteiz. Responde siempre en formato JSON bilingüe."},
+                    {"role": "system", "content": "Eres un experto en calidad del aire en Vitoria-Gasteiz. Tu objetivo es explicar de forma clara y concreta cuáles son las variables meteorológicas y de tráfico que más influyen en la predicción del contaminante, y por qué. Responde siempre en formato JSON bilingüe."},
                     {"role": "user", "content": prompt}
                 ],
                 "response_format": {"type": "json_object"},
-                "temperature": 0.4,
-                "max_tokens": 600
+                "temperature": 0.3,
+                "max_tokens": 800
             },
             timeout=15
         )
