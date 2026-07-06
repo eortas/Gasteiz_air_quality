@@ -31,4 +31,6 @@ outputs/
 .vscode/
 .idea/
 
+# Node.js
+node_modules/
 
