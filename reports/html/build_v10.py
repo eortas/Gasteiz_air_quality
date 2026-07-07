@@ -178,12 +178,129 @@ except Exception as e:
             manana_data[z][c] = 0
 
 # ==============================================================================
-# 4. BACKTESTING
+# 4a. HELPER: Fallback para predicción cuando no hay historial
 # ==============================================================================
-print("Calculando backtesting con modelos v8...")
+def _fallback_predict(target_name, row_input, row_target, df_past, meta_models_fallback, cache):
+    """
+    Recalcula una predicción usando los modelos v8 + meta-modelo como fallback.
+    Solo se usa cuando predictions_history.json no tiene la entrada para ese día.
+    """
+    model_path = MODELS_DIR / f"lgbm_v8_{target_name}.pkl"
+    feat_path  = MODELS_DIR / f"lgbm_v8_{target_name}_features.json"
+    meta_model_path = MODELS_DIR / f"meta_model_{target_name}.pkl"
+
+    try:
+        # Cachear el modelo para no recargarlo en cada iteración
+        if target_name not in cache:
+            model = joblib.load(model_path)
+            features = json.loads(feat_path.read_text(encoding="utf-8"))
+
+            med_path = MODELS_DIR / f"lgbm_v8_{target_name}_medians.json"
+            medians = {}
+            if med_path.exists():
+                try: medians = json.loads(med_path.read_text(encoding="utf-8"))
+                except: pass
+
+            seasonal_path = MODELS_DIR / f"lgbm_v8_{target_name}_medians_seasonal.json"
+            seasonal_medians = {}
+            if seasonal_path.exists():
+                try: seasonal_medians = json.loads(seasonal_path.read_text(encoding="utf-8"))
+                except: pass
+
+            cache[target_name] = {
+                "model": model, "features": features,
+                "medians": medians, "seasonal_medians": seasonal_medians
+            }
+
+        m = cache[target_name]
+        model = m["model"]
+        features = m["features"]
+        medians = m["medians"]
+        seasonal_medians = m["seasonal_medians"]
+
+        pred_month = row_target["date"].month
+        month_key = str(pred_month)
+        month_medians = seasonal_medians.get(month_key, {})
+
+        fill_values = {}
+        for f in features:
+            if f in month_medians:
+                fill_values[f] = month_medians[f]
+            elif f in medians:
+                fill_values[f] = medians[f]
+            else:
+                fill_values[f] = 0.0
+
+        X = row_input.to_frame().T.reindex(columns=features).fillna(fill_values).astype(float)
+        pred = max(0.0, float(model.predict(X)[0]))
+
+        # Aplicar meta-modelo si existe
+        if meta_model_path.exists():
+            meta_model = joblib.load(meta_model_path)
+            contam_col = target_name.replace("_d1", "")
+            date_i = row_input["date"]
+
+            # Calcular errores históricos
+            df_history_i = df_past[df_past["date"] < date_i].tail(8)
+            errors_i = []
+            for _, h_row in df_history_i.iterrows():
+                X_h = h_row.to_frame().T.reindex(columns=features).fillna(fill_values).astype(float)
+                p_h = float(model.predict(X_h)[0])
+                actual = h_row.get(contam_col)
+                if pd.notna(actual):
+                    errors_i.append(actual - p_h)
+
+            error_lag_1d = errors_i[-1] if errors_i else 0
+            error_roll_7d = np.mean(errors_i) if errors_i else 0
+
+            meta_input = {
+                "pred_v1": pred,
+                "error_lag_1d": float(error_lag_1d),
+                "error_roll_mean_7d": float(error_roll_7d),
+                "temperature_2m": float(pd.to_numeric(pd.Series([row_input.get("temperature_2m")]), errors='coerce').fillna(12.0).iloc[0]),
+                "wind_speed_10m": float(pd.to_numeric(pd.Series([row_input.get("wind_speed_10m")]), errors='coerce').fillna(2.5).iloc[0]),
+                "boundary_layer_height": float(pd.to_numeric(pd.Series([row_input.get("boundary_layer_height")]), errors='coerce').fillna(500.0).iloc[0]),
+                "relative_humidity_2m": float(pd.to_numeric(pd.Series([row_input.get("relative_humidity_2m")]), errors='coerce').fillna(75.0).iloc[0]),
+                "is_weekend": float(pd.to_numeric(pd.Series([row_input.get("is_weekend")]), errors='coerce').fillna(0).iloc[0]),
+                "es_domingo": float(pd.to_numeric(pd.Series([row_input.get("es_domingo")]), errors='coerce').fillna(0).iloc[0]),
+                "es_invierno_estricto": float(pd.to_numeric(pd.Series([row_input.get("es_invierno_estricto")]), errors='coerce').fillna(0).iloc[0]),
+            }
+            X_meta = pd.DataFrame([meta_input]).astype(float)
+            pred_v2 = max(0.0, float(meta_model.predict(X_meta)[0]))
+
+            # Smart bypass + clamp (misma lógica que predict.py)
+            is_no2 = "NO2" in target_name
+            if is_no2:
+                median_map = {"NO2_zbe_d1": 10.0, "NO2_out_d1": 11.5}
+                global_med = median_map.get(target_name, 10.0)
+                if pred < global_med:
+                    pred_v2 = pred  # bypass
+                else:
+                    lo = pred * 0.70
+                    hi = pred * 1.30
+                    pred_v2 = max(lo, min(pred_v2, hi))
+            else:
+                if pred > 0:
+                    lo = pred * 0.70
+                    hi = pred * 1.30
+                    pred_v2 = max(lo, min(pred_v2, hi))
+
+            return pred_v2
+        return pred
+
+    except Exception as e:
+        print(f"  WARN Fallback predict falló para {target_name}: {e}")
+        return 0.0
+
+
+# ==============================================================================
+# 4. BACKTESTING (usando historial de predicciones reales del pipeline)
+# ==============================================================================
+print("Cargando backtesting desde historial de predicciones...")
 perf_data = {'zbe': {}, 'out': {}}
 
 try:
+    # Cargar el parquet con datos reales (observaciones)
     df_feat = pd.read_parquet(DATASET_PATH)
     df_feat["date"] = pd.to_datetime(df_feat["date"], utc=True)
 
@@ -196,262 +313,144 @@ try:
                 df_feat = df_latest
 
     if not df_feat.empty:
-        # Ajuste de fechas para el backtest (7 días terminando ayer)
-        # El DataFrame suele tener la fila de "Mañana" al final
         df_feat = df_feat.sort_values("date").reset_index(drop=True)
-        
-        # Excluimos el día de hoy (o futuros) para el backtest, ya que no son días completos
+
+        # Excluimos hoy y futuros (datos incompletos)
         today_date = datetime.now().date()
         df_past = df_feat[df_feat['date'].dt.date < today_date].copy()
-        
-        # Buscamos la última fila con datos reales de PM10_out en todo el histórico de días pasados
+
+        # Encontrar las últimas 7 fechas con datos reales
         valid_indices = df_past.index[df_past['PM10_out'].notna()].tolist()
         if not valid_indices:
-            # Fallback si no hay ningún dato real
             last_rows = df_past.tail(12).copy()
             targets_backtest = last_rows.iloc[-8:-1] if len(last_rows) >= 8 else last_rows
-            inputs_backtest  = last_rows.iloc[-9:-2] if len(last_rows) >= 9 else last_rows
         else:
             last_real_idx = valid_indices[-1]
             last_real_idx_pos = df_past.index.get_loc(last_real_idx)
-            # Queremos 7 targets terminando en el último real
             targets_backtest = df_past.iloc[max(0, last_real_idx_pos-6) : last_real_idx_pos+1]
-            # Sus inputs son los del día anterior (modelo d1)
-            inputs_backtest  = df_past.iloc[max(0, last_real_idx_pos-7) : last_real_idx_pos]
-        
+
+        # Fechas para las etiquetas del gráfico
         fechas = targets_backtest['date'].dt.strftime('%d %b').tolist()
         if len(fechas) > 0:
             fechas[-1] = "Ayer"
-        
-        # Cargar meta-modelos para refinamiento V2 si existen
-        meta_models = {}
+
+        # --- Cargar historial de predicciones del pipeline ---
+        history_path = PROCESSED_DIR / "predictions_history.json"
+        pred_history = {}  # Mapa: "YYYY-MM-DD" -> {target: valor}
+        if history_path.exists():
+            try:
+                history_list = json.loads(history_path.read_text(encoding="utf-8"))
+                for entry in history_list:
+                    pred_history[entry["prediction_date"]] = entry.get("predictions", {})
+                print(f"  OK Historial cargado: {len(pred_history)} días de predicciones")
+            except Exception as e:
+                print(f"  WARN Error leyendo historial: {e}")
+
+        # --- Cargar modelos como FALLBACK para días sin historial ---
+        # Solo se usan si predictions_history.json no tiene la entrada para ese día
+        fallback_models = {}
+        meta_models_fallback = {}
         meta_path = MODELS_DIR / "meta_metrics.json"
         if meta_path.exists():
             try:
-                meta_models = json.loads(meta_path.read_text(encoding="utf-8"))
+                meta_models_fallback = json.loads(meta_path.read_text(encoding="utf-8"))
             except: pass
 
         for zone in ['zbe', 'out']:
             perf_data[zone]["labels"] = fechas
             for cont in ['NO2', 'PM10', 'PM2.5']:
                 target_name = f"{cont}_{zone}_d1"
-                model_path = MODELS_DIR / f"lgbm_v8_{target_name}.pkl"
-                feat_path  = MODELS_DIR / f"lgbm_v8_{target_name}_features.json"
-                meta_model_path = MODELS_DIR / f"meta_model_{target_name}.pkl"
-                
-                try:
-                    # 1. Base prediction (v1)
-                    model = joblib.load(model_path)
-                    features = json.loads(feat_path.read_text(encoding="utf-8"))
-                    
-                    # Cargar medianas globales
-                    med_path = MODELS_DIR / f"lgbm_v8_{target_name}_medians.json"
-                    medians = {}
-                    if med_path.exists():
-                        try:
-                            medians = json.loads(med_path.read_text(encoding="utf-8"))
-                        except Exception:
-                            pass
-                            
-                    # Cargar medianas estacionales
-                    seasonal_path = MODELS_DIR / f"lgbm_v8_{target_name}_medians_seasonal.json"
-                    seasonal_medians = {}
-                    if seasonal_path.exists():
-                        try:
-                            seasonal_medians = json.loads(seasonal_path.read_text(encoding="utf-8"))
-                        except Exception:
-                            pass
-                    
-                    preds_v2 = []
-                    for idx_i in range(len(inputs_backtest)):
-                        row_i = inputs_backtest.iloc[idx_i]
-                        date_i = row_i["date"]
-                        pred_date = targets_backtest.iloc[idx_i]["date"]
-                        pred_month = pred_date.month
-                        
-                        # Obtener fill values estacionales para el mes predicho
-                        month_key = str(pred_month)
-                        month_medians = seasonal_medians.get(month_key, {})
-                        
-                        fill_values_i = {}
-                        for f in features:
-                            if f in month_medians:
-                                fill_values_i[f] = month_medians[f]
-                            elif f in medians:
-                                fill_values_i[f] = medians[f]
-                            else:
-                                fill_values_i[f] = 0.0
-                        
-                        X_i = row_i.to_frame().T.reindex(columns=features).fillna(fill_values_i).astype(float)
-                        p_v1 = float(model.predict(X_i)[0])
-                        p_v1 = max(0.0, p_v1)
-                        
-                        if meta_model_path.exists():
-                            meta_model = joblib.load(meta_model_path)
-                            contam_col = f"{cont}_{zone}"
-                            
-                            # Obtener histórico reciente antes de date_i
-                            df_history_i = df_past[df_past["date"] < date_i].tail(8)
-                            
-                            # Calcular errores históricos de la predicción base (v1)
-                            errors_i = []
-                            for _, h_row in df_history_i.iterrows():
-                                h_month = h_row["date"].month
-                                h_month_key = str(h_month)
-                                h_month_medians = seasonal_medians.get(h_month_key, {})
-                                
-                                fill_values_h = {}
-                                for f in features:
-                                    if f in h_month_medians:
-                                        fill_values_h[f] = h_month_medians[f]
-                                    elif f in medians:
-                                        fill_values_h[f] = medians[f]
-                                    else:
-                                        fill_values_h[f] = 0.0
-                                        
-                                X_h = h_row.to_frame().T.reindex(columns=features).fillna(fill_values_h).astype(float)
-                                p_h = model.predict(X_h)[0]
-                                    
-                                actual = h_row.get(contam_col)
-                                if pd.notna(actual):
-                                    errors_i.append(actual - p_h)
-                                    
-                            error_lag_1d = errors_i[-1] if len(errors_i) >= 1 else 0
-                            error_roll_7d = np.mean(errors_i) if len(errors_i) >= 1 else 0
-                            
-                            # Rellenar exógenas con medias del mes actual
-                            month_mask = df_past["date"].dt.month == pred_month
-                            df_month = df_past[month_mask] if month_mask.any() else df_past
-                            
-                            default_temp = df_month["temperature_2m"].mean() if "temperature_2m" in df_month.columns else 12.0
-                            default_wind = df_month["wind_speed_10m"].mean() if "wind_speed_10m" in df_month.columns else 2.5
-                            default_boundary = df_month["boundary_layer_height"].mean() if "boundary_layer_height" in df_month.columns else 500.0
-                            default_humidity = df_month["relative_humidity_2m"].mean() if "relative_humidity_2m" in df_month.columns else 75.0
-                            
-                            default_temp = default_temp if pd.notna(default_temp) else 12.0
-                            default_wind = default_wind if pd.notna(default_wind) else 2.5
-                            default_boundary = default_boundary if pd.notna(default_boundary) else 500.0
-                            default_humidity = default_humidity if pd.notna(default_humidity) else 75.0
-                            
-                            temp_val = row_i.get("temperature_2m")
-                            if pd.isna(temp_val) and "fc_temperature_2m_d1" in row_i:
-                                temp_val = row_i.get("fc_temperature_2m_d1")
-                                
-                            wind_val = row_i.get("wind_speed_10m")
-                            if pd.isna(wind_val) and "fc_wind_speed_10m_d1" in row_i:
-                                wind_val = row_i.get("fc_wind_speed_10m_d1")
-                                
-                            boundary_val = row_i.get("boundary_layer_height")
-                            if pd.isna(boundary_val) and "fc_boundary_layer_height_d1" in row_i:
-                                boundary_val = row_i.get("fc_boundary_layer_height_d1")
-                                
-                            humidity_val = row_i.get("relative_humidity_2m")
-                            if pd.isna(humidity_val) and "fc_relative_humidity_2m_d1" in row_i:
-                                humidity_val = row_i.get("fc_relative_humidity_2m_d1")
-                            
-                            meta_input = {
-                                "pred_v1": float(p_v1),
-                                "error_lag_1d": float(error_lag_1d),
-                                "error_roll_mean_7d": float(error_roll_7d),
-                                "temperature_2m": float(pd.to_numeric(pd.Series([temp_val]), errors='coerce').fillna(default_temp).iloc[0]),
-                                "wind_speed_10m": float(pd.to_numeric(pd.Series([wind_val]), errors='coerce').fillna(default_wind).iloc[0]),
-                                "boundary_layer_height": float(pd.to_numeric(pd.Series([boundary_val]), errors='coerce').fillna(default_boundary).iloc[0]),
-                                "relative_humidity_2m": float(pd.to_numeric(pd.Series([humidity_val]), errors='coerce').fillna(default_humidity).iloc[0]),
-                                "is_weekend": float(pd.to_numeric(pd.Series([row_i.get("is_weekend")]), errors='coerce').fillna(0).iloc[0]),
-                                "es_domingo": float(pd.to_numeric(pd.Series([row_i.get("es_domingo")]), errors='coerce').fillna(0).iloc[0]),
-                                "es_invierno_estricto": float(pd.to_numeric(pd.Series([row_i.get("es_invierno_estricto")]), errors='coerce').fillna(0).iloc[0]),
-                            }
-                            
-                            X_meta = pd.DataFrame([meta_input]).astype(float)
-                            p_v2 = float(meta_model.predict(X_meta)[0])
-                            p_v2 = max(0.0, p_v2)
-                            
-                            # === SMART BYPASS & CLAMP ===
-                            is_no2 = "NO2" in target_name
-                            global_median_target = None
-                            if is_no2:
-                                target_medians_map = {
-                                    "NO2_zbe_d1": 10.0,
-                                    "NO2_out_d1": 11.5,
-                                }
-                                global_median_target = target_medians_map.get(target_name, 10.0)
-                                
-                            if is_no2 and global_median_target and p_v1 < global_median_target:
-                                # BYPASS
-                                p_v2 = p_v1
-                            else:
-                                # CLAMP ±30%
-                                max_correction_pct = 0.30
-                                if p_v1 > 0:
-                                    lo = p_v1 * (1 - max_correction_pct)
-                                    hi = p_v1 * (1 + max_correction_pct)
-                                    p_v2_clamped = max(0.0, min(p_v2, hi))
-                                    p_v2 = max(lo, p_v2_clamped)
-                            
-                            preds_v2.append(p_v2)
-                        else:
-                            preds_v2.append(p_v1)
-                    
-                    contam_col = f"{cont}_{zone}"
-                    if contam_col in targets_backtest.columns:
-                        real_vals = [None if pd.isna(v) else round(v, 1) for v in targets_backtest[contam_col]]
-                    else:
-                        real_vals = [None] * len(targets_backtest)
-                        
-                    # Asegurar longitud 7
-                    while len(real_vals) < 7: real_vals.insert(0, None)
-                    preds_final = [round(p, 1) for p in preds_v2]
-                    while len(preds_final) < 7: preds_final.insert(0, 0)
-                    
-                    perf_data[zone][cont] = {
-                        "real": real_vals[-7:],
-                        "pred": preds_final[-7:]
-                    }
-                    
-                except Exception as e:
-                    import traceback
-                    print(f"  WARN Error procesando backtest para {target_name}: {e}")
-                    traceback.print_exc()
-                    perf_data[zone][cont] = {"real": [None]*7, "pred": [0]*7}
+                contam_col = f"{cont}_{zone}"
 
-            
-            # Calcular ICA determinista en el backtest a partir de los contaminantes ya calculados
+                # Obtener valores reales (mediciones) del parquet
+                if contam_col in targets_backtest.columns:
+                    real_vals = [None if pd.isna(v) else round(v, 1)
+                                 for v in targets_backtest[contam_col]]
+                else:
+                    real_vals = [None] * len(targets_backtest)
+
+                # Obtener predicciones del historial (preferido) o recalcular (fallback)
+                pred_vals = []
+                for idx_i in range(len(targets_backtest)):
+                    target_date = targets_backtest.iloc[idx_i]["date"].date().isoformat()
+
+                    # Opción 1: Buscar en el historial de predicciones
+                    if target_date in pred_history and target_name in pred_history[target_date]:
+                        pred_val = pred_history[target_date][target_name]
+                        pred_vals.append(round(pred_val, 1))
+                    else:
+                        # Opción 2: Fallback - recalcular con modelo
+                        # Necesitamos la fila del día anterior como input
+                        target_idx_pos = targets_backtest.index[idx_i]
+                        # Buscar la fila anterior en df_past
+                        pos_in_past = df_past.index.get_loc(target_idx_pos)
+                        if pos_in_past > 0:
+                            row_input = df_past.iloc[pos_in_past - 1]
+                        else:
+                            row_input = df_past.iloc[0]
+
+                        pred_val = _fallback_predict(
+                            target_name, row_input, targets_backtest.iloc[idx_i],
+                            df_past, meta_models_fallback, fallback_models
+                        )
+                        pred_vals.append(round(pred_val, 1))
+
+                # Asegurar longitud 7
+                while len(real_vals) < 7: real_vals.insert(0, None)
+                while len(pred_vals) < 7: pred_vals.insert(0, 0)
+
+                perf_data[zone][cont] = {
+                    "real": real_vals[-7:],
+                    "pred": pred_vals[-7:]
+                }
+
+            # Calcular ICA determinista en el backtest
             try:
                 from sklearn.linear_model import Ridge
                 no2_col = f"NO2_{zone}"
                 pm10_col = f"PM10_{zone}"
                 pm25_col = f"PM2.5_{zone}"
                 ica_col = f"ICA_{zone}"
-                
+
                 sub = df_past[[no2_col, pm10_col, pm25_col, ica_col]].dropna()
                 if len(sub) >= 30:
                     X_ica = sub[[no2_col, pm10_col, pm25_col]]
                     y_ica = sub[ica_col]
-                    
+
                     model_ica = Ridge(alpha=1.0)
                     model_ica.fit(X_ica, y_ica)
-                    
+
                     ica_real = []
                     ica_pred = []
-                    
+
                     for i in range(7):
                         r_no2 = perf_data[zone]['NO2']['real'][i]
                         r_pm10 = perf_data[zone]['PM10']['real'][i]
                         r_pm25 = perf_data[zone]['PM2.5']['real'][i]
-                        
+
                         p_no2 = perf_data[zone]['NO2']['pred'][i]
                         p_pm10 = perf_data[zone]['PM10']['pred'][i]
                         p_pm25 = perf_data[zone]['PM2.5']['pred'][i]
-                        
+
                         if r_no2 is None or r_pm10 is None or r_pm25 is None:
                             ica_real.append(None)
                         else:
                             val_r = float(model_ica.predict([[r_no2, r_pm10, r_pm25]])[0])
                             ica_real.append(round(max(0.0, val_r), 1))
-                            
+
                         val_p = float(model_ica.predict([[p_no2, p_pm10, p_pm25]])[0])
                         ica_pred.append(round(max(0.0, val_p), 1))
-                        
+
+                    # Si hay predicciones históricas de ICA, usar esas para pred
+                    for i in range(len(targets_backtest)):
+                        target_date = targets_backtest.iloc[i]["date"].date().isoformat()
+                        ica_target = f"ICA_{zone}_d1"
+                        if target_date in pred_history and ica_target in pred_history[target_date]:
+                            # Ajustar el índice en el array de 7 elementos
+                            arr_idx = i - max(0, len(targets_backtest) - 7)
+                            if 0 <= arr_idx < 7:
+                                ica_pred[arr_idx] = round(pred_history[target_date][ica_target], 1)
+
                     perf_data[zone]['ICA'] = {
                         "real": ica_real,
                         "pred": ica_pred
@@ -463,8 +462,9 @@ try:
                 print(f"  WARN Error calculando ICA determinista para backtest en zona {zone}: {e}")
                 traceback.print_exc()
                 perf_data[zone]['ICA'] = {"real": [None]*7, "pred": [0]*7}
-        
-        print("  OK Predicciones y Backtest (V2 Refined) listos.")
+
+        n_from_history = sum(1 for d in [t.date().isoformat() for _, t in targets_backtest['date'].items()] if d in pred_history)
+        print(f"  OK Backtest listo: {n_from_history}/{len(targets_backtest)} días con predicciones históricas reales.")
     else:
         raise ValueError("El DataFrame de features está vacío.")
 

@@ -398,7 +398,9 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
                 X_h = h_row.to_frame().T.reindex(columns=feats_v1).fillna(fill_values).astype(float)
                 p_h = float(model_v1.predict(X_h)[0])
                 
-                actual = h_row.get(f"target_{target}") 
+                # target es "NO2_zbe_d1" -> la columna real en el parquet es "NO2_zbe"
+                contam_col = target.replace("_d1", "")
+                actual = h_row.get(contam_col) 
                 if pd.notna(actual):
                     errors.append(actual - p_h)
             
@@ -761,6 +763,38 @@ def save_json(results: dict, pred_date: pd.Timestamp):
     out_path = PROCESSED_DIR / "predictions_latest.json"
     out_path.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     log(f"\n  [OK] JSON guardado: {out_path}")
+
+    # --- Persistir historial de predicciones para el dashboard ---
+    # Cada ejecución añade una entrada con las predicciones finales del día.
+    # El dashboard usará este historial en lugar de recalcular el backtest.
+    history_path = PROCESSED_DIR / "predictions_history.json"
+    try:
+        if history_path.exists():
+            history = json.loads(history_path.read_text(encoding="utf-8"))
+        else:
+            history = []
+
+        # Crear entrada con la fecha y las predicciones finales
+        entry = {
+            "prediction_date": pred_date.date().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "predictions": {k: round(v["prediction"], 2) for k, v in results.items()}
+        }
+
+        # Evitar duplicados: si ya existe una entrada para esa fecha, la reemplazamos
+        history = [h for h in history if h["prediction_date"] != entry["prediction_date"]]
+        history.append(entry)
+
+        # Mantener máximo 90 días, ordenados por fecha
+        history = sorted(history, key=lambda x: x["prediction_date"])[-90:]
+
+        history_path.write_text(
+            json.dumps(history, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        log(f"  [OK] Historial actualizado: {history_path} ({len(history)} entradas)")
+    except Exception as e:
+        log(f"  [WARN] No se pudo actualizar el historial de predicciones: {e}")
+
     return out
 
 
