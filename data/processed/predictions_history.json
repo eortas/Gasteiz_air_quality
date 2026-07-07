@@ -1,0 +1,16 @@
+[
+  {
+    "prediction_date": "2026-07-08",
+    "generated_at": "2026-07-07T11:31:31.506011+00:00",
+    "predictions": {
+      "NO2_zbe_d1": 6.39,
+      "NO2_out_d1": 5.94,
+      "PM10_zbe_d1": 9.44,
+      "PM10_out_d1": 8.96,
+      "PM2.5_zbe_d1": 5.76,
+      "PM2.5_out_d1": 5.9,
+      "ICA_zbe_d1": 15.82,
+      "ICA_out_d1": 16.02
+    }
+  }
+]
