@@ -1,403 +1,393 @@
 {
   "prediction_date": "2026-07-09",
-  "generated_at": "2026-07-08T10:46:25.014181+00:00",
+  "generated_at": "2026-07-08T11:49:05.211921+00:00",
   "model_version": "v8",
   "targets": {
     "NO2_zbe_d1": {
-      "prediction_v1": 7.91,
-      "prediction": 7.91,
-      "lower": 2.9,
-      "upper": 12.92,
+      "prediction_v1": 6.55,
+      "prediction": 5.53,
+      "lower": 0.52,
+      "upper": 10.55,
       "rmse_cv": 3.915,
-      "correction": 0.0,
+      "correction": -1.02,
       "foresight": {
-        "base_value": 10.77,
+        "base_value": 10.65,
         "positive_top": [
           {
-            "feature": "fc_wind_gusts_10m_d1",
-            "value": 2.27
-          },
-          {
             "feature": "exp_traffic_volume_d1",
-            "value": 0.56
+            "value": 0.51
           },
           {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.56
+            "feature": "wind_v",
+            "value": 0.19
           },
           {
-            "feature": "fc_wind_direction_10m_d1",
-            "value": 0.44
+            "feature": "ICA_zbe_roll_mean_14d",
+            "value": 0.16
           },
           {
-            "feature": "fc_dew_point_d1",
-            "value": 0.22
+            "feature": "humedad_zbe",
+            "value": 0.16
+          },
+          {
+            "feature": "PM10_zbe_roll_mean_7d",
+            "value": 0.13
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_zbe",
-            "value": -1.75
+            "value": -1.55
           },
           {
             "feature": "NO2_zbe_roll_mean_7d",
-            "value": -1.5
-          },
-          {
-            "feature": "PM10_zbe_roll_max_14d",
-            "value": -0.64
+            "value": -1.11
           },
           {
             "feature": "traffic_occupancy_lag_1d",
-            "value": -0.46
+            "value": -0.47
           },
           {
-            "feature": "PM2.5_out",
-            "value": -0.42
+            "feature": "dew_point",
+            "value": -0.4
+          },
+          {
+            "feature": "NO2_zbe_roll_max_3d",
+            "value": -0.33
           }
         ],
         "narrative": {
-          "es": "Las variables más influyentes en esta predicción son las ráfagas de viento, el volumen de tráfico del día anterior y la velocidad del viento, que aumentan la concentración de NO2. Las ráfagas de viento dispersan la contaminación de manera irregular, mientras que el tráfico elevado emite más óxido nítrico. Por otro lado, la concentración actual de NO2 en la zona, la acumulación reciente de NO2 y el máximo reciente de PM10 reducen la concentración, indicando una cierta limpieza o dilución del aire. El valor predicho de 7.9 µg/m³ es claramente inferior al valor base histórico de 10.8 µg/m³, lo que sugiere una mejora en la calidad del aire en la zona ZBE.",
-          "eu": "NO2-ren predikzioan eragin handiena duten aldagaiak abeleku-ondroak, trafikoaren kantitatea aurreko egunean eta abeleku-abiadura dira, NO2-ren kontzentrazioa igotzen dutelako. Abelen ondroek ez dute eragiten modu uniformean, trazibilgailuen trafikoa NO2 gehiago ematen duelako. Bestalde, NO2-ren uneko kontzentrazioa, NO2-ren bildura berri eta PM10-ren maximoa 14 egunetan kontzentrazioa murrizten dute, airea garbitu edo zabaldu egiten dela adierazten dutelako. 7.9 µg/m³-ren balioa 10.8 µg/m³-ren balio historikoarekin alderatuta, ZBE eremuan airearen kalitatea hobetzen dela adierazten du."
+          "es": "Error API: {\"error\":{\"message\":\"Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"{  \\\"es\\\": \\\"La predicción de 6.5 µg/m³ de NO2 en la zona ZBE se ve influenciada principalmente por el volumen de tráfico del día anterior, que aumenta la emisión de este contaminante. También contribuyen en menor medida la velocidad del viento y el promedio de la calidad del aire en la zona en los últimos 14 días. Por otro lado, la concentración de NO2 actual y la acumulación reciente de este contaminante reducen significativamente su predicción, al igual que la ocupación del tráfico del día anterior. El valor predicho es claramente inferior al valor base histórico de 10.7 µg/m³, lo que sugiere una mejora en la calidad del aire.\\\",\\n  \\\"eu\\\": \\\"NO2-ren 6.5 µg/m³-ren aurreikuspena ZBE eremuan leheneko eguneko trafikoaren bolumena dela eta, kontsumoa gehitzen duen kontsumoa dela. Gainera, airearen kalitatearen batezbestekoa azken 14 egunetan eta abiadura airearen abiadura ere lagun egin dute. Bestalde, NO2-ren uneko konzentrazioa eta beraren akumulazio berriak aurreikuspena murrizten dute, leheneko eguneko trafikoaren eragiketa ere. Aurreikuspen balioa 10.7 µg/m³ren oinarri historikoarekin alderatuta, airearen kalitatea hobetzen dela adierazten du.\\\"\"}}\n",
+          "eu": "API errorea"
         }
       }
     },
     "NO2_out_d1": {
-      "prediction_v1": 11.06,
-      "prediction": 11.06,
-      "lower": 5.31,
-      "upper": 16.81,
+      "prediction_v1": 5.61,
+      "prediction": 5.34,
+      "lower": 0,
+      "upper": 11.09,
       "rmse_cv": 4.49,
-      "correction": 0.0,
+      "correction": -0.27,
       "foresight": {
-        "base_value": 12.51,
+        "base_value": 12.46,
         "positive_top": [
           {
-            "feature": "fc_wind_gusts_10m_d1",
-            "value": 1.62
+            "feature": "relative_humidity_2m",
+            "value": 0.65
           },
           {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 1.58
+            "feature": "wind_v",
+            "value": 0.41
           },
           {
-            "feature": "fc_temperature_2m_d1",
-            "value": 0.95
+            "feature": "NO2_out_lag_2d",
+            "value": 0.29
           },
           {
-            "feature": "exp_traffic_volume_d1",
-            "value": 0.43
+            "feature": "ICA_zbe_roll_mean_7d",
+            "value": 0.29
           },
           {
-            "feature": "NO2_zbe_roll_std_7d",
-            "value": 0.43
+            "feature": "viento_vel_out",
+            "value": 0.28
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_out",
-            "value": -2.68
+            "value": -3.0
           },
           {
             "feature": "NO2_zbe_roll_mean_7d",
-            "value": -1.13
+            "value": -0.51
           },
           {
-            "feature": "wind_gusts_10m",
-            "value": -0.48
+            "feature": "dew_point",
+            "value": -0.45
           },
           {
-            "feature": "fc_dew_point_d1",
-            "value": -0.46
+            "feature": "PM2.5_out",
+            "value": -0.43
           },
           {
-            "feature": "doy_cos",
-            "value": -0.36
+            "feature": "temperature_2m",
+            "value": -0.4
           }
         ],
         "narrative": {
-          "es": "Las variables más influyentes en esta predicción de NO2 en la zona OUT son las ráfagas de viento y la velocidad del viento, que aumentan la concentración. Esto se debe a que un viento más fuerte puede transportar emisiones de NO2 desde otras zonas hacia esta ubicación. Por otro lado, el valor actual de NO2 en la zona OUT y la acumulación reciente de NO2 reducen la concentración, probablemente porque indican que ya hay una cierta presencia de contaminante que limita la acumulación adicional. El valor predicho de 11.1 µg/m³ es ligeramente inferior al valor base histórico de 12.5 µg/m³, lo que sugiere que, en condiciones similares, la concentración de NO2 ha disminuido en esta zona.",
-          "eu": "NO2-ren predikzioa OUT eremuaren kasuan, uholdeko airearen higadura eta airearen abiadura NO2-ren konzentrazioa handitzen dute. Hau da, airea askoz mugimendu handiagoa bada, beste eremu batzuetatik NO2 emisioak hurbil ditzake. Bestalde, OUT eremuan NO2-ren uneko balioa eta NO2-ren bilduma berriak konzentrazioa murrizten dute, kontuan hartuz orain arte kontuan hartu den kontaminatzailearen mugatzea. 11.1 µg/m³-ko balioa 12.5 µg/m³-ko historian oinarritutako balioa baino txikiagoa da, horrek esan nahi du hainbat baldintza antzekoetan NO2-ren konzentrazioa murriztu dela eremu honetan."
+          "es": "Las variables que más influyen en el aumento de la concentración de NO2 en esta predicción son la humedad relativa a 2 metros, la componente viento v y el retraso de dos días del NO2 en la zona OUT. La humedad puede favorecer la formación de aerosoles que contienen NO2, mientras que el viento v puede transportar emisiones hacia la zona de medición. El retraso de NO2 sugiere una acumulación residual de contaminación. Por otro lado, la concentración actual de NO2 en la zona OUT, junto con la acumulación reciente y el punto de rocío, reducen la concentración, posiblemente por lavado atmosférico o dilución. El valor predicho de 5.6 µg/m³ es significativamente menor que el valor base histórico de 12.5 µg/m³, lo que sugiere una mejora en la calidad del aire.",
+          "eu": "NO2-ren kontzentrazioa igozteko eragin handiena duten aldagaiak humitate erlatiboa 2 metroan, v-irekia eta OUT eremuaren NO2-ren 2 egunen atzerapena dira. Humitateak NO2-aren aerosolak sortzea lagundu dezake, eta v-irekia emisioak eremu horretara eramaten ditu. NO2-ren atzerapena kontaminazioaren bilduma iraunkorra adierazten du. Bestalde, NO2-ren uneko kontzentrazioa OUT eremuan, bilduma txikiagoa eta uha-puntua kontzentrazioa jaisten dute, posibleki atmosferaren islatze edo banatzeagatik. 5.6 µg/m³-ren balio aurreikusia 12.5 µg/m³-ren balio historikoarekin alderatuta askoz txikiagoa da, airearen kalitatea hobetzen ari dela adierazten duelarik."
         }
       }
     },
     "PM10_zbe_d1": {
-      "prediction_v1": 19.88,
-      "prediction": 20.21,
-      "lower": 14.78,
-      "upper": 25.63,
+      "prediction_v1": 20.4,
+      "prediction": 22.3,
+      "lower": 16.88,
+      "upper": 27.73,
       "rmse_cv": 4.239,
-      "correction": 0.33,
+      "correction": 1.9,
       "foresight": {
-        "base_value": 12.61,
+        "base_value": 12.7,
         "positive_top": [
           {
-            "feature": "relative_humidity_2m",
-            "value": 1.49
+            "feature": "PM10_zbe",
+            "value": 1.93
           },
           {
-            "feature": "PM10_zbe",
-            "value": 1.02
+            "feature": "relative_humidity_2m",
+            "value": 1.15
           },
           {
             "feature": "ICA_zbe",
-            "value": 0.87
+            "value": 0.77
           },
           {
-            "feature": "ICA_out",
-            "value": 0.6
+            "feature": "viento_vel_out",
+            "value": 0.64
           },
           {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.53
+            "feature": "weather_code",
+            "value": 0.43
           }
         ],
         "negative_top": [
           {
+            "feature": "traffic_occupancy_lag_2d",
+            "value": -0.29
+          },
+          {
             "feature": "PM10_out",
-            "value": -0.28
+            "value": -0.22
           },
           {
-            "feature": "ICA_zbe_roll_mean_30d",
-            "value": -0.28
-          },
-          {
-            "feature": "NO2_zbe_lag_14d",
+            "feature": "NO2_zbe_diff_30d",
             "value": -0.16
           },
           {
-            "feature": "fc_boundary_layer_height_d1",
-            "value": -0.15
+            "feature": "PM10_zbe_lag_1d",
+            "value": -0.16
           },
           {
-            "feature": "fc_wind_direction_10m_d3",
-            "value": -0.14
+            "feature": "wind_gusts_10m",
+            "value": -0.15
           }
         ],
         "narrative": {
-          "es": "Las variables que más influyen en el aumento de la concentración de PM10 en la zona ZBE son la humedad relativa a 2 metros, que incrementa el PM10 al favorecer la formación de partículas, y los valores anteriores de PM10 en la misma zona, que reflejan una acumulación continua. El ICA_zbe también contribuye positivamente, posiblemente por su relación con la estabilidad atmosférica. Por otro lado, el PM10 de zonas externas y el promedio móvil de 30 días del ICA_zbe reducen la concentración, indicando una dilución o estabilización del contaminante. El valor predicho de 19.9 µg/m³ es significativamente mayor que el valor base histórico de 12.6 µg/m³, lo que sugiere un aumento en la contaminación en esta zona.",
-          "eu": "PM10-ren kontzentrazioa ZBE eremuaren kasuan handitzen duten aldagaiak 2 metroko oreka-urmutasuna da, PM10 ZBE-ren balioa aurrekoak eta ICA_zbe, hauen laguntzaz partikula berriak sortzen direlako. Bestalde, PM10 kanpoko eremuetatik eta ICA_zbe-ren 30 eguneko batezbestekoa kontzentrazioa murrizten dute, kontaminatzailearen eskuaintza edo estabilizazioa adierazten dutelako. 19.9 µg/m³-ren balio aurreikusia 12.6 µg/m³-ren historiko baliora begira, kontaminazio maila handiagoa dela adierazten du eremu horretan."
+          "es": "La predicción de PM10 en la zona ZBE es de 20.4 µg/m³, lo que es mayor que el valor base histórico de 12.7 µg/m³. Las variables que más influyen en este aumento son la concentración actual de PM10 en la zona (+1.93), la humedad relativa a 2 metros (+1.15) y el Índice de Calidad del Aire en ZBE (+0.77). Estas variables refuerzan la presencia de partículas en el aire.",
+          "eu": "PM10-ren predikzioa ZBE eremuan 20.4 µg/m³ da, historikoaren balio osoa 12.7 µg/m³ baino gehiago. PM10-ren konzentrazioa ZBE eremuan (+1.93), 2 metroko airearen gainbegirada (+1.15) eta ZBE eremuko Aire Kalitatearen Indizea (+0.77) balio horren igoera eragiten duten gairik garrantzitsuenak dira, airean partikula kopurua handitzen dutelako."
         }
       }
     },
     "PM10_out_d1": {
-      "prediction_v1": 17.17,
-      "prediction": 18.09,
-      "lower": 12.7,
-      "upper": 23.47,
+      "prediction_v1": 18.09,
+      "prediction": 19.11,
+      "lower": 13.73,
+      "upper": 24.5,
       "rmse_cv": 4.208,
-      "correction": 0.92,
+      "correction": 1.02,
       "foresight": {
-        "base_value": 10.55,
+        "base_value": 10.6,
         "positive_top": [
           {
             "feature": "ICA_out",
-            "value": 2.85
+            "value": 1.85
           },
           {
             "feature": "relative_humidity_2m",
-            "value": 1.21
-          },
-          {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.48
+            "value": 1.7
           },
           {
             "feature": "PM10_out",
-            "value": 0.47
+            "value": 1.54
           },
           {
-            "feature": "PM2.5_out",
-            "value": 0.39
+            "feature": "ventilation_index",
+            "value": 0.52
+          },
+          {
+            "feature": "wind_speed_10m",
+            "value": 0.44
           }
         ],
         "negative_top": [
           {
+            "feature": "ICA_zbe_lag_14d",
+            "value": -0.35
+          },
+          {
+            "feature": "NO2_zbe_lag_30d",
+            "value": -0.29
+          },
+          {
             "feature": "PM10_zbe",
-            "value": -0.38
+            "value": -0.2
           },
           {
-            "feature": "ICA_out_lag_7d",
-            "value": -0.22
+            "feature": "NO2_zbe",
+            "value": -0.15
           },
           {
-            "feature": "wind_gusts_10m",
-            "value": -0.18
-          },
-          {
-            "feature": "traffic_occupancy_lag_2d",
-            "value": -0.14
-          },
-          {
-            "feature": "NO2_zbe_lag_14d",
-            "value": -0.14
+            "feature": "NO2_zbe_diff_30d",
+            "value": -0.12
           }
         ],
         "narrative": {
-          "es": "Las variables que más influyen en el aumento de la concentración de PM10 en la zona OUT son el ICA_out (+2.85), la humedad relativa a 2 metros (+1.21) y la velocidad del viento (+0.48). El ICA_out refleja la actividad industrial o antropogénica que emite partículas, mientras que la humedad y la velocidad del viento pueden transportar y dispersar estas partículas a mayores distancias. Por otro lado, el PM10_zbe (-0.38), el ICA_out_lag_7d (-0.22) y los rachas de viento (-0.18) reducen ligeramente la concentración, ya que indican una disminución reciente de emisiones o un aumento en la dispersión. El valor predicho de 17.2 µg/m³ es significativamente mayor que el valor base histórico de 10.6 µg/m³, lo que sugiere una situación de contaminación temporal por factores locales.",
-          "eu": "PM10-ren kontzentrazioa OUT eremuaren kasuan gehitzeko garrantzitsuenak ICA_out (+2.85), 2 metroko errelatiboa (+1.21) eta airearen abiadura (+0.48) dira. ICA_out industrialdun edo antropogenikoa partikula ematea adierazten du, errelatiboa eta airearen abiadura partikulak zabaltzen laguntzen dute. Bestalde, PM10_zbe (-0.38), ICA_out_lag_7d (-0.22) eta airearen rafaleak (-0.18) kontzentrazioa murrizten dute, emisioen beherakada edo zabalkuntzaren gorakada adierazten baitute. 17.2 µg/m³-ren balioa 10.6 µg/m³-ko historia-zerrendatik askoz gorakoa da, faktore lokalengatik kontaminazio temporala dela adierazten duena."
+          "es": "Las variables que más influyen en el aumento de la concentración de PM10 en la zona OUT son la humedad relativa a 2 metros (+1.7), el ICA de la zona OUT (+1.85) y la propia concentración de PM10 en la zona OUT (+1.54). Estas variables reflejan condiciones meteorológicas y emisiones locales que favorecen la acumulación de partículas. Por el contrario, el ICA de la zona ZBE del día anterior (-0.35), el NO2 de ZBE de los 30 días anteriores (-0.29) y el PM10 de ZBE (-0.2) tienen un efecto reducido en la concentración, posiblemente debido a patrones de viento o dilución atmosférica. El valor predicho (18.1 µg/m³) es claramente superior al valor base histórico (10.6 µg/m³), lo que sugiere una situación de concentración elevada de partículas en esta zona.",
+          "eu": "PM10-ren kantitatea OUT eremuaren kasuan gehitzeko baliozko faktoreak 2 metroko errelatiboa igaineko nebetasuna (+1.7), OUT eremuko ICA (+1.85) eta OUT eremuko PM10 (+1.54) dira. Faktore hauek meteorologia eta emisio lokalaren egoera adierazten dute, partikula horiek bildu ahal izateko. Bestalde, ZBE eremuko ICA aurreko eguneko (-0.35), ZBE eremuko NO2 30 egunetik aurrera (-0.29) eta ZBE eremuko PM10 (-0.2) PM10-kantitatea gutxitzen dute, airearen zirkulazio edo diluzio atmosferikoa dela suposatuz. Aurreikusitako balioa (18.1 µg/m³) oso desberdina da historikoki oinarritutako balioa (10.6 µg/m³) baino altuagoa dela adierazten du, partikula asko bildu direla esan nahi duen hori. "
         }
       }
     },
     "PM2.5_zbe_d1": {
-      "prediction_v1": 11.4,
-      "prediction": 10.48,
-      "lower": 7.05,
-      "upper": 13.91,
+      "prediction_v1": 11.22,
+      "prediction": 10.4,
+      "lower": 6.97,
+      "upper": 13.83,
       "rmse_cv": 2.68,
-      "correction": -0.92,
+      "correction": -0.82,
       "foresight": {
         "base_value": 7.49,
         "positive_top": [
           {
-            "feature": "ICA_out",
-            "value": 1.03
-          },
-          {
             "feature": "PM2.5_zbe",
-            "value": 0.89
+            "value": 1.07
           },
           {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.53
+            "feature": "ICA_out",
+            "value": 0.93
+          },
+          {
+            "feature": "PM2.5_out",
+            "value": 0.5
           },
           {
             "feature": "ICA_zbe",
-            "value": 0.44
+            "value": 0.45
           },
           {
-            "feature": "fc_ventilation_index_d1",
-            "value": 0.32
+            "feature": "viento_vel_out",
+            "value": 0.29
           }
         ],
         "negative_top": [
           {
-            "feature": "PM10_zbe",
-            "value": -0.44
+            "feature": "NO2_zbe_lag_14d",
+            "value": -0.22
+          },
+          {
+            "feature": "doy_cos",
+            "value": -0.17
+          },
+          {
+            "feature": "temp_max_dia",
+            "value": -0.1
           },
           {
             "feature": "rain",
-            "value": -0.24
+            "value": -0.1
           },
           {
-            "feature": "ICA_zbe_lag_7d",
-            "value": -0.23
-          },
-          {
-            "feature": "PM10_out",
-            "value": -0.21
-          },
-          {
-            "feature": "wind_v",
-            "value": -0.19
+            "feature": "ICA_out_roll_mean_7d",
+            "value": -0.1
           }
         ],
         "narrative": {
-          "es": "La predicción de 11.4 µg/m³ de PM2.5 en la zona ZBE se ve influenciada principalmente por el ICA_out, que aumenta la concentración al introducir partículas externas a la zona. La velocidad del viento también contribuye al aumento al dispersar menos las partículas. Por otro lado, la presencia de PM10 en la zona y la lluvia ayuda a reducir la concentración de PM2.5. Este valor es 3.9 µg/m³ superior al valor base histórico, lo que sugiere un incremento significativo en la contaminación en esta zona.",
-          "eu": "PM2.5-ren 11.4 µg/m³-ren aurreikuspena ZBE eremuan ICA_out-ekin lotuta dago, PM2.5-k partikula kanpokoak sartzen dituelako. Zabaldunaren abiadura ere gehiagotzen du PM2.5-k. PM10 ZBE-rekin eta uhaiek laguntzen dute PM2.5-k murrizteko. Balio hori 3.9 µg/m³ handiagoa da historian oinarritutako balio osoa baino, kontaminazioa handitzen dela adierazten du."
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3-32b` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5351, Requested 1166. Please try again in 5.17s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "eu": "API errorea"
         }
       }
     },
     "PM2.5_out_d1": {
-      "prediction_v1": 12.09,
-      "prediction": 12.66,
-      "lower": 8.68,
-      "upper": 16.64,
+      "prediction_v1": 11.9,
+      "prediction": 11.9,
+      "lower": 7.92,
+      "upper": 15.88,
       "rmse_cv": 3.111,
-      "correction": 0.57,
+      "correction": -0.0,
       "foresight": {
         "base_value": 7.04,
         "positive_top": [
           {
             "feature": "ICA_out",
-            "value": 1.48
+            "value": 2.46
           },
           {
             "feature": "PM2.5_out",
-            "value": 0.7
+            "value": 1.05
           },
           {
-            "feature": "fc_wind_speed_10m_d1",
-            "value": 0.68
+            "feature": "ventilation_index",
+            "value": 0.42
           },
           {
             "feature": "viento_vel_out",
-            "value": 0.47
+            "value": 0.29
           },
           {
-            "feature": "NO2_out_diff_30d",
-            "value": 0.39
+            "feature": "wind_speed_10m",
+            "value": 0.29
           }
         ],
         "negative_top": [
           {
-            "feature": "fc_relative_humidity_2m_d1",
-            "value": -0.33
+            "feature": "NO2_zbe_lag_14d",
+            "value": -0.34
           },
           {
-            "feature": "temp_max_dia",
-            "value": -0.22
+            "feature": "PM2.5_zbe",
+            "value": -0.31
           },
           {
-            "feature": "fc_cloud_cover_d3",
-            "value": -0.21
+            "feature": "NO2_out_diff_30d",
+            "value": -0.28
           },
           {
-            "feature": "ICA_out_roll_mean_7d",
-            "value": -0.18
+            "feature": "boundary_layer_height",
+            "value": -0.19
           },
           {
-            "feature": "humedad_zbe",
-            "value": -0.11
+            "feature": "PM10_zbe_roll_std_14d",
+            "value": -0.19
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3-32b` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5753, Requested 796. Please try again in 5.49s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+          "es": "Error API: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3-32b` in organization `org_01knwqgqy3eyhtybzz0bvmmb48` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5342, Requested 1170. Please try again in 5.12s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
           "eu": "API errorea"
         }
       }
     },
     "ICA_zbe_d1": {
-      "prediction_v1": 31.95,
-      "prediction": 30.92,
-      "lower": 22.32,
-      "upper": 39.53,
-      "rmse_cv": 6.722,
-      "correction": -1.03,
+      "prediction_v1": 20.4,
+      "prediction": 22.3,
+      "lower": 19.59,
+      "upper": 25.01,
+      "rmse_cv": 2.119,
+      "correction": 1.9,
       "foresight": {
-        "base_value": 21.24,
-        "positive_top": [
-          {
-            "feature": "PM2.5 (Ensemble)",
-            "value": -15.01
-          }
-        ],
+        "base_value": 22.3,
+        "positive_top": [],
         "negative_top": [],
         "narrative": {
-          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (7.9 µg/m³), PM10 (20.2 µg/m³) y PM2.5 (10.5 µg/m³).",
-          "eu": "Airearen Kalitate Indizea (ICA) NO2 (7.9 µg/m³), PM10 (20.2 µg/m³) eta PM2.5 (10.5 µg/m³) aztertu ondoren lortu da."
+          "es": "ICA calculado con subíndices CAQI: NO2=3, PM10=22, PM2.5=17. Concentraciones: NO2=5.5, PM10=22.3, PM2.5=10.4 µg/m³.",
+          "eu": "ICA CAQI azpi-indizeekin: NO2=3, PM10=22, PM2.5=17."
         }
       }
     },
     "ICA_out_d1": {
-      "prediction_v1": 31.16,
-      "prediction": 32.49,
-      "lower": 22.27,
-      "upper": 42.71,
-      "rmse_cv": 7.987,
-      "correction": 1.33,
+      "prediction_v1": 19.83,
+      "prediction": 19.83,
+      "lower": 16.96,
+      "upper": 22.71,
+      "rmse_cv": 2.245,
+      "correction": 0.0,
       "foresight": {
-        "base_value": 19.89,
-        "positive_top": [
-          {
-            "feature": "PM2.5 (Ensemble)",
-            "value": -15.08
-          }
-        ],
+        "base_value": 19.83,
+        "positive_top": [],
         "negative_top": [],
         "narrative": {
-          "es": "Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 (11.1 µg/m³), PM10 (18.1 µg/m³) y PM2.5 (12.7 µg/m³).",
-          "eu": "Airearen Kalitate Indizea (ICA) NO2 (11.1 µg/m³), PM10 (18.1 µg/m³) eta PM2.5 (12.7 µg/m³) aztertu ondoren lortu da."
+          "es": "ICA calculado con subíndices CAQI: NO2=3, PM10=19, PM2.5=20. Concentraciones: NO2=5.3, PM10=19.1, PM2.5=11.9 µg/m³.",
+          "eu": "ICA CAQI azpi-indizeekin: NO2=3, PM10=19, PM2.5=20."
         }
       }
     }
