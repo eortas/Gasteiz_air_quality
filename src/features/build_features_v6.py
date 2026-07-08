@@ -39,6 +39,11 @@ import pandas as pd
 import numpy as np
 import holidays
 
+# Importar constantes centralizadas (Fix auditoría #17)
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config import (ZBE_DATE, ZBE_STATIONS, OUT_STATIONS, CONTAMINANTS,
+                    HDD_BASE_TEMP, LATITUDE, LONGITUDE)
 
 warnings.filterwarnings("ignore")
 
@@ -50,20 +55,13 @@ WEATHER_DIR   = ROOT_DIR / "data" / "raw" / "weather"
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-# -- CONFIG ----------------------------------
-ZBE_STATIONS  = ["PAUL", "FUEROS"]
-OUT_STATIONS  = ["LANDAZURI", "HUETOS", "ZUMABIDE", "BEATO"]
-CONTAMINANTS  = ["NO2", "PM10", "PM2.5", "ICA"]
+# -- CONFIG (importado de src/config.py + locales) --
+# ZBE_STATIONS, OUT_STATIONS, CONTAMINANTS, ZBE_DATE, HDD_BASE_TEMP,
+# LATITUDE, LONGITUDE -> importados de config.py
 TARGETS       = [f"{c}_{g}" for c in CONTAMINANTS for g in ["zbe", "out"]]
 HORIZON_DAYS  = 3
 LAG_DAYS      = [1, 2, 3, 7, 14, 30]
 ROLLING_WINS  = [3, 7, 14, 30]
-ZBE_DATE      = pd.Timestamp("2025-09-01", tz="UTC")
-LATITUDE      = 42.8467
-LONGITUDE     = -2.6716
-
-# Base para HDD - temperatura de encendido estándar España
-HDD_BASE_TEMP = 15.0
 
 FORECAST_VARS = [
     "temperature_2m", "precipitation", "rain", "snowfall",
@@ -621,87 +619,56 @@ def add_targets(df: pd.DataFrame) -> pd.DataFrame:
 
 # -- 9. PRONÓSTICO COMO FEATURES -----------------------
 def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
-    # Identificar columnas meteorológicas base para el pronóstico
+    """
+    Añade features de pronóstico meteorológico SOLO con datos reales de Open-Meteo.
+
+    IMPORTANTE (Fix auditoría #1 - Data Leakage):
+    La versión anterior usaba shift(-h) para simular pronósticos con valores
+    reales futuros + ruido gaussiano. Esto era DATA LEAKAGE: el modelo veía
+    información del futuro durante el entrenamiento, inflando las métricas de CV.
+
+    Ahora:
+    - En el HISTÓRICO: no se generan features fc_* (el modelo entrena solo
+      con meteorología observada del día actual, que es lo disponible en producción)
+    - En la ÚLTIMA FILA (predicción real): se inyectan los pronósticos reales
+      de Open-Meteo como features fc_* para la predicción de mañana
+    """
+    df = df.set_index("date").sort_index()
+
+    if fc.empty:
+        log("  Sin pronóstico Open-Meteo - el modelo usará solo features observadas")
+        log("  (Fix auditoría: eliminado shift(-h) que causaba data leakage)")
+        return df.reset_index()
+
+    # Identificar columnas meteorológicas base para generar nombres fc_*
     weather_base_cols = [c for c in df.columns if any(x in c for x in
         ["temperature", "precipitation", "wind", "cloud",
          "humidity", "boundary", "sunshine", "HDD", "dew_point", "ventilation_index"])
         and "_lag_" not in c and "_roll_" not in c
-        and "_diff_" not in c 
+        and "_diff_" not in c
         and ("_acum_" not in c or "precipitation_acum" in c)
         and not c.startswith("fc_")]
 
-    df = df.set_index("date").sort_index()
-    
-    # Usamos un generador con semilla aleatoria fija (42) para que el ruido sea reproducible
-    rng = np.random.default_rng(42)
+    section("9. Añadiendo features del pronóstico Open-Meteo (solo última fila)")
 
-    for h in range(1, HORIZON_DAYS + 1):
-        for col in weather_base_cols:
-            future_val = df[col].shift(-h)
-            
-            # Definir el nivel de ruido gaussiano simulado según la variable y horizonte de predicción (h)
-            col_lower = col.lower()
-            if "temperature" in col_lower or "temp_" in col_lower:
-                noise_std = 1.2 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = future_val + noise
-            elif "precipitation" in col_lower or "rain" in col_lower or "snow" in col_lower:
-                noise_std = 0.8 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = (future_val + noise).clip(lower=0.0)
-            elif "wind" in col_lower:
-                noise_std = 0.7 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                if "speed" in col_lower or "gusts" in col_lower:
-                    noisy_val = (future_val + noise).clip(lower=0.0)
-                else:
-                    noisy_val = future_val + noise
-            elif "humidity" in col_lower:
-                noise_std = 4.0 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = (future_val + noise).clip(0.0, 100.0)
-            elif "boundary" in col_lower:
-                noise_std = 75.0 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = (future_val + noise).clip(lower=0.0)
-            elif "cloud" in col_lower:
-                noise_std = 12.0 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = (future_val + noise).clip(0.0, 100.0)
-            elif "sunshine" in col_lower:
-                noise_std = 1000.0 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = (future_val + noise).clip(lower=0.0)
-            elif "dew_point" in col_lower:
-                noise_std = 1.2 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = future_val + noise
-            elif "ventilation_index" in col_lower:
-                noise_std = 250.0 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = (future_val + noise).clip(lower=0.0)
-            elif "hdd" in col_lower:
-                noise_std = 1.0 * h
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = (future_val + noise).clip(lower=0.0)
-            else:
-                noise_std = future_val.std() * 0.1 * h if future_val.std() > 0 else 1.0
-                noise = rng.normal(0, noise_std, size=len(df))
-                noisy_val = future_val + noise
-                
-            df[f"fc_{col}_d{h}"] = noisy_val
+    # Solo inyectar pronóstico real de Open-Meteo en la última fila
+    # Las filas históricas NO tienen features fc_* → no hay leakage
+    n_fc_added = 0
+    for col in weather_base_cols:
+        fc_col_name = f"fc_{col}_d1"
+        if col in fc.columns:
+            # Crear columna con NaN en el histórico y pronóstico real en la última fila
+            df[fc_col_name] = np.nan
+            df.loc[df.index[-1], fc_col_name] = fc[col].iloc[0]
+            n_fc_added += 1
 
-    if fc.empty:
-        log("  Sin pronóstico - usando proxy histórico con ruido simulado en training")
-        return df.reset_index()
-
-    section("9. Añadiendo features del pronóstico Open-Meteo")
+    # También inyectar columnas que vengan directamente del pronóstico
     for col in fc.columns:
         if col in df.columns:
-            # Sobreescribir la última fila de predicción con el pronóstico real de Open-Meteo
             df.loc[df.index[-1], col] = fc[col].iloc[0]
 
-    log(f"  Features de pronóstico añadidas (con ruido simulado en histórico y pronóstico real en última fila)")
+    log(f"  Features fc_* creadas: {n_fc_added} (solo con valor en última fila)")
+    log(f"  Histórico: sin features fc_* (evita data leakage)")
     return df.reset_index()
 
 

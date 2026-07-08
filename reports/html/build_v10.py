@@ -35,12 +35,18 @@ traffic_path = "traffic_map.html"
 # ==============================================================================
 print(f"Leyendo {csv_file}...")
 cf_data = {}
+df_cv = pd.DataFrame(columns=['date', 'contaminant', 'zone', 'version', 'observed', 'counterfactual', 'gap', 'gap_pct'])
 try:
     if csv_file.exists():
         df_cv = pd.read_csv(csv_file)
         # Si ICA no está en df_cv, lo calculamos de forma determinista combinando NO2, PM10 y PM2.5 si están disponibles
         if 'ICA' not in df_cv['contaminant'].unique():
             print("  ICA no encontrado en counterfactual_gap_v8.csv. Generándolo dinámicamente a partir de NO2, PM10 y PM2.5...")
+            # Importar función ICA desde config central
+            import sys
+            sys.path.insert(0, str(ROOT_DIR))
+            from src.config import compute_ica_subindex
+            
             ica_rows = []
             for zone in df_cv['zone'].unique():
                 for version in df_cv['version'].unique():
@@ -60,10 +66,18 @@ try:
                                           axis=1, keys=['NO2', 'PM10', 'PM25']).dropna()
                     
                     if not df_merged.empty:
-                        # Para cada fecha, el ICA es el máximo de los sub-índices.
-                        # Como aproximación determinista lineal o máximo, usamos el máximo para simular el comportamiento del ICA real
-                        obs_ica = df_merged.apply(lambda r: max(r[('NO2', 'observed')], r[('PM10', 'observed')], r[('PM25', 'observed')] * 2), axis=1)
-                        cf_ica = df_merged.apply(lambda r: max(r[('NO2', 'counterfactual')], r[('PM10', 'counterfactual')], r[('PM25', 'counterfactual')] * 2), axis=1)
+                        # Fix auditoría #8: Calcular ICA con subíndices CAQI europeos normalizados
+                        
+                        obs_ica = df_merged.apply(lambda r: max(
+                            compute_ica_subindex("NO2",   r[('NO2', 'observed')]),
+                            compute_ica_subindex("PM10",  r[('PM10', 'observed')]),
+                            compute_ica_subindex("PM2.5", r[('PM25', 'observed')])
+                        ), axis=1)
+                        cf_ica = df_merged.apply(lambda r: max(
+                            compute_ica_subindex("NO2",   r[('NO2', 'counterfactual')]),
+                            compute_ica_subindex("PM10",  r[('PM10', 'counterfactual')]),
+                            compute_ica_subindex("PM2.5", r[('PM25', 'counterfactual')])
+                        ), axis=1)
                         
                         df_ica = pd.DataFrame(index=df_merged.index)
                         df_ica['contaminant'] = 'ICA'

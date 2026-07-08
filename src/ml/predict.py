@@ -441,49 +441,23 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             pred_v2 = float(meta_model.predict(X_meta)[0])
             pred_v2 = max(0.0, pred_v2)
             
-            # === FIX v8.1: SMART META-MODEL BYPASS + CLAMP ===
-            # El backtest demuestra que el meta-modelo EMPEORA el NO2:
-            #   NO2_zbe v1: Bias +7.6% vs v2(meta): Bias +19.2% (últimos 30d)
-            #   NO2_out v1: Bias -0.2% vs v2(meta): Bias -12.5%
-            # Para PM10/PM2.5 el meta tampoco ayuda mucho (sesgo del +8%).
-            #
-            # Estrategia: bypass del meta para NO2 en período de valores bajos
-            # y clamp agresivo para el resto.
+            # Fix auditoría #4b: Clamp simple (±30%) sin bypass frágil
+            # El bypass con medianas hardcodeadas fue eliminado porque:
+            # - train_meta_model.py ahora NO guarda modelos que no mejoran
+            # - Si llegamos aquí, el meta-modelo fue validado con walk-forward
             pred_v1 = float(r["prediction"])
+            max_correction_pct = 0.30
             
-            # Detectar si es NO2 y está en período de valores bajos (verano)
-            is_no2 = "NO2" in target
-            
-            # Cargar mediana global del target para determinar si v1 es "bajo"
-            global_median_target = None
-            if is_no2:
-                # Las medianas globales de NO2 están alrededor de 10-12
-                # Si v1 < mediana global, estamos en verano y el meta-modelo falla
-                target_medians_map = {
-                    "NO2_zbe_d1": 10.0,
-                    "NO2_out_d1": 11.5,
-                }
-                global_median_target = target_medians_map.get(target, 10.0)
-            
-            if is_no2 and global_median_target and pred_v1 < global_median_target:
-                # BYPASS: usar v1 directamente, el meta-modelo empeora las cosas
-                log(f"  [BYPASS] {target}: v1={pred_v1:.2f} < mediana={global_median_target:.1f} "
-                    f"-> usando v1 directamente (meta={pred_v2:.2f} descartado)")
-                pred_v2 = pred_v1
-            else:
-                # CLAMP: para el resto, limitar corrección a ±30%
-                max_correction_pct = 0.30
+            if pred_v1 > 0:
+                lower_bound = pred_v1 * (1 - max_correction_pct)
+                upper_bound = pred_v1 * (1 + max_correction_pct)
+                pred_v2_clamped = max(0.0, min(pred_v2, upper_bound))
+                pred_v2_clamped = max(lower_bound, pred_v2_clamped)
                 
-                if pred_v1 > 0:
-                    lower_bound = pred_v1 * (1 - max_correction_pct)
-                    upper_bound = pred_v1 * (1 + max_correction_pct)
-                    pred_v2_clamped = max(0.0, min(pred_v2, upper_bound))
-                    pred_v2_clamped = max(lower_bound, pred_v2_clamped)
-                    
-                    if abs(pred_v2 - pred_v2_clamped) > 0.01:
-                        log(f"  [CLAMP] {target}: meta={pred_v2:.2f} -> clamped={pred_v2_clamped:.2f} "
-                            f"(v1={pred_v1:.2f}, rango=[{lower_bound:.2f}, {upper_bound:.2f}])")
-                        pred_v2 = pred_v2_clamped
+                if abs(pred_v2 - pred_v2_clamped) > 0.01:
+                    log(f"  [CLAMP] {target}: meta={pred_v2:.2f} -> clamped={pred_v2_clamped:.2f} "
+                        f"(v1={pred_v1:.2f}, rango=[{lower_bound:.2f}, {upper_bound:.2f}])")
+                    pred_v2 = pred_v2_clamped
             
             refined_results[target] = {
                 "prediction_v1": r["prediction"],
@@ -574,61 +548,72 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
 
 
 def add_deterministic_ica(results: dict):
-    """Calcula el ICA de forma determinista para zbe y out a partir de las predicciones corregidas."""
-    from sklearn.linear_model import Ridge
+    """Calcula el ICA con subíndices CAQI europeos normalizados.
+    
+    Fix auditoría #10: Reemplaza el Ridge entrenado al vuelo (sin validación)
+    por un cálculo determinista con umbrales estándar europeos (CAQI).
+    """
+    # Importar umbrales desde config central
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from config import compute_ica_subindex
+    
     try:
-        if DATASET_PATH.exists():
-            df_hist = pd.read_parquet(DATASET_PATH)
-            for zone in ["zbe", "out"]:
-                no2_col = f"NO2_{zone}"
-                pm10_col = f"PM10_{zone}"
-                pm25_col = f"PM2.5_{zone}"
-                ica_col = f"ICA_{zone}"
-                
-                sub = df_hist[[no2_col, pm10_col, pm25_col, ica_col]].dropna()
-                if len(sub) >= 30:
-                    X = sub[[no2_col, pm10_col, pm25_col]]
-                    y = sub[ica_col]
-                    
-                    model_ica = Ridge(alpha=1.0)
-                    model_ica.fit(X, y)
-                    
-                    # Predicciones corregidas (o base si no hay corrector)
-                    pred_no2 = results[f"NO2_{zone}_d1"]["prediction"]
-                    pred_pm10 = results[f"PM10_{zone}_d1"]["prediction"]
-                    pred_pm25 = results[f"PM2.5_{zone}_d1"]["prediction"]
-                    
-                    pred_ica = float(model_ica.predict([[pred_no2, pred_pm10, pred_pm25]])[0])
-                    pred_ica = max(0.0, pred_ica)
-                    
-                    # Predicción base (v1)
-                    pred_no2_v1 = results[f"NO2_{zone}_d1"].get("prediction_v1", pred_no2)
-                    pred_pm10_v1 = results[f"PM10_{zone}_d1"].get("prediction_v1", pred_pm10)
-                    pred_pm25_v1 = results[f"PM2.5_{zone}_d1"].get("prediction_v1", pred_pm25)
-                    
-                    pred_ica_v1 = float(model_ica.predict([[pred_no2_v1, pred_pm10_v1, pred_pm25_v1]])[0])
-                    pred_ica_v1 = max(0.0, pred_ica_v1)
-                    
-                    # Métricas de error aproximadas
-                    rmse_cv = 6.722 if zone == "zbe" else 7.987
-                    
-                    results[f"ICA_{zone}_d1"] = {
-                        "prediction_v1": round(pred_ica_v1, 2),
-                        "prediction":    round(pred_ica, 2),
-                        "lower":         round(max(0, pred_ica - 1.28 * rmse_cv), 2),
-                        "upper":         round(pred_ica + 1.28 * rmse_cv, 2),
-                        "rmse_cv":       rmse_cv,
-                        "correction":    round(pred_ica - pred_ica_v1, 2),
-                        "foresight": {
-                            "base_value": round(float(y.mean()), 2),
-                            "positive_top": [{"feature": "PM2.5 (Ensemble)", "value": round(float(model_ica.coef_[2]*(pred_pm25 - y.mean())), 2)}],
-                            "negative_top": [],
-                            "narrative": {
-                                "es": f"Índice de Calidad del Aire (ICA) calculado deterministamente a partir de NO2 ({pred_no2:.1f} µg/m³), PM10 ({pred_pm10:.1f} µg/m³) y PM2.5 ({pred_pm25:.1f} µg/m³).",
-                                "eu": f"Airearen Kalitate Indizea (ICA) NO2 ({pred_no2:.1f} µg/m³), PM10 ({pred_pm10:.1f} µg/m³) eta PM2.5 ({pred_pm25:.1f} µg/m³) aztertu ondoren lortu da."
-                            }
-                        }
+        for zone in ["zbe", "out"]:
+            no2_key  = f"NO2_{zone}_d1"
+            pm10_key = f"PM10_{zone}_d1"
+            pm25_key = f"PM2.5_{zone}_d1"
+            
+            if no2_key not in results or pm10_key not in results or pm25_key not in results:
+                continue
+            
+            pred_no2  = results[no2_key]["prediction"]
+            pred_pm10 = results[pm10_key]["prediction"]
+            pred_pm25 = results[pm25_key]["prediction"]
+            
+            # Calcular subíndices CAQI normalizados
+            sub_no2  = compute_ica_subindex("NO2",   pred_no2)
+            sub_pm10 = compute_ica_subindex("PM10",  pred_pm10)
+            sub_pm25 = compute_ica_subindex("PM2.5", pred_pm25)
+            
+            # El ICA es el máximo de los subíndices (estándar CAQI)
+            pred_ica = max(sub_no2, sub_pm10, sub_pm25)
+            
+            # También calcular para v1
+            pred_no2_v1  = results[no2_key].get("prediction_v1", pred_no2)
+            pred_pm10_v1 = results[pm10_key].get("prediction_v1", pred_pm10)
+            pred_pm25_v1 = results[pm25_key].get("prediction_v1", pred_pm25)
+            
+            sub_no2_v1  = compute_ica_subindex("NO2",   pred_no2_v1)
+            sub_pm10_v1 = compute_ica_subindex("PM10",  pred_pm10_v1)
+            sub_pm25_v1 = compute_ica_subindex("PM2.5", pred_pm25_v1)
+            pred_ica_v1 = max(sub_no2_v1, sub_pm10_v1, sub_pm25_v1)
+            
+            # RMSE aproximado del ICA (propagación de errores)
+            rmse_cv = max(
+                results[no2_key].get("rmse_cv", 5.0),
+                results[pm10_key].get("rmse_cv", 5.0),
+                results[pm25_key].get("rmse_cv", 5.0)
+            )
+            
+            results[f"ICA_{zone}_d1"] = {
+                "prediction_v1": round(pred_ica_v1, 2),
+                "prediction":    round(pred_ica, 2),
+                "lower":         round(max(0, pred_ica - 1.28 * rmse_cv * 0.5), 2),
+                "upper":         round(pred_ica + 1.28 * rmse_cv * 0.5, 2),
+                "rmse_cv":       round(rmse_cv * 0.5, 3),
+                "correction":    round(pred_ica - pred_ica_v1, 2),
+                "foresight": {
+                    "base_value": round(pred_ica, 2),
+                    "positive_top": [],
+                    "negative_top": [],
+                    "narrative": {
+                        "es": f"ICA calculado con subíndices CAQI: NO2={sub_no2:.0f}, PM10={sub_pm10:.0f}, PM2.5={sub_pm25:.0f}. "
+                              f"Concentraciones: NO2={pred_no2:.1f}, PM10={pred_pm10:.1f}, PM2.5={pred_pm25:.1f} µg/m³.",
+                        "eu": f"ICA CAQI azpi-indizeekin: NO2={sub_no2:.0f}, PM10={sub_pm10:.0f}, PM2.5={sub_pm25:.0f}."
                     }
+                }
+            }
     except Exception as e:
         log(f"  [WARN] Falló el cálculo del ICA determinista: {e}")
 

@@ -160,7 +160,10 @@ def build_daily_pivot(df: pd.DataFrame) -> pd.DataFrame:
 def print_zbe_stats(pivot: pd.DataFrame):
     section("3. Estadísticas pre/post ZBE")
 
-    ZBE_DATE = pd.Timestamp("2025-09-01")
+    # Importar desde config central (Fix auditoría #17)
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from config import ZBE_DATE_NAIVE as ZBE_DATE
     pre      = pivot[pivot["date"] < ZBE_DATE]
     post     = pivot[pivot["date"] >= ZBE_DATE]
 

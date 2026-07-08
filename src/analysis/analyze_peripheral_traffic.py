@@ -4,10 +4,14 @@ from pathlib import Path
 import os
 
 # Configuración
-ROOT_DIR = Path("c:/Users/ortas/OneDrive/Documentos/Vitoria_AG")
+ROOT_DIR = Path(__file__).parent.parent.parent
 TRAFFIC_DIR = ROOT_DIR / "data/raw/traffic"
 REPORTS_DIR = ROOT_DIR / "reports"
-ZBE_DATE = "2025-09-01"
+
+# Importar desde config central (Fix auditoría #17)
+import sys
+sys.path.insert(0, str(ROOT_DIR / "src"))
+from config import ZBE_DATE_STR as ZBE_DATE
 
 # Sensores proporcionados por el usuario (Perímetro ZBE)
 PERIPHERAL_SENSORS = [

@@ -52,7 +52,7 @@ from sklearn.inspection import permutation_importance
 
 warnings.filterwarnings("ignore")
 
-# ??? RUTAS ????????????????????????????????????????????????????????????????????
+# ─── RUTAS ────────────────────────────────────────────────────────────────────
 ROOT_DIR      = Path(__file__).parent.parent.parent
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 MODELS_DIR    = ROOT_DIR / "models"
@@ -60,19 +60,17 @@ MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
 DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
 
-# ??? CONFIG ???????????????????????????????????????????????????????????????????
-TARGETS        = ["NO2", "PM10", "PM2.5"]
-ZBE_DATE       = pd.Timestamp("2025-09-01", tz="UTC")
+# Importar constantes centralizadas (Fix auditoría #17)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config import ZBE_DATE, TARGETS_CAUSALES as TARGETS, HDD_FEATURES_REQUIRED
+
+# ─── CONFIG ───────────────────────────────────────────────────────────────────
 N_SPLITS       = 5
 HORIZON        = "d1"
 TOP_N_FEATURES = 80
 EARLY_STOPPING_ROUNDS = 100
 
-HDD_FEATURES_REQUIRED = [
-    "HDD", "HDD_acum_7d", "HDD_acum_14d", "HDD_lag_1d", "HDD_lag_7d",
-    "fc_HDD_d1", "fc_HDD_d2", "fc_HDD_d3",
-    "dia_muy_frio", "es_invierno_estricto", "domingo_invierno", "es_domingo",
-]
+# HDD_FEATURES_REQUIRED -> importado de config.py (sin fc_HDD_* que ya no existen tras Fix #1)
 
 # Covariables meteorol?gicas para DiD y counterfactual
 METEO_COVARIATES = [
@@ -213,32 +211,61 @@ def verify_features(df, feature_cols):
     return df, feature_cols
 
 
-# ??? 3. SELECCI?N DE FEATURES ????????????????????????????????????????????????
-def select_features_permutation(X_train, y_train, X_val, y_val,
-                                  feature_cols, target_name):
+# ── 3. SELECCIÓN DE FEATURES ──────────────────────────────────────────────────
+def _get_fold_importances(X_train, y_train, X_val, y_val):
+    """Calcula permutation importance para un fold. Devuelve array de importancias."""
     from lightgbm import LGBMRegressor, early_stopping, log_evaluation
 
-    log(f"\n  Calculando permutation importance para {target_name}...")
     model = LGBMRegressor(**{**LGBM_PARAMS, "n_estimators": 300})
     model.fit(X_train, y_train,
               eval_set=[(X_val, y_val)],
               callbacks=[early_stopping(50, verbose=False), log_evaluation(-1)])
 
-    perm       = permutation_importance(model, X_val, y_val, n_repeats=5,
-                                        random_state=42,
-                                        scoring="neg_root_mean_squared_error",
-                                        n_jobs=-1)
-    sorted_idx = np.argsort(perm.importances_mean)[::-1]
-    n_select   = max(min(TOP_N_FEATURES, (perm.importances_mean > 0).sum()), 20)
+    perm = permutation_importance(model, X_val, y_val, n_repeats=5,
+                                  random_state=42,
+                                  scoring="neg_root_mean_squared_error",
+                                  n_jobs=-1)
+    return perm.importances_mean
+
+
+def select_features_aggregated(df_target, y_full, feature_cols, folds, target_name):
+    """
+    Selección de features agregando permutation importance de TODOS los folds.
+
+    Fix auditoría #5: Antes se usaba solo el último fold, lo que sesgaba
+    la selección hacia features que funcionan bien en la ventana temporal
+    más reciente. Ahora se promedian las importancias de todos los folds
+    para una selección más robusta.
+    """
+    log(f"\n  Calculando permutation importance para {target_name} ({len(folds)} folds)...")
+
+    # Acumular importancias de cada fold
+    all_importances = []
+    for fold_idx, (tr_idx, va_idx) in enumerate(folds):
+        fold_medians = df_target.iloc[tr_idx][feature_cols].median().fillna(0)
+        X_tr = df_target.iloc[tr_idx][feature_cols].fillna(fold_medians)
+        X_va = df_target.iloc[va_idx][feature_cols].fillna(fold_medians)
+        y_tr = y_full.iloc[tr_idx]
+        y_va = y_full.iloc[va_idx]
+
+        imp = _get_fold_importances(X_tr, y_tr, X_va, y_va)
+        all_importances.append(imp)
+        log(f"    Fold {fold_idx + 1}: top feature importance = {np.max(imp):.4f}")
+
+    # Promediar importancias de todos los folds
+    mean_importances = np.mean(all_importances, axis=0)
+    sorted_idx = np.argsort(mean_importances)[::-1]
+    n_select   = max(min(TOP_N_FEATURES, (mean_importances > 0).sum()), 20)
     selected   = [feature_cols[i] for i in sorted_idx[:n_select]]
 
+    # Forzar HDD features si no fueron seleccionadas
     hdd_forced = [f for f in HDD_FEATURES_REQUIRED
                   if f in feature_cols and f not in selected]
     if hdd_forced:
         selected = selected + hdd_forced
         log(f"  HDD features forzadas : {hdd_forced}")
 
-    log(f"  Features seleccionadas: {len(selected)}")
+    log(f"  Features seleccionadas: {len(selected)} (agregadas de {len(folds)} folds)")
     log(f"  Top 5: {selected[:5]}")
     return selected
 
@@ -308,17 +335,9 @@ def train_all(df, feature_cols, target_cols, tune=False):
         folds_t = list(tscv.split(df_target[feature_cols]))
         fold_metrics = {"rmse": [], "mae": [], "r2": [], "mape": []}
 
-        # 1. Feature selection (permutation importance) usando el último fold sin leakage
-        last_tr, last_va = folds_t[-1]
-        fs_medians = df_target.iloc[last_tr][feature_cols].median().fillna(0)
-        
-        X_fs_tr = df_target.iloc[last_tr][feature_cols].fillna(fs_medians)
-        X_fs_va = df_target.iloc[last_va][feature_cols].fillna(fs_medians)
-        
-        selected = select_features_permutation(
-            X_fs_tr, y_full.iloc[last_tr],
-            X_fs_va, y_full.iloc[last_va],
-            feature_cols, target_col,
+        # 1. Feature selection agregada sobre TODOS los folds (Fix auditoría #5)
+        selected = select_features_aggregated(
+            df_target, y_full, feature_cols, folds_t, target_col
         )
         all_selected[target_col] = selected
 
@@ -326,11 +345,13 @@ def train_all(df, feature_cols, target_cols, tune=False):
         lgbm_params = LGBM_PARAMS.copy()
 
         # Tuning con Optuna en el último fold
+        last_tr, last_va = folds_t[-1]
         if tune:
             log(f"    Tuning LightGBM con Optuna para {target_col} (30 trials)...")
             try:
-                X_tune_tr = df_target.iloc[last_tr][selected].fillna(fs_medians[selected])
-                X_tune_va = df_target.iloc[last_va][selected].fillna(fs_medians[selected])
+                tune_medians = df_target.iloc[last_tr][selected].median().fillna(0)
+                X_tune_tr = df_target.iloc[last_tr][selected].fillna(tune_medians)
+                X_tune_va = df_target.iloc[last_va][selected].fillna(tune_medians)
                 best_lgbm_params = tune_lgbm_optuna(X_tune_tr, y_full.iloc[last_tr],
                                                      X_tune_va, y_full.iloc[last_va], n_trials=30)
                 lgbm_params.update(best_lgbm_params)
@@ -604,9 +625,15 @@ def did_analysis_v8(df):
         base_cols = ["date", "month_year"]
         covs_in_df = [c for c in METEO_COVARIATES if c in df.columns]
         
-        # Seleccionar columnas necesarias y rellenar nulos en covariables con 0
+        # Seleccionar columnas necesarias
         sub_df = df[base_cols + covs_in_df + [col_zbe, col_out]].copy()
-        sub_df[covs_in_df] = sub_df[covs_in_df].fillna(0.0)
+        
+        # Fix auditoría #7: Imputar con mediana histórica + flag de missing
+        # Antes se usaba fillna(0), lo que es incorrecto (ej: temperatura 0°C es válida)
+        for cov in covs_in_df:
+            median_val = sub_df[cov].median()
+            sub_df[f"{cov}_missing"] = sub_df[cov].isna().astype(int)
+            sub_df[cov] = sub_df[cov].fillna(median_val)
         
         sub_df["Post"] = (sub_df["date"] >= ZBE_DATE).astype(int)
         sub_df["contaminant"] = cont

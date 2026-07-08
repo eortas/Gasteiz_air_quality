@@ -30,8 +30,10 @@ MODELS_DIR.mkdir(parents=True, exist_ok=True)
 OUT_ES_FILE = MODELS_DIR / "event_study_v9.json"
 OUT_SC_FILE = MODELS_DIR / "synthetic_control_v9.json"
 
-# Fecha ZBE implementación
-ZBE_DATE_STR = "2025-09-01"
+# Importar constantes centralizadas (Fix auditoría #17)
+import sys
+sys.path.insert(0, str(ROOT_DIR / "src"))
+from config import ZBE_DATE_STR
 
 CONTAMINANTS = ["NO2", "PM10", "PM2.5", "ICA"]
 TREATED     = ["PAUL", "FUEROS"]

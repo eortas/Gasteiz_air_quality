@@ -36,7 +36,11 @@ warnings.filterwarnings("ignore")
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
 ROOT         = Path(__file__).parent.parent
 PARQUET_PATH = ROOT / "data" / "processed" / "features_daily.parquet"
-ZBE_DATE     = pd.Timestamp("2025-09-01", tz="UTC")
+
+# Importar desde config central (Fix auditoría #17)
+import sys
+sys.path.insert(0, str(ROOT))
+from config import ZBE_DATE
 WINTER_MONTHS = {11, 12, 1, 2}          # invierno estricto
 N_BOOTSTRAP  = 10_000
 RANDOM_SEED  = 42
