@@ -317,7 +317,7 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 "Content-Type": "application/json"
             },
             json={
-                "model": "qwen/qwen3-32b",
+                "model": "qwen/qwen3.6-27b",
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_msg}

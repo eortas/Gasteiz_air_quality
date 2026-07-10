@@ -527,7 +527,7 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
                 "Content-Type": "application/json"
             },
             json={
-                "model": "qwen/qwen3-32b",
+                "model": "qwen/qwen3.6-27b",
                 "messages": [
                     {"role": "system", "content": "Eres un experto en calidad del aire en Vitoria-Gasteiz. Tu objetivo es explicar de forma clara y concreta cuáles son las variables meteorológicas y de tráfico que más influyen en la predicción del contaminante, y por qué. Responde siempre en formato JSON bilingüe."},
                     {"role": "user", "content": prompt}
