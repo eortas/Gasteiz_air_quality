@@ -90,7 +90,7 @@ def decompress_local_csvs(data_dirs: list[Path]):
             continue
         for gz_file in d.glob("*.csv.gz"):
             csv_file = gz_file.with_suffix("") # quitar .gz
-            if csv_file.exists():
+            if csv_file.exists() and csv_file.stat().st_mtime >= gz_file.stat().st_mtime:
                 continue
             with gzip.open(gz_file, "rb") as f_in, open(csv_file, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
@@ -119,18 +119,20 @@ def main():
 
     ingestion_args = ["--local-only"] if local_only else []
 
+    with_releases = "--with-releases" in sys.argv or os.getenv("GITHUB_ACTIONS") == "true"
+
     logger.info("=" * 60)
     logger.info("  PIPELINE VITORIA AIR QUALITY")
     logger.info(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     logger.info("=" * 60)
 
-    # ── 0. RESTORE DESDE STORAGE ──────────────────────────────────────────────
-    if not local_only:
+    # ── 0. RESTORE DESDE STORAGE / GITHUB RELEASES ────────────────────────────
+    if with_releases:
         logger.info("\n── FASE 0: Restore desde GitHub Releases")
         if not run_script("Download CSVs historicos", "src/ingestion/download_releases.py", []):
             logger.warning("[WARN]  Fallo la descarga desde Releases. Puede faltar historico.")
     else:
-        logger.info("\n── FASE 0: Restore - OMITIDO (GitHub Releases)")
+        logger.info("\n── FASE 0: Restore - OMITIDO (usando cache local)")
     
     # Restaura desde los .csv.gz que están en el repositorio (Git)
     decompress_local_csvs([

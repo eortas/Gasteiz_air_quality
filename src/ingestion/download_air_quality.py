@@ -76,48 +76,58 @@ async def get_browser_session(playwright):
     y captura la cookie de sesión (usualmente `token` en localStorage o devuelta
     en requests de red). Retorna el (token, browser, context).
     """
-    print("  Iniciando Playwright para obtener sesión válida...")
-    browser = await playwright.chromium.launch(headless=True, args=['--no-sandbox'])
-    context = await browser.new_context(
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-    )
-    page = await context.new_page()
-
-    token = None
-
-    def capture_token(request):
-        nonlocal token
-        if "getWidget" in request.url and request.method == "POST":
-            post_data = request.post_data
-            if post_data and "token=" in post_data:
-                for param in post_data.split("&"):
-                    if param.startswith("token="):
-                        from urllib.parse import unquote
-                        token = unquote(param.split("=")[1])
-                        break
-
-    page.on("request", capture_token)
-
-    try:
-        await page.goto("https://kunakcloud.com/websites/aytoVitoria.html", wait_until="networkidle", timeout=60000)
-        await asyncio.sleep(2)
-        # click cookiebot accept if exists
+    for attempt in range(1, 4):
         try:
-            btn = page.locator("#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")
-            if await btn.is_visible(timeout=5000):
-                await btn.click()
-                await asyncio.sleep(1)
-        except:
-            pass
-        # Esperar a que el dashboard dispare las peticiones getWidget (token capturado)
-        for _ in range(30):
-            if token: break
-            await asyncio.sleep(1)
-    except Exception as e:
-        print(f"\n  [WARN] Error cargando página: {e}")
+            print(f"  Iniciando Playwright (intento {attempt}/3) para obtener sesión válida...")
+            browser = await playwright.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+            )
+            page = await context.new_page()
 
-    await page.close()
-    return token, browser, context
+            token = None
+
+            def capture_token(request):
+                nonlocal token
+                if "getWidget" in request.url and request.method == "POST":
+                    post_data = request.post_data
+                    if post_data and "token=" in post_data:
+                        for param in post_data.split("&"):
+                            if param.startswith("token="):
+                                from urllib.parse import unquote
+                                token = unquote(param.split("=")[1])
+                                break
+
+            page.on("request", capture_token)
+
+            await page.goto("https://kunakcloud.com/websites/aytoVitoria.html", wait_until="networkidle", timeout=60000)
+            await asyncio.sleep(2)
+            try:
+                btn = page.locator("#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")
+                if await btn.is_visible(timeout=5000):
+                    await btn.click()
+                    await asyncio.sleep(1)
+            except:
+                pass
+            for _ in range(30):
+                if token: break
+                await asyncio.sleep(1)
+
+            await page.close()
+            if token:
+                return token, browser, context
+            else:
+                await browser.close()
+        except Exception as e:
+            print(f"  [WARN] Intento {attempt} falló: {e}")
+            try:
+                if 'browser' in locals() and browser:
+                    await browser.close()
+            except:
+                pass
+            await asyncio.sleep(3)
+
+    return None, None, None
 
 
 # ─── FETCH DE UN MES (usa el contexto del navegador con sus cookies) ──────────

@@ -6,10 +6,10 @@ __pycache__/
 *.pyo
 .pytest_cache/
 
-# Datos (permitir solo comprimidos .gz para persistencia sin Supabase)
+# Datos raw (respaldados en GitHub Releases, no en el repo Git)
 data/raw/**
 !data/raw/**/
-!data/raw/**/*.csv.gz
+!data/raw/**/checkpoint_air.json
 !data/raw/**/.gitkeep
 
 

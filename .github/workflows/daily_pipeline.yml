@@ -51,7 +51,7 @@ jobs:
 
       # ── 4. Pipeline completo ─────────────────────────────────────────────────
       - name: Ejecutar pipeline (ingesta → features → modelo → predicción)
-        run: python run_pipeline.py --local-only
+        run: python run_pipeline.py --with-releases --skip-training
 
       # ── 5. Asegurar archivos para la web ─────────────────────────────────────
       - name: Sincronizar archivos para la web
@@ -60,7 +60,7 @@ jobs:
           cp reports/html/*.png . || true
           ls -lh index.html || true
 
-      # ── 7. Commit y push ─────────────────────────────────────────────────────
+      # ── 7. Commit y push (archivos ligeros y dashboard) ──────────────────────
       - name: Publicar dashboard en GitHub Pages
         run: |
           git config user.name  "github-actions[bot]"
@@ -69,9 +69,6 @@ jobs:
           git add traffic_map.html || true
           git add "**/*.png" || true
           git add data/processed/*.json || true
-          git add data/raw/traffic/*.csv.gz || true
-          git add data/raw/air/*.csv.gz || true
-          git add data/raw/weather/*.csv.gz || true
           git add data/raw/**/checkpoint_air.json || true
           git add data/processed/predictions_latest.json || true
           git add data/processed/station_daily.csv || true
@@ -81,7 +78,7 @@ jobs:
           git push
 
       # ── 8. Upload to GitHub Releases ─────────────────────────────────────────
-      - name: Actualizar datos en GitHub Releases
+      - name: Actualizar datos pesados en GitHub Releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
