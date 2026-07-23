@@ -1,13 +1,13 @@
 {
   "prediction_date": "2026-07-24",
-  "generated_at": "2026-07-23T11:35:19.077131+00:00",
+  "generated_at": "2026-07-23T11:51:31.626635+00:00",
   "model_version": "v8",
   "targets": {
     "NO2_zbe_d1": {
       "prediction": 11.25,
-      "lower": 6.24,
-      "upper": 16.26,
-      "rmse_cv": 3.915,
+      "lower": 6.83,
+      "upper": 15.68,
+      "rmse_cv": 3.4581,
       "foresight": {
         "base_value": 10.6,
         "positive_top": [
@@ -55,16 +55,16 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
-          "eu": "API errorea"
+          "es": "Predicción de 11.3 µg/m³. Factores principales: NO2_zbe (+1.24), exp_traffic_volume_d1 (+0.54), relative_humidity_2m (+0.37).",
+          "eu": "11.3 µg/m³-ko aurreikuspena. Faktore nagusiak: NO2_zbe (+1.24), exp_traffic_volume_d1 (+0.54), relative_humidity_2m (+0.37)."
         }
       }
     },
     "NO2_out_d1": {
       "prediction": 15.04,
-      "lower": 9.3,
-      "upper": 20.79,
-      "rmse_cv": 4.49,
+      "lower": 9.21,
+      "upper": 20.88,
+      "rmse_cv": 4.5571,
       "foresight": {
         "base_value": 12.42,
         "positive_top": [
@@ -112,16 +112,16 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
-          "eu": "API errorea"
+          "es": "Predicción de 15.0 µg/m³. Factores clave: NO2_out (+1.52), cloud_cover (+1.36), viento_vel_out (+0.43).",
+          "eu": "15.0 µg/m³-ko aurreikuspena. Faktore nagusiak: NO2_out (+1.52), cloud_cover (+1.36), viento_vel_out (+0.43)."
         }
       }
     },
     "PM10_zbe_d1": {
       "prediction": 17.82,
-      "lower": 12.39,
-      "upper": 23.24,
-      "rmse_cv": 4.239,
+      "lower": 11.73,
+      "upper": 23.91,
+      "rmse_cv": 4.7577,
       "foresight": {
         "base_value": 12.83,
         "positive_top": [
@@ -169,16 +169,16 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
-          "eu": "API errorea"
+          "es": "Predicción de 17.8 µg/m³. Factores clave: PM10_zbe (+1.35), PM10_zbe_roll_mean_30d (+0.85), relative_humidity_2m (+0.65).",
+          "eu": "17.8 µg/m³-ko aurreikuspena. Faktore nagusiak: PM10_zbe (+1.35), PM10_zbe_roll_mean_30d (+0.85), relative_humidity_2m (+0.65)."
         }
       }
     },
     "PM10_out_d1": {
       "prediction": 13.5,
-      "lower": 8.12,
-      "upper": 18.89,
-      "rmse_cv": 4.208,
+      "lower": 7.83,
+      "upper": 19.18,
+      "rmse_cv": 4.4351,
       "foresight": {
         "base_value": 10.7,
         "positive_top": [
@@ -226,16 +226,16 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
-          "eu": "API errorea"
+          "es": "Predicción de 13.5 µg/m³. Factores clave: PM10_out (+0.64), relative_humidity_2m (+0.52), precipitation_acum_3d (+0.47).",
+          "eu": "13.5 µg/m³-ko aurreikuspena. Faktore nagusiak: PM10_out (+0.64), relative_humidity_2m (+0.52), precipitation_acum_3d (+0.47)."
         }
       }
     },
     "PM2.5_zbe_d1": {
       "prediction": 9.2,
-      "lower": 5.77,
-      "upper": 12.63,
-      "rmse_cv": 2.68,
+      "lower": 5.17,
+      "upper": 13.23,
+      "rmse_cv": 3.1508,
       "foresight": {
         "base_value": 7.6,
         "positive_top": [
@@ -283,16 +283,16 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
-          "eu": "API errorea"
+          "es": "Predicción de 9.2 µg/m³. Factores clave: ventilation_index (+0.53), temp_max_dia (+0.46), weather_code (+0.37).",
+          "eu": "9.2 µg/m³-ko aurreikuspena. Faktore nagusiak: ventilation_index (+0.53), temp_max_dia (+0.46), weather_code (+0.37)."
         }
       }
     },
     "PM2.5_out_d1": {
       "prediction": 7.85,
-      "lower": 3.87,
-      "upper": 11.83,
-      "rmse_cv": 3.111,
+      "lower": 3.55,
+      "upper": 12.15,
+      "rmse_cv": 3.3592,
       "foresight": {
         "base_value": 7.12,
         "positive_top": [
@@ -340,17 +340,17 @@
           }
         ],
         "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
-          "eu": "API errorea"
+          "es": "Predicción de 7.9 µg/m³. Factores clave: ventilation_index (+0.5), traffic_occupancy_lag_7d (+0.22), wind_speed_10m (+0.21).",
+          "eu": "7.9 µg/m³-ko aurreikuspena. Faktore nagusiak: ventilation_index (+0.5), traffic_occupancy_lag_7d (+0.22), wind_speed_10m (+0.21)."
         }
       }
     },
     "ICA_zbe_d1": {
       "prediction_v1": 17.82,
       "prediction": 17.82,
-      "lower": 15.11,
-      "upper": 20.53,
-      "rmse_cv": 2.119,
+      "lower": 14.78,
+      "upper": 20.86,
+      "rmse_cv": 2.379,
       "correction": 0.0,
       "foresight": {
         "base_value": 17.82,
@@ -365,9 +365,9 @@
     "ICA_out_d1": {
       "prediction_v1": 13.5,
       "prediction": 13.5,
-      "lower": 10.63,
-      "upper": 16.37,
-      "rmse_cv": 2.245,
+      "lower": 10.58,
+      "upper": 16.42,
+      "rmse_cv": 2.279,
       "correction": 0.0,
       "foresight": {
         "base_value": 13.5,

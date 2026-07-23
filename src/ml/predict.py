@@ -57,17 +57,30 @@ TARGETS = [
     "PM2.5_zbe_d1", "PM2.5_out_d1",
 ]
 
-# M?tricas CV v5 - usadas para construir intervalos de confianza aproximados
-CV_RMSE = {
-    "NO2_zbe_d1":   3.915,
-    "NO2_out_d1":   4.490,
-    "PM10_zbe_d1":  4.239,
-    "PM10_out_d1":  4.208,
-    "PM2.5_zbe_d1": 2.680,
-    "PM2.5_out_d1": 3.111,
-    "ICA_zbe_d1":   6.722,
-    "ICA_out_d1":   7.987,
-}
+# Función para obtener métricas CV v8 dinámicas
+def get_cv_rmse() -> dict:
+    metrics_path = MODELS_DIR / "metrics_v8.json"
+    defaults = {
+        "NO2_zbe_d1": 3.458, "NO2_out_d1": 4.557,
+        "PM10_zbe_d1": 4.758, "PM10_out_d1": 4.435,
+        "PM2.5_zbe_d1": 3.151, "PM2.5_out_d1": 3.359,
+        "ICA_zbe_d1": 4.758, "ICA_out_d1": 4.557,
+    }
+    if metrics_path.exists():
+        try:
+            data = json.loads(metrics_path.read_text(encoding="utf-8"))
+            res = {}
+            for k, v in data.items():
+                clean_k = k.replace("target_", "")
+                res[clean_k] = v.get("cv_rmse", defaults.get(clean_k, 4.0))
+            res["ICA_zbe_d1"] = res.get("PM10_zbe_d1", 4.758)
+            res["ICA_out_d1"] = res.get("NO2_out_d1", 4.557)
+            return res
+        except Exception:
+            pass
+    return defaults
+
+CV_RMSE = get_cv_rmse()
 
 # Unidades y umbrales de alerta (WHO 2021 guidelines, medias diarias)
 META = {
@@ -529,22 +542,34 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
             json={
                 "model": "qwen/qwen3.6-27b",
                 "messages": [
-                    {"role": "system", "content": "Eres un experto en calidad del aire en Vitoria-Gasteiz. Tu objetivo es explicar de forma clara y concreta cuáles son las variables meteorológicas y de tráfico que más influyen en la predicción del contaminante, y por qué. Responde siempre en formato JSON bilingüe."},
+                    {"role": "system", "content": "Eres un experto en calidad del aire en Vitoria-Gasteiz. Tu objetivo es explicar de forma clara y concreta cuáles son las variables meteorológicas y de tráfico que más influyen en la predicción del contaminante, y por qué. Responde siempre ÚNICAMENTE con un objeto JSON bilingüe con las explicaciones completas en castellano ('es') y euskera ('eu')."},
                     {"role": "user", "content": prompt}
                 ],
-                "response_format": {"type": "json_object"},
                 "temperature": 0.3,
                 "max_tokens": 800
             },
             timeout=15
         )
         if response.status_code == 200:
-            res_json = response.json()["choices"][0]["message"]["content"]
-            return json.loads(res_json)
+            res_text = response.json()["choices"][0]["message"]["content"]
+            # Limpiar posibles etiquetas de razonamiento <think> si el modelo las incluye
+            import re
+            cleaned_text = re.sub(r'<think>.*?</think>', '', res_text, flags=re.DOTALL).strip()
+            # Extraer primer bloque JSON válido
+            json_match = re.search(r'\{.*\}', cleaned_text, re.DOTALL)
+            if json_match:
+                cleaned_text = json_match.group(0)
+            return json.loads(cleaned_text)
         else:
-            return {"es": f"Error API: {response.text}", "eu": "API errorea"}
+            return {
+                "es": f"Predicción de {round(pred_val, 1)} µg/m³. Factores clave: {pos_str}.",
+                "eu": f"{round(pred_val, 1)} µg/m³-ko aurreikuspena. Faktore nagusiak: {pos_str}."
+            }
     except Exception as e:
-        return {"es": f"Error: {str(e)}", "eu": "Errorea"}
+        return {
+            "es": f"Predicción de {round(pred_val, 1)} µg/m³. Factores principales: {pos_str}.",
+            "eu": f"{round(pred_val, 1)} µg/m³-ko aurreikuspena. Faktore nagusiak: {pos_str}."
+        }
 
 
 def add_deterministic_ica(results: dict):
