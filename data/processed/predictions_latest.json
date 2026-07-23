@@ -1,59 +1,57 @@
 {
   "prediction_date": "2026-07-24",
-  "generated_at": "2026-07-23T01:14:18.662419+00:00",
+  "generated_at": "2026-07-23T11:35:19.077131+00:00",
   "model_version": "v8",
   "targets": {
     "NO2_zbe_d1": {
-      "prediction_v1": 9.54,
-      "prediction": 9.34,
-      "lower": 4.33,
-      "upper": 14.35,
+      "prediction": 11.25,
+      "lower": 6.24,
+      "upper": 16.26,
       "rmse_cv": 3.915,
-      "correction": -0.2,
       "foresight": {
         "base_value": 10.6,
         "positive_top": [
           {
+            "feature": "NO2_zbe",
+            "value": 1.24
+          },
+          {
             "feature": "exp_traffic_volume_d1",
-            "value": 0.48
+            "value": 0.54
+          },
+          {
+            "feature": "relative_humidity_2m",
+            "value": 0.37
           },
           {
             "feature": "traffic_volume_lag_1d",
-            "value": 0.3
+            "value": 0.36
           },
           {
-            "feature": "weather_code",
-            "value": 0.2
-          },
-          {
-            "feature": "wind_v",
-            "value": 0.14
-          },
-          {
-            "feature": "presion_zbe",
-            "value": 0.05
+            "feature": "NO2_zbe_diff_30d",
+            "value": 0.29
           }
         ],
         "negative_top": [
           {
+            "feature": "PM10_zbe_roll_mean_14d",
+            "value": -0.5
+          },
+          {
             "feature": "dew_point",
-            "value": -0.48
+            "value": -0.47
           },
           {
             "feature": "NO2_zbe_roll_max_3d",
-            "value": -0.35
+            "value": -0.33
           },
           {
-            "feature": "PM10_zbe_roll_mean_14d",
-            "value": -0.3
+            "feature": "NO2_zbe_roll_mean_7d",
+            "value": -0.24
           },
           {
-            "feature": "NO2_zbe",
-            "value": -0.23
-          },
-          {
-            "feature": "PM10_zbe_lag_1d",
-            "value": -0.13
+            "feature": "traffic_occupancy_lag_7d",
+            "value": -0.2
           }
         ],
         "narrative": {
@@ -63,56 +61,54 @@
       }
     },
     "NO2_out_d1": {
-      "prediction_v1": 12.19,
-      "prediction": 12.66,
-      "lower": 6.91,
-      "upper": 18.4,
+      "prediction": 15.04,
+      "lower": 9.3,
+      "upper": 20.79,
       "rmse_cv": 4.49,
-      "correction": 0.47,
       "foresight": {
-        "base_value": 12.41,
+        "base_value": 12.42,
         "positive_top": [
           {
             "feature": "NO2_out",
-            "value": 1.39
+            "value": 1.52
           },
           {
             "feature": "cloud_cover",
-            "value": 0.56
+            "value": 1.36
           },
           {
-            "feature": "NO2_zbe_lag_3d",
-            "value": 0.12
-          },
-          {
-            "feature": "PM2.5_out",
-            "value": 0.09
+            "feature": "viento_vel_out",
+            "value": 0.43
           },
           {
             "feature": "wind_v",
-            "value": 0.09
+            "value": 0.4
+          },
+          {
+            "feature": "exp_traffic_volume_d1",
+            "value": 0.39
           }
         ],
         "negative_top": [
           {
-            "feature": "NO2_out_roll_mean_7d",
-            "value": -0.38
+            "feature": "temp_min_dia",
+            "value": -0.43
           },
           {
-            "feature": "temperature_2m",
-            "value": -0.38
+            "feature": "NO2_out_roll_mean_14d",
+            "value": -0.33
           },
           {
-            "feature": "NO2_zbe_roll_mean_7d",
+            "feature": "PM10_out_lag_14d",
+            "value": -0.29
+          },
+          {
+            "feature": "PM2.5_out_roll_mean_14d",
             "value": -0.27
           },
           {
-            "feature": "temperatura_zbe",
-            "value": -0.24
-          },
-          {
-            "feature": "dew_point",
-            "value": -0.22
+            "feature": "PM2.5_zbe_roll_std_3d",
+            "value": -0.25
           }
         ],
         "narrative": {
@@ -122,56 +118,54 @@
       }
     },
     "PM10_zbe_d1": {
-      "prediction_v1": 17.35,
-      "prediction": 19.21,
-      "lower": 13.79,
-      "upper": 24.64,
+      "prediction": 17.82,
+      "lower": 12.39,
+      "upper": 23.24,
       "rmse_cv": 4.239,
-      "correction": 1.86,
       "foresight": {
         "base_value": 12.83,
         "positive_top": [
           {
             "feature": "PM10_zbe",
-            "value": 1.6
+            "value": 1.35
+          },
+          {
+            "feature": "PM10_zbe_roll_mean_30d",
+            "value": 0.85
+          },
+          {
+            "feature": "relative_humidity_2m",
+            "value": 0.65
           },
           {
             "feature": "weather_code",
-            "value": 0.46
+            "value": 0.41
           },
           {
-            "feature": "viento_vel_out",
-            "value": 0.4
-          },
-          {
-            "feature": "sunshine_duration",
-            "value": 0.37
-          },
-          {
-            "feature": "boundary_layer_height",
-            "value": 0.29
+            "feature": "precipitation_acum_3d",
+            "value": 0.33
           }
         ],
         "negative_top": [
           {
             "feature": "ICA_zbe",
-            "value": -0.4
+            "value": -0.72
           },
           {
-            "feature": "NO2_out_lag_14d",
-            "value": -0.14
+            "feature": "traffic_occupancy_lag_2d",
+            "value": -0.32
+          },
+          {
+            "feature": "PM2.5_out_lag_7d",
+            "value": -0.12
+          },
+          {
+            "feature": "NO2_out_roll_std_14d",
+            "value": -0.11
           },
           {
             "feature": "PM2.5_out_lag_3d",
-            "value": -0.13
-          },
-          {
-            "feature": "NO2_out_roll_std_7d",
-            "value": -0.07
-          },
-          {
-            "feature": "NO2_zbe_lag_1d",
-            "value": -0.06
+            "value": -0.1
           }
         ],
         "narrative": {
@@ -181,151 +175,31 @@
       }
     },
     "PM10_out_d1": {
-      "prediction_v1": 13.7,
-      "prediction": 14.01,
-      "lower": 8.63,
-      "upper": 19.4,
+      "prediction": 13.5,
+      "lower": 8.12,
+      "upper": 18.89,
       "rmse_cv": 4.208,
-      "correction": 0.31,
       "foresight": {
         "base_value": 10.7,
         "positive_top": [
           {
-            "feature": "relative_humidity_2m",
-            "value": 0.62
-          },
-          {
             "feature": "PM10_out",
-            "value": 0.49
+            "value": 0.64
+          },
+          {
+            "feature": "relative_humidity_2m",
+            "value": 0.52
           },
           {
             "feature": "precipitation_acum_3d",
-            "value": 0.48
+            "value": 0.47
           },
           {
             "feature": "sunshine_duration",
-            "value": 0.41
+            "value": 0.27
           },
           {
             "feature": "temp_max_dia",
-            "value": 0.36
-          }
-        ],
-        "negative_top": [
-          {
-            "feature": "ICA_out",
-            "value": -1.05
-          },
-          {
-            "feature": "NO2_zbe_lag_30d",
-            "value": -0.37
-          },
-          {
-            "feature": "doy_cos",
-            "value": -0.23
-          },
-          {
-            "feature": "PM2.5_zbe_roll_max_3d",
-            "value": -0.21
-          },
-          {
-            "feature": "PM2.5_out",
-            "value": -0.21
-          }
-        ],
-        "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
-          "eu": "API errorea"
-        }
-      }
-    },
-    "PM2.5_zbe_d1": {
-      "prediction_v1": 7.31,
-      "prediction": 5.89,
-      "lower": 2.46,
-      "upper": 9.32,
-      "rmse_cv": 2.68,
-      "correction": -1.42,
-      "foresight": {
-        "base_value": 7.6,
-        "positive_top": [
-          {
-            "feature": "temp_max_dia",
-            "value": 0.43
-          },
-          {
-            "feature": "weather_code",
-            "value": 0.33
-          },
-          {
-            "feature": "ventilation_index",
-            "value": 0.3
-          },
-          {
-            "feature": "sunshine_duration",
-            "value": 0.26
-          },
-          {
-            "feature": "viento_vel_out",
-            "value": 0.24
-          }
-        ],
-        "negative_top": [
-          {
-            "feature": "ICA_out",
-            "value": -0.57
-          },
-          {
-            "feature": "NO2_zbe_lag_14d",
-            "value": -0.46
-          },
-          {
-            "feature": "ICA_zbe",
-            "value": -0.43
-          },
-          {
-            "feature": "exp_traffic_occupancy_d3",
-            "value": -0.43
-          },
-          {
-            "feature": "PM2.5_zbe_roll_std_30d",
-            "value": -0.32
-          }
-        ],
-        "narrative": {
-          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
-          "eu": "API errorea"
-        }
-      }
-    },
-    "PM2.5_out_d1": {
-      "prediction_v1": 8.47,
-      "prediction": 7.89,
-      "lower": 3.91,
-      "upper": 11.88,
-      "rmse_cv": 3.111,
-      "correction": -0.58,
-      "foresight": {
-        "base_value": 7.12,
-        "positive_top": [
-          {
-            "feature": "ventilation_index",
-            "value": 0.54
-          },
-          {
-            "feature": "temp_max_dia",
-            "value": 0.36
-          },
-          {
-            "feature": "PM10_out_roll_mean_30d",
-            "value": 0.36
-          },
-          {
-            "feature": "precipitation_acum_3d",
-            "value": 0.28
-          },
-          {
-            "feature": "sunshine_duration",
             "value": 0.27
           }
         ],
@@ -335,20 +209,134 @@
             "value": -1.04
           },
           {
+            "feature": "NO2_zbe_lag_30d",
+            "value": -0.42
+          },
+          {
+            "feature": "PM10_zbe_roll_max_14d",
+            "value": -0.18
+          },
+          {
+            "feature": "doy_cos",
+            "value": -0.18
+          },
+          {
+            "feature": "PM10_zbe",
+            "value": -0.17
+          }
+        ],
+        "narrative": {
+          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
+          "eu": "API errorea"
+        }
+      }
+    },
+    "PM2.5_zbe_d1": {
+      "prediction": 9.2,
+      "lower": 5.77,
+      "upper": 12.63,
+      "rmse_cv": 2.68,
+      "foresight": {
+        "base_value": 7.6,
+        "positive_top": [
+          {
+            "feature": "ventilation_index",
+            "value": 0.53
+          },
+          {
+            "feature": "temp_max_dia",
+            "value": 0.46
+          },
+          {
+            "feature": "weather_code",
+            "value": 0.37
+          },
+          {
+            "feature": "PM2.5_zbe_lag_2d",
+            "value": 0.35
+          },
+          {
+            "feature": "wind_speed_10m",
+            "value": 0.27
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "NO2_zbe_lag_14d",
+            "value": -0.37
+          },
+          {
             "feature": "PM2.5_out",
             "value": -0.37
           },
           {
+            "feature": "ICA_zbe",
+            "value": -0.3
+          },
+          {
+            "feature": "humedad_out",
+            "value": -0.23
+          },
+          {
+            "feature": "exp_traffic_occupancy_d2",
+            "value": -0.22
+          }
+        ],
+        "narrative": {
+          "es": "Error API: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
+          "eu": "API errorea"
+        }
+      }
+    },
+    "PM2.5_out_d1": {
+      "prediction": 7.85,
+      "lower": 3.87,
+      "upper": 11.83,
+      "rmse_cv": 3.111,
+      "foresight": {
+        "base_value": 7.12,
+        "positive_top": [
+          {
+            "feature": "ventilation_index",
+            "value": 0.5
+          },
+          {
+            "feature": "traffic_occupancy_lag_7d",
+            "value": 0.22
+          },
+          {
+            "feature": "wind_speed_10m",
+            "value": 0.21
+          },
+          {
+            "feature": "sunshine_duration",
+            "value": 0.18
+          },
+          {
+            "feature": "wind_u",
+            "value": 0.17
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "ICA_out",
+            "value": -0.66
+          },
+          {
+            "feature": "PM2.5_out",
+            "value": -0.46
+          },
+          {
             "feature": "NO2_out_roll_std_14d",
-            "value": -0.2
-          },
-          {
-            "feature": "PM10_zbe_roll_max_14d",
             "value": -0.15
           },
           {
-            "feature": "NO2_out_roll_std_7d",
-            "value": -0.15
+            "feature": "ICA_out_roll_std_14d",
+            "value": -0.12
+          },
+          {
+            "feature": "PM10_zbe",
+            "value": -0.11
           }
         ],
         "narrative": {
@@ -358,36 +346,36 @@
       }
     },
     "ICA_zbe_d1": {
-      "prediction_v1": 17.35,
-      "prediction": 19.21,
-      "lower": 16.5,
-      "upper": 21.92,
+      "prediction_v1": 17.82,
+      "prediction": 17.82,
+      "lower": 15.11,
+      "upper": 20.53,
       "rmse_cv": 2.119,
-      "correction": 1.86,
+      "correction": 0.0,
       "foresight": {
-        "base_value": 19.21,
+        "base_value": 17.82,
         "positive_top": [],
         "negative_top": [],
         "narrative": {
-          "es": "ICA calculado con subíndices CAQI: NO2=5, PM10=19, PM2.5=10. Concentraciones: NO2=9.3, PM10=19.2, PM2.5=5.9 µg/m³.",
-          "eu": "ICA CAQI azpi-indizeekin: NO2=5, PM10=19, PM2.5=10."
+          "es": "ICA calculado con subíndices CAQI: NO2=6, PM10=18, PM2.5=15. Concentraciones: NO2=11.2, PM10=17.8, PM2.5=9.2 µg/m³.",
+          "eu": "ICA CAQI azpi-indizeekin: NO2=6, PM10=18, PM2.5=15."
         }
       }
     },
     "ICA_out_d1": {
-      "prediction_v1": 14.12,
-      "prediction": 14.01,
-      "lower": 11.14,
-      "upper": 16.88,
+      "prediction_v1": 13.5,
+      "prediction": 13.5,
+      "lower": 10.63,
+      "upper": 16.37,
       "rmse_cv": 2.245,
-      "correction": -0.11,
+      "correction": 0.0,
       "foresight": {
-        "base_value": 14.01,
+        "base_value": 13.5,
         "positive_top": [],
         "negative_top": [],
         "narrative": {
-          "es": "ICA calculado con subíndices CAQI: NO2=6, PM10=14, PM2.5=13. Concentraciones: NO2=12.7, PM10=14.0, PM2.5=7.9 µg/m³.",
-          "eu": "ICA CAQI azpi-indizeekin: NO2=6, PM10=14, PM2.5=13."
+          "es": "ICA calculado con subíndices CAQI: NO2=8, PM10=14, PM2.5=13. Concentraciones: NO2=15.0, PM10=13.5, PM2.5=7.8 µg/m³.",
+          "eu": "ICA CAQI azpi-indizeekin: NO2=8, PM10=14, PM2.5=13."
         }
       }
     }

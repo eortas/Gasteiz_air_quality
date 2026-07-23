@@ -505,16 +505,16 @@
   },
   {
     "prediction_date": "2026-07-24",
-    "generated_at": "2026-07-23T01:14:18.663631+00:00",
+    "generated_at": "2026-07-23T11:35:19.092583+00:00",
     "predictions": {
-      "NO2_zbe_d1": 9.34,
-      "NO2_out_d1": 12.66,
-      "PM10_zbe_d1": 19.21,
-      "PM10_out_d1": 14.01,
-      "PM2.5_zbe_d1": 5.89,
-      "PM2.5_out_d1": 7.89,
-      "ICA_zbe_d1": 19.21,
-      "ICA_out_d1": 14.01
+      "NO2_zbe_d1": 11.25,
+      "NO2_out_d1": 15.04,
+      "PM10_zbe_d1": 17.82,
+      "PM10_out_d1": 13.5,
+      "PM2.5_zbe_d1": 9.2,
+      "PM2.5_out_d1": 7.85,
+      "ICA_zbe_d1": 17.82,
+      "ICA_out_d1": 13.5
     }
   }
 ]

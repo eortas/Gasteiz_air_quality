@@ -175,6 +175,7 @@ def load_dataset():
                      if pd.api.types.is_datetime64_any_dtype(df[c])]
     feature_cols = [c for c in df.columns
                     if not c.startswith("target_")
+                    and not c.startswith("fc_")
                     and c != "date"
                     and c not in raw_contaminants
                     and c not in datetime_cols]

@@ -227,21 +227,11 @@ def main():
 
     # ── 8. PREDICCIÓN (d1) ───────────────────────────────────────────────────
     logger.info("\n── FASE 8: Predicción d1")
-    if not run_script("Predecir mañana", "src/ml/predict.py", ["--with-forecast"]):
+    if not run_script("Predecir mañana", "src/ml/predict.py", ["--with-forecast", "--no-meta"]):
         logger.warning("[WARN]  La predicción falló.")
 
-    # ── 8b. META-MODELO (Refinamiento) ───────────────────────────────────────
-    logger.info("\n── FASE 8b: Entrenamiento del Meta-Modelo (Corrector)")
-    if not run_script("Preparar datos meta-modelo", "src/ml/prepare_meta_data.py"):
-        logger.warning("[WARN]  La preparación de datos para el meta-modelo falló.")
-    else:
-        if not run_script("Entrenar meta-modelo (Ridge)", "src/ml/train_meta_model.py"):
-            logger.warning("[WARN]  El entrenamiento del meta-modelo falló.")
-        else:
-            # Volvemos a lanzar predict.py para que use los nuevos meta-modelos entrenados
-            # Esto asegura que predictions_latest.json tenga la corrección v2 actualizada
-            logger.info("Aplicando meta-modelos actualizados a la predicción...")
-            run_script("Refinar predicción con meta-modelo", "src/ml/predict.py", ["--with-forecast"])
+    # ── 8b. META-MODELO (OMITIDO HASTA ESTABILIZACIÓN) ───────────────────────
+    logger.info("\n── FASE 8b: Meta-Modelo - OMITIDO (modelo simple base)")
 
     # ── 8c. ANÁLISIS TRÁFICO YOY ─────────────────────────────────────────────
     logger.info("\n── FASE 8c: Análisis de tráfico YoY")
