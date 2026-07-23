@@ -975,8 +975,8 @@ html_template = """<!DOCTYPE html>
     <div class="sep"></div>
     <span class="controls-label" data-i18n="zone">ZONA </span>
     <div class="tab-group" id="zoneTabsV10">
-      <button class="tab active" onclick="selectZoneV10('out', this)" data-i18n="zoneOut">FUERA DE ZBE</button>
-      <button class="tab" onclick="selectZoneV10('zbe', this)" data-i18n="zoneIn">ZBE</button>
+      <button class="tab active" onclick="selectZoneV10('zbe', this)" data-i18n="zoneIn">ZBE</button>
+      <button class="tab" onclick="selectZoneV10('out', this)" data-i18n="zoneOut">FUERA DE ZBE</button>
     </div>
   </div>
 
@@ -1681,7 +1681,7 @@ function selectStationV9(station, btn) { currentStationV9 = station; document.qu
 // ===========================================================================
 // LÓGICA DASHBOARD 3 (OPERATIVA Y PREDICCIÓN)
 // ===========================================================================
-let currentContV10 = 'NO2', currentZoneV10 = 'out', perfChart = null;
+let currentContV10 = 'NO2', currentZoneV10 = 'zbe', perfChart = null;
 
 function renderDashboard3() {
   const zoneData = manana[currentZoneV10] || {};
