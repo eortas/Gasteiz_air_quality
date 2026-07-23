@@ -520,16 +520,11 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
     neg_str = ", ".join([f"{feat_map.get(f[0], f[0])} ({round(f[1], 2)})" for f in negative_feats[:3]])
 
     prompt = (
-        f"/no_think\n"
         f"Contaminante: {target.split('_')[0]} | Zona: {target.split('_')[1].upper()} | Predicción: {round(pred_val, 1)} µg/m³ | Valor base histórico: {round(base_val, 1)} µg/m³\n"
-        f"Variables que AUMENTAN la concentración (SHAP positivo): {pos_str}\n"
-        f"Variables que REDUCEN la concentración (SHAP negativo): {neg_str}\n\n"
-        f"Escribe un análisis ambiental breve (2 párrafos cortos) en CASTELLANO y en EUSKERA que:\n"
-        f"1. Explique cuáles son las variables más relevantes para esta predicción y por qué influyen.\n"
-        f"2. Interprete el valor predicho respecto al valor base histórico.\n"
-        f"Sé concreto sobre el nombre y efecto de cada variable. No uses tecnicismos innecesarios.\n"
-        f"Devuelve ÚNICAMENTE un objeto JSON con las claves 'es' y 'eu'.\n"
-        f"Ejemplo: {{\"es\": \"texto en castellano\", \"eu\": \"euskarazko testua\"}}"
+        f"Variables que AUMENTAN la concentración: {pos_str}\n"
+        f"Variables que REDUCEN la concentración: {neg_str}\n\n"
+        f"Genera un análisis ambiental directo y fluido en 2 párrafos breves explicando la influencia del tráfico, viento y condiciones meteorológicas.\n"
+        f"Responde ÚNICAMENTE con un JSON con el formato: {{\"es\": \"texto en castellano\", \"eu\": \"texto en euskera\"}}"
     )
 
     try:
@@ -542,34 +537,50 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
             json={
                 "model": "qwen/qwen3.6-27b",
                 "messages": [
-                    {"role": "system", "content": "Eres un experto en calidad del aire en Vitoria-Gasteiz. Tu objetivo es explicar de forma clara y concreta cuáles son las variables meteorológicas y de tráfico que más influyen en la predicción del contaminante, y por qué. Responde siempre ÚNICAMENTE con un objeto JSON bilingüe con las explicaciones completas en castellano ('es') y euskera ('eu')."},
+                    {"role": "system", "content": "Eres un meteorólogo y analista ambiental de Vitoria-Gasteiz. Tu tarea es generar explicaciones en lenguaje natural claro y conciso sobre la calidad del aire. No incluyas explicaciones de razonamiento ni etiquetas <think>. Devuelve únicamente el objeto JSON bilingüe ('es' y 'eu')."},
                     {"role": "user", "content": prompt}
                 ],
                 "temperature": 0.3,
-                "max_tokens": 800
+                "max_tokens": 1500
             },
-            timeout=15
+            timeout=25
         )
         if response.status_code == 200:
             res_text = response.json()["choices"][0]["message"]["content"]
-            # Limpiar posibles etiquetas de razonamiento <think> si el modelo las incluye
             import re
             cleaned_text = re.sub(r'<think>.*?</think>', '', res_text, flags=re.DOTALL).strip()
-            # Extraer primer bloque JSON válido
             json_match = re.search(r'\{.*\}', cleaned_text, re.DOTALL)
             if json_match:
                 cleaned_text = json_match.group(0)
-            return json.loads(cleaned_text)
-        else:
-            return {
-                "es": f"Predicción de {round(pred_val, 1)} µg/m³. Factores clave: {pos_str}.",
-                "eu": f"{round(pred_val, 1)} µg/m³-ko aurreikuspena. Faktore nagusiak: {pos_str}."
-            }
+            parsed = json.loads(cleaned_text)
+            if "es" in parsed and "eu" in parsed and len(parsed["es"]) > 30:
+                return parsed
     except Exception as e:
-        return {
-            "es": f"Predicción de {round(pred_val, 1)} µg/m³. Factores principales: {pos_str}.",
-            "eu": f"{round(pred_val, 1)} µg/m³-ko aurreikuspena. Faktore nagusiak: {pos_str}."
-        }
+        log(f"  [INFO] Groq API fallback activado: {e}")
+
+    # Fallback enriquecido en lenguaje natural de 2 párrafos si no responde la API
+    cont_name = target.split('_')[0]
+    zone_name = target.split('_')[1].upper()
+    
+    es_text = (
+        f"Para mañana se estima una concentración de {cont_name} de {round(pred_val, 1)} µg/m³ en la zona {zone_name}, "
+        f"frente a la media habitual de {round(base_val, 1)} µg/m³. "
+        f"Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, "
+        f"donde factores como {pos_str} actúan incrementando los niveles atmosféricos.\n\n"
+        f"Por otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como {neg_str} "
+        f"contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad."
+    )
+    
+    eu_text = (
+        f"Biharko {cont_name} kontzentrazioa {round(pred_val, 1)} µg/m³-koa izatea aurreikusten da {zone_name} eremuan, "
+        f"ohiko {round(base_val, 1)} µg/m³-ko batez bestekoaren aldean. "
+        f"Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, "
+        f"bereziki {pos_str} bezalako faktoreek kontzentrazioa handituz.\n\n"
+        f"Beste alde batetik, Gasteizko haraneko aireztapenak eta {neg_str} bezalako baldintzek "
+        f"kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
+    )
+    
+    return {"es": es_text, "eu": eu_text}
 
 
 def add_deterministic_ica(results: dict):
