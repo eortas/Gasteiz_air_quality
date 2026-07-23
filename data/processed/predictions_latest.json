@@ -1,6 +1,6 @@
 {
   "prediction_date": "2026-07-24",
-  "generated_at": "2026-07-23T11:51:31.626635+00:00",
+  "generated_at": "2026-07-23T12:02:51.253320+00:00",
   "model_version": "v8",
   "targets": {
     "NO2_zbe_d1": {
@@ -112,7 +112,7 @@
           }
         ],
         "narrative": {
-          "es": "Predicción de 15.0 µg/m³. Factores clave: NO2_out (+1.52), cloud_cover (+1.36), viento_vel_out (+0.43).",
+          "es": "Predicción de 15.0 µg/m³. Factores principales: NO2_out (+1.52), cloud_cover (+1.36), viento_vel_out (+0.43).",
           "eu": "15.0 µg/m³-ko aurreikuspena. Faktore nagusiak: NO2_out (+1.52), cloud_cover (+1.36), viento_vel_out (+0.43)."
         }
       }
@@ -169,7 +169,7 @@
           }
         ],
         "narrative": {
-          "es": "Predicción de 17.8 µg/m³. Factores clave: PM10_zbe (+1.35), PM10_zbe_roll_mean_30d (+0.85), relative_humidity_2m (+0.65).",
+          "es": "Predicción de 17.8 µg/m³. Factores principales: PM10_zbe (+1.35), PM10_zbe_roll_mean_30d (+0.85), relative_humidity_2m (+0.65).",
           "eu": "17.8 µg/m³-ko aurreikuspena. Faktore nagusiak: PM10_zbe (+1.35), PM10_zbe_roll_mean_30d (+0.85), relative_humidity_2m (+0.65)."
         }
       }
@@ -226,7 +226,7 @@
           }
         ],
         "narrative": {
-          "es": "Predicción de 13.5 µg/m³. Factores clave: PM10_out (+0.64), relative_humidity_2m (+0.52), precipitation_acum_3d (+0.47).",
+          "es": "Predicción de 13.5 µg/m³. Factores principales: PM10_out (+0.64), relative_humidity_2m (+0.52), precipitation_acum_3d (+0.47).",
           "eu": "13.5 µg/m³-ko aurreikuspena. Faktore nagusiak: PM10_out (+0.64), relative_humidity_2m (+0.52), precipitation_acum_3d (+0.47)."
         }
       }
@@ -283,7 +283,7 @@
           }
         ],
         "narrative": {
-          "es": "Predicción de 9.2 µg/m³. Factores clave: ventilation_index (+0.53), temp_max_dia (+0.46), weather_code (+0.37).",
+          "es": "Predicción de 9.2 µg/m³. Factores principales: ventilation_index (+0.53), temp_max_dia (+0.46), weather_code (+0.37).",
           "eu": "9.2 µg/m³-ko aurreikuspena. Faktore nagusiak: ventilation_index (+0.53), temp_max_dia (+0.46), weather_code (+0.37)."
         }
       }
@@ -340,7 +340,7 @@
           }
         ],
         "narrative": {
-          "es": "Predicción de 7.9 µg/m³. Factores clave: ventilation_index (+0.5), traffic_occupancy_lag_7d (+0.22), wind_speed_10m (+0.21).",
+          "es": "Predicción de 7.9 µg/m³. Factores principales: ventilation_index (+0.5), traffic_occupancy_lag_7d (+0.22), wind_speed_10m (+0.21).",
           "eu": "7.9 µg/m³-ko aurreikuspena. Faktore nagusiak: ventilation_index (+0.5), traffic_occupancy_lag_7d (+0.22), wind_speed_10m (+0.21)."
         }
       }
