@@ -544,5 +544,19 @@
       "ICA_zbe_d1": 16.53,
       "ICA_out_d1": 15.45
     }
+  },
+  {
+    "prediction_date": "2026-07-27",
+    "generated_at": "2026-07-26T01:13:31.453636+00:00",
+    "predictions": {
+      "NO2_zbe_d1": 9.25,
+      "NO2_out_d1": 8.12,
+      "PM10_zbe_d1": 14.57,
+      "PM10_out_d1": 14.33,
+      "PM2.5_zbe_d1": 10.95,
+      "PM2.5_out_d1": 9.9,
+      "ICA_zbe_d1": 18.25,
+      "ICA_out_d1": 16.5
+    }
   }
 ]
