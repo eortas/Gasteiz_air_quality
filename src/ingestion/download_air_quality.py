@@ -23,6 +23,7 @@ Requiere playwright para capturar los cookies de sesion requeridos.
 import asyncio
 import json
 import os
+import sys
 import time
 import argparse
 import pandas as pd
