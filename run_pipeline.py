@@ -211,7 +211,9 @@ def main():
             logger.error("[ERROR] El entrenamiento falló. Abortando.")
             sys.exit(1)
     else:
-        logger.info("\n── FASE 6: Entrenamiento - OMITIDO (--skip-training)")
+        logger.info("\n── FASE 6: Recálculo contrafactual v8 (--skip-cv)")
+        if not run_script("Actualizar contrafactual v8 --skip-cv", "src/ml/train_model_v8.py", ["--skip-cv"]):
+            logger.warning("[WARN] El recálculo contrafactual falló.")
 
     # ── 7. ANÁLISIS CAUSAL v9 (Event Study + Synthetic Control) ──────────────
     logger.info("\n── FASE 7: Análisis causal v9")

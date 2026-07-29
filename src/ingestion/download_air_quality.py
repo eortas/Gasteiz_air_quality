@@ -273,7 +273,7 @@ async def main(manual_token: str = None):
                 print("=============================================")
                 print("FATAL: No se pudo obtener el token autómata.")
                 print("=============================================")
-                return
+                sys.exit(1)
             print(f"OK ({token[:20]}...)")
         print()
 
