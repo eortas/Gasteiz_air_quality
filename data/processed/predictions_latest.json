@@ -1,12 +1,12 @@
 {
-  "prediction_date": "2026-07-29",
-  "generated_at": "2026-07-28T01:03:04.002652+00:00",
+  "prediction_date": "2026-07-30",
+  "generated_at": "2026-07-29T01:05:35.157313+00:00",
   "model_version": "v8",
   "targets": {
     "NO2_zbe_d1": {
-      "prediction": 7.04,
-      "lower": 2.61,
-      "upper": 11.47,
+      "prediction": 7.46,
+      "lower": 3.03,
+      "upper": 11.88,
       "rmse_cv": 3.4581,
       "foresight": {
         "base_value": 10.6,
@@ -38,8 +38,8 @@
             "value": -2.2
           },
           {
-            "feature": "traffic_volume_lag_2d",
-            "value": -0.97
+            "feature": "ICA_zbe_roll_std_7d",
+            "value": -0.52
           },
           {
             "feature": "PM10_zbe_roll_mean_14d",
@@ -55,34 +55,34 @@
           }
         ],
         "narrative": {
-          "es": "Para mañana se estima una concentración de NO2 de 7.0 µg/m³ en la zona ZBE, frente a la media habitual de 10.6 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como exp_traffic_volume_d1 (+0.54), relative_humidity_2m (+0.37), Acumulación reciente de NO2 (+0.36) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como NO2_zbe (-2.2), traffic_volume_lag_2d (-0.97), Acumulación reciente de PM10 (-0.5) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
-          "eu": "Biharko NO2 kontzentrazioa 7.0 µg/m³-koa izatea aurreikusten da ZBE eremuan, ohiko 10.6 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki exp_traffic_volume_d1 (+0.54), relative_humidity_2m (+0.37), Acumulación reciente de NO2 (+0.36) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta NO2_zbe (-2.2), traffic_volume_lag_2d (-0.97), Acumulación reciente de PM10 (-0.5) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
+          "es": "Para mañana se estima una concentración de NO2 de 7.5 µg/m³ en la zona ZBE, frente a la media habitual de 10.6 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como exp_traffic_volume_d1 (+0.54), relative_humidity_2m (+0.37), Acumulación reciente de NO2 (+0.36) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como NO2_zbe (-2.2), ICA_zbe_roll_std_7d (-0.52), Acumulación reciente de PM10 (-0.5) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
+          "eu": "Biharko NO2 kontzentrazioa 7.5 µg/m³-koa izatea aurreikusten da ZBE eremuan, ohiko 10.6 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki exp_traffic_volume_d1 (+0.54), relative_humidity_2m (+0.37), Acumulación reciente de NO2 (+0.36) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta NO2_zbe (-2.2), ICA_zbe_roll_std_7d (-0.52), Acumulación reciente de PM10 (-0.5) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
         }
       }
     },
     "NO2_out_d1": {
-      "prediction": 6.52,
-      "lower": 0.69,
-      "upper": 12.35,
+      "prediction": 4.32,
+      "lower": 0,
+      "upper": 10.15,
       "rmse_cv": 4.5571,
       "foresight": {
         "base_value": 12.42,
         "positive_top": [
           {
-            "feature": "cloud_cover",
-            "value": 1.01
-          },
-          {
             "feature": "wind_v",
-            "value": 0.36
-          },
-          {
-            "feature": "exp_traffic_volume_d1",
-            "value": 0.31
+            "value": 0.33
           },
           {
             "feature": "NO2_out_roll_mean_7d",
-            "value": 0.3
+            "value": 0.31
+          },
+          {
+            "feature": "exp_traffic_volume_d1",
+            "value": 0.25
+          },
+          {
+            "feature": "NO2_zbe_roll_mean_7d",
+            "value": 0.18
           },
           {
             "feature": "NO2_out_diff_30d",
@@ -92,68 +92,64 @@
         "negative_top": [
           {
             "feature": "NO2_out",
-            "value": -3.57
+            "value": -3.53
           },
           {
             "feature": "dew_point",
-            "value": -1.36
+            "value": -1.25
           },
           {
-            "feature": "NO2_out_lag_3d",
-            "value": -0.29
+            "feature": "NO2_zbe_lag_7d",
+            "value": -0.4
           },
           {
-            "feature": "temp_max_dia",
-            "value": -0.25
+            "feature": "temperature_2m",
+            "value": -0.36
           },
           {
-            "feature": "viento_vel_out",
-            "value": -0.24
+            "feature": "ICA_zbe_lag_30d",
+            "value": -0.35
           }
         ],
         "narrative": {
-          "es": "Para mañana se estima una concentración de NO2 de 6.5 µg/m³ en la zona OUT, frente a la media habitual de 12.4 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como cloud_cover (+1.01), wind_v (+0.36), exp_traffic_volume_d1 (+0.31) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como NO2_out (-3.57), dew_point (-1.36), NO2_out_lag_3d (-0.29) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
-          "eu": "Biharko NO2 kontzentrazioa 6.5 µg/m³-koa izatea aurreikusten da OUT eremuan, ohiko 12.4 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki cloud_cover (+1.01), wind_v (+0.36), exp_traffic_volume_d1 (+0.31) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta NO2_out (-3.57), dew_point (-1.36), NO2_out_lag_3d (-0.29) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
+          "es": "Para mañana se estima una concentración de NO2 de 4.3 µg/m³ en la zona OUT, frente a la media habitual de 12.4 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como wind_v (+0.33), NO2_out_roll_mean_7d (+0.31), exp_traffic_volume_d1 (+0.25) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como NO2_out (-3.53), dew_point (-1.25), NO2_zbe_lag_7d (-0.4) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
+          "eu": "Biharko NO2 kontzentrazioa 4.3 µg/m³-koa izatea aurreikusten da OUT eremuan, ohiko 12.4 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki wind_v (+0.33), NO2_out_roll_mean_7d (+0.31), exp_traffic_volume_d1 (+0.25) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta NO2_out (-3.53), dew_point (-1.25), NO2_zbe_lag_7d (-0.4) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
         }
       }
     },
     "PM10_zbe_d1": {
-      "prediction": 14.82,
-      "lower": 8.73,
-      "upper": 20.91,
+      "prediction": 15.31,
+      "lower": 9.22,
+      "upper": 21.4,
       "rmse_cv": 4.7577,
       "foresight": {
         "base_value": 12.83,
         "positive_top": [
           {
-            "feature": "relative_humidity_2m",
-            "value": 0.95
+            "feature": "PM10_zbe_roll_mean_30d",
+            "value": 0.52
           },
           {
             "feature": "weather_code",
-            "value": 0.33
+            "value": 0.39
           },
           {
             "feature": "sunshine_duration",
-            "value": 0.3
+            "value": 0.26
           },
           {
-            "feature": "precipitation_acum_3d",
-            "value": 0.22
+            "feature": "NO2_zbe_lag_7d",
+            "value": 0.26
           },
           {
-            "feature": "dew_point",
-            "value": 0.19
+            "feature": "relative_humidity_2m",
+            "value": 0.23
           }
         ],
         "negative_top": [
           {
             "feature": "ICA_zbe",
-            "value": -0.51
-          },
-          {
-            "feature": "traffic_occupancy_lag_2d",
-            "value": -0.27
+            "value": -0.39
           },
           {
             "feature": "viento_dir_out",
@@ -161,34 +157,34 @@
           },
           {
             "feature": "viento_vel_out",
-            "value": -0.13
+            "value": -0.18
           },
           {
             "feature": "PM2.5_zbe_lag_2d",
+            "value": -0.13
+          },
+          {
+            "feature": "PM10_zbe_diff_30d",
             "value": -0.12
           }
         ],
         "narrative": {
-          "es": "Para mañana se estima una concentración de PM10 de 14.8 µg/m³ en la zona ZBE, frente a la media habitual de 12.8 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como relative_humidity_2m (+0.95), weather_code (+0.33), sunshine_duration (+0.3) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como ICA_zbe (-0.51), traffic_occupancy_lag_2d (-0.27), viento_dir_out (-0.21) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
-          "eu": "Biharko PM10 kontzentrazioa 14.8 µg/m³-koa izatea aurreikusten da ZBE eremuan, ohiko 12.8 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki relative_humidity_2m (+0.95), weather_code (+0.33), sunshine_duration (+0.3) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta ICA_zbe (-0.51), traffic_occupancy_lag_2d (-0.27), viento_dir_out (-0.21) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
+          "es": "Para mañana se estima una concentración de PM10 de 15.3 µg/m³ en la zona ZBE, frente a la media habitual de 12.8 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como PM10_zbe_roll_mean_30d (+0.52), weather_code (+0.39), sunshine_duration (+0.26) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como ICA_zbe (-0.39), viento_dir_out (-0.21), viento_vel_out (-0.18) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
+          "eu": "Biharko PM10 kontzentrazioa 15.3 µg/m³-koa izatea aurreikusten da ZBE eremuan, ohiko 12.8 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki PM10_zbe_roll_mean_30d (+0.52), weather_code (+0.39), sunshine_duration (+0.26) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta ICA_zbe (-0.39), viento_dir_out (-0.21), viento_vel_out (-0.18) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
         }
       }
     },
     "PM10_out_d1": {
-      "prediction": 13.65,
-      "lower": 7.97,
-      "upper": 19.33,
+      "prediction": 13.84,
+      "lower": 8.16,
+      "upper": 19.51,
       "rmse_cv": 4.4351,
       "foresight": {
         "base_value": 10.7,
         "positive_top": [
           {
             "feature": "ICA_out",
-            "value": 0.71
-          },
-          {
-            "feature": "relative_humidity_2m",
-            "value": 0.5
+            "value": 0.7
           },
           {
             "feature": "PM10_out",
@@ -200,127 +196,131 @@
           },
           {
             "feature": "precipitation_acum_3d",
-            "value": 0.32
+            "value": 0.31
+          },
+          {
+            "feature": "PM2.5_out",
+            "value": 0.31
           }
         ],
         "negative_top": [
           {
-            "feature": "NO2_zbe_lag_30d",
-            "value": -0.44
-          },
-          {
             "feature": "NO2_out",
-            "value": -0.33
-          },
-          {
-            "feature": "NO2_out_roll_std_7d",
-            "value": -0.24
+            "value": -0.32
           },
           {
             "feature": "PM10_zbe_roll_max_14d",
-            "value": -0.21
+            "value": -0.25
           },
           {
-            "feature": "PM10_zbe",
-            "value": -0.21
-          }
-        ],
-        "narrative": {
-          "es": "Para mañana se estima una concentración de PM10 de 13.6 µg/m³ en la zona OUT, frente a la media habitual de 10.7 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como ICA_out (+0.71), relative_humidity_2m (+0.5), PM10_out (+0.36) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como NO2_zbe_lag_30d (-0.44), NO2_out (-0.33), NO2_out_roll_std_7d (-0.24) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
-          "eu": "Biharko PM10 kontzentrazioa 13.6 µg/m³-koa izatea aurreikusten da OUT eremuan, ohiko 10.7 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki ICA_out (+0.71), relative_humidity_2m (+0.5), PM10_out (+0.36) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta NO2_zbe_lag_30d (-0.44), NO2_out (-0.33), NO2_out_roll_std_7d (-0.24) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
-        }
-      }
-    },
-    "PM2.5_zbe_d1": {
-      "prediction": 9.03,
-      "lower": 5.0,
-      "upper": 13.06,
-      "rmse_cv": 3.1508,
-      "foresight": {
-        "base_value": 7.6,
-        "positive_top": [
-          {
-            "feature": "weather_code",
-            "value": 0.6
-          },
-          {
-            "feature": "ICA_zbe",
-            "value": 0.48
-          },
-          {
-            "feature": "temp_max_dia",
-            "value": 0.38
-          },
-          {
-            "feature": "precipitation_acum_3d",
-            "value": 0.28
-          },
-          {
-            "feature": "ventilation_index",
-            "value": 0.26
-          }
-        ],
-        "negative_top": [
-          {
-            "feature": "NO2_zbe_lag_14d",
-            "value": -0.35
-          },
-          {
-            "feature": "PM2.5_zbe_lag_2d",
-            "value": -0.3
+            "feature": "NO2_out_roll_std_7d",
+            "value": -0.23
           },
           {
             "feature": "PM10_zbe",
             "value": -0.22
           },
           {
-            "feature": "exp_traffic_occupancy_d2",
-            "value": -0.2
-          },
-          {
-            "feature": "PM10_out_roll_mean_14d",
+            "feature": "NO2_out_roll_std_3d",
             "value": -0.2
           }
         ],
         "narrative": {
-          "es": "Para mañana se estima una concentración de PM2.5 de 9.0 µg/m³ en la zona ZBE, frente a la media habitual de 7.6 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como weather_code (+0.6), ICA_zbe (+0.48), temp_max_dia (+0.38) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como NO2_zbe_lag_14d (-0.35), PM2.5_zbe_lag_2d (-0.3), PM10_zbe (-0.22) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
-          "eu": "Biharko PM2.5 kontzentrazioa 9.0 µg/m³-koa izatea aurreikusten da ZBE eremuan, ohiko 7.6 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki weather_code (+0.6), ICA_zbe (+0.48), temp_max_dia (+0.38) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta NO2_zbe_lag_14d (-0.35), PM2.5_zbe_lag_2d (-0.3), PM10_zbe (-0.22) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
+          "es": "Para mañana se estima una concentración de PM10 de 13.8 µg/m³ en la zona OUT, frente a la media habitual de 10.7 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como ICA_out (+0.7), PM10_out (+0.36), traffic_occupancy_lag_7d (+0.34) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como NO2_out (-0.32), PM10_zbe_roll_max_14d (-0.25), NO2_out_roll_std_7d (-0.23) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
+          "eu": "Biharko PM10 kontzentrazioa 13.8 µg/m³-koa izatea aurreikusten da OUT eremuan, ohiko 10.7 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki ICA_out (+0.7), PM10_out (+0.36), traffic_occupancy_lag_7d (+0.34) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta NO2_out (-0.32), PM10_zbe_roll_max_14d (-0.25), NO2_out_roll_std_7d (-0.23) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
+        }
+      }
+    },
+    "PM2.5_zbe_d1": {
+      "prediction": 9.74,
+      "lower": 5.71,
+      "upper": 13.77,
+      "rmse_cv": 3.1508,
+      "foresight": {
+        "base_value": 7.6,
+        "positive_top": [
+          {
+            "feature": "ICA_zbe",
+            "value": 0.47
+          },
+          {
+            "feature": "ventilation_index",
+            "value": 0.37
+          },
+          {
+            "feature": "temp_max_dia",
+            "value": 0.3
+          },
+          {
+            "feature": "sunshine_duration",
+            "value": 0.29
+          },
+          {
+            "feature": "precipitation_acum_3d",
+            "value": 0.24
+          }
+        ],
+        "negative_top": [
+          {
+            "feature": "PM2.5_zbe_lag_2d",
+            "value": -0.28
+          },
+          {
+            "feature": "PM10_zbe",
+            "value": -0.22
+          },
+          {
+            "feature": "PM10_out_roll_mean_14d",
+            "value": -0.21
+          },
+          {
+            "feature": "exp_traffic_occupancy_d2",
+            "value": -0.19
+          },
+          {
+            "feature": "PM10_zbe_diff_30d",
+            "value": -0.17
+          }
+        ],
+        "narrative": {
+          "es": "Para mañana se estima una concentración de PM2.5 de 9.7 µg/m³ en la zona ZBE, frente a la media habitual de 7.6 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como ICA_zbe (+0.47), ventilation_index (+0.37), temp_max_dia (+0.3) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como PM2.5_zbe_lag_2d (-0.28), PM10_zbe (-0.22), PM10_out_roll_mean_14d (-0.21) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
+          "eu": "Biharko PM2.5 kontzentrazioa 9.7 µg/m³-koa izatea aurreikusten da ZBE eremuan, ohiko 7.6 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki ICA_zbe (+0.47), ventilation_index (+0.37), temp_max_dia (+0.3) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta PM2.5_zbe_lag_2d (-0.28), PM10_zbe (-0.22), PM10_out_roll_mean_14d (-0.21) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
         }
       }
     },
     "PM2.5_out_d1": {
-      "prediction": 9.33,
-      "lower": 5.03,
-      "upper": 13.63,
+      "prediction": 9.58,
+      "lower": 5.28,
+      "upper": 13.88,
       "rmse_cv": 3.3592,
       "foresight": {
         "base_value": 7.12,
         "positive_top": [
           {
-            "feature": "PM2.5_out",
-            "value": 0.42
+            "feature": "ventilation_index",
+            "value": 0.45
           },
           {
-            "feature": "ventilation_index",
-            "value": 0.34
+            "feature": "PM2.5_out",
+            "value": 0.42
           },
           {
             "feature": "wind_speed_10m",
             "value": 0.27
           },
           {
-            "feature": "traffic_occupancy_lag_7d",
+            "feature": "wind_v",
             "value": 0.2
           },
           {
-            "feature": "temp_max_dia",
+            "feature": "traffic_occupancy_lag_7d",
             "value": 0.2
           }
         ],
         "negative_top": [
           {
             "feature": "NO2_out_roll_std_14d",
-            "value": -0.15
+            "value": -0.14
           },
           {
             "feature": "PM10_zbe",
@@ -332,7 +332,7 @@
           },
           {
             "feature": "PM10_out_lag_30d",
-            "value": -0.06
+            "value": -0.05
           },
           {
             "feature": "traffic_volume_lag_1d",
@@ -340,42 +340,42 @@
           }
         ],
         "narrative": {
-          "es": "Para mañana se estima una concentración de PM2.5 de 9.3 µg/m³ en la zona OUT, frente a la media habitual de 7.1 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como PM2.5_out (+0.42), ventilation_index (+0.34), wind_speed_10m (+0.27) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como NO2_out_roll_std_14d (-0.15), PM10_zbe (-0.11), NO2_out_roll_std_7d (-0.07) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
-          "eu": "Biharko PM2.5 kontzentrazioa 9.3 µg/m³-koa izatea aurreikusten da OUT eremuan, ohiko 7.1 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki PM2.5_out (+0.42), ventilation_index (+0.34), wind_speed_10m (+0.27) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta NO2_out_roll_std_14d (-0.15), PM10_zbe (-0.11), NO2_out_roll_std_7d (-0.07) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
+          "es": "Para mañana se estima una concentración de PM2.5 de 9.6 µg/m³ en la zona OUT, frente a la media habitual de 7.1 µg/m³. Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, donde factores como ventilation_index (+0.45), PM2.5_out (+0.42), wind_speed_10m (+0.27) actúan incrementando los niveles atmosféricos.\n\nPor otra parte, la ventilación del valle de Vitoria y condiciones meteorológicas como NO2_out_roll_std_14d (-0.14), PM10_zbe (-0.11), NO2_out_roll_std_7d (-0.07) contribuyen a limitar la acumulación de contaminantes, manteniendo la calidad del aire en niveles aceptables dentro de la ciudad.",
+          "eu": "Biharko PM2.5 kontzentrazioa 9.6 µg/m³-koa izatea aurreikusten da OUT eremuan, ohiko 7.1 µg/m³-ko batez bestekoaren aldean. Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, bereziki ventilation_index (+0.45), PM2.5_out (+0.42), wind_speed_10m (+0.27) bezalako faktoreek kontzentrazioa handituz.\n\nBeste alde batetik, Gasteizko haraneko aireztapenak eta NO2_out_roll_std_14d (-0.14), PM10_zbe (-0.11), NO2_out_roll_std_7d (-0.07) bezalako baldintzek kutsatzaileen metaketa mugatzen laguntzen dute, airearen kalitatea maila egokietan mantenduz."
         }
       }
     },
     "ICA_zbe_d1": {
-      "prediction_v1": 15.05,
-      "prediction": 15.05,
-      "lower": 12.01,
-      "upper": 18.09,
+      "prediction_v1": 16.23,
+      "prediction": 16.23,
+      "lower": 13.19,
+      "upper": 19.28,
       "rmse_cv": 2.379,
       "correction": 0.0,
       "foresight": {
-        "base_value": 15.05,
+        "base_value": 16.23,
         "positive_top": [],
         "negative_top": [],
         "narrative": {
-          "es": "ICA calculado con subíndices CAQI: NO2=4, PM10=15, PM2.5=15. Concentraciones: NO2=7.0, PM10=14.8, PM2.5=9.0 µg/m³.",
-          "eu": "ICA CAQI azpi-indizeekin: NO2=4, PM10=15, PM2.5=15."
+          "es": "ICA calculado con subíndices CAQI: NO2=4, PM10=15, PM2.5=16. Concentraciones: NO2=7.5, PM10=15.3, PM2.5=9.7 µg/m³.",
+          "eu": "ICA CAQI azpi-indizeekin: NO2=4, PM10=15, PM2.5=16."
         }
       }
     },
     "ICA_out_d1": {
-      "prediction_v1": 15.55,
-      "prediction": 15.55,
-      "lower": 12.63,
-      "upper": 18.47,
+      "prediction_v1": 15.97,
+      "prediction": 15.97,
+      "lower": 13.05,
+      "upper": 18.88,
       "rmse_cv": 2.279,
       "correction": 0.0,
       "foresight": {
-        "base_value": 15.55,
+        "base_value": 15.97,
         "positive_top": [],
         "negative_top": [],
         "narrative": {
-          "es": "ICA calculado con subíndices CAQI: NO2=3, PM10=14, PM2.5=16. Concentraciones: NO2=6.5, PM10=13.7, PM2.5=9.3 µg/m³.",
-          "eu": "ICA CAQI azpi-indizeekin: NO2=3, PM10=14, PM2.5=16."
+          "es": "ICA calculado con subíndices CAQI: NO2=2, PM10=14, PM2.5=16. Concentraciones: NO2=4.3, PM10=13.8, PM2.5=9.6 µg/m³.",
+          "eu": "ICA CAQI azpi-indizeekin: NO2=2, PM10=14, PM2.5=16."
         }
       }
     }
