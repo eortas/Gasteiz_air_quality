@@ -922,6 +922,7 @@ def save_json(results: dict, pred_date: pd.Timestamp, run_type: str = "productio
 def main():
     with_forecast = "--with-forecast" in sys.argv
     json_only     = "--json"          in sys.argv
+    publish_date  = "--publish-date"  in sys.argv
     date_arg      = next((sys.argv[i+1] for i, a in enumerate(sys.argv)
                           if a == "--date" and i+1 < len(sys.argv)), None)
 
@@ -976,7 +977,7 @@ def main():
         results = refine_with_meta_models(results, row, df_history, pred_date)
 
     # 5. Mostrar o volcar JSON
-    run_type = "backtest" if date_arg else "production"
+    run_type = "production" if publish_date or not date_arg else "backtest"
     source_date = row["date"].iloc[0]
     if json_only:
         out = save_json(results, pred_date, run_type, source_date)
