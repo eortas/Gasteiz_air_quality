@@ -670,6 +670,7 @@ const translations = {
     v10Bad: "🔴 MALA",
     backReal: "Medición Real",
     backPred: "Predicción",
+    backCurrentPred: "Predicción de mañana",
     backWait: "⏳ Esperando sensores municipales",
     backExcel: "✓ Precisión Excelente",
     backGood: "✓ Precisión Buena",
@@ -769,6 +770,7 @@ const translations = {
     v10Bad: "🔴 TXARRA",
     backReal: "Neurketa Erreala",
     backPred: "Aurreikuspena",
+    backCurrentPred: "Biharko iragarpena",
     backWait: "⏳ Sentsoreen zain",
     backExcel: "✓ Doitasun bikaina",
     backGood: "✓ Doitasun ona",
@@ -1121,7 +1123,26 @@ function renderDashboard3() {
   const ctx = document.getElementById('perfChart').getContext('2d');
   if(perfChart) perfChart.destroy();
   
-  const labels = (perfStats[currentZoneV10].labels || []).map(l => l === 'Ayer' ? (currentLang === 'es' ? 'Ayer' : 'Atzo') : l);
+  const historicalLabels = (perfStats[currentZoneV10].labels || []).map(
+    l => l === 'Ayer' ? (currentLang === 'es' ? 'Ayer' : 'Atzo') : l
+  );
+  const labels = [...historicalLabels, currentLang === 'es' ? 'Mañana' : 'Bihar'];
+  const activeTarget = targetsData[`${currentContV10}_${currentZoneV10}_d1`] || {};
+  const activePrediction = activeTarget.prediction;
+  const currentForecast = Array(labels.length).fill(null);
+  let lastObservedIndex = -1;
+
+  for (let i = d.real.length - 1; i >= 0; i--) {
+    if (d.real[i] !== null && d.real[i] !== undefined) {
+      lastObservedIndex = i;
+      break;
+    }
+  }
+
+  if (lastObservedIndex >= 0 && activePrediction !== undefined) {
+    currentForecast[lastObservedIndex] = d.real[lastObservedIndex];
+    currentForecast[labels.length - 1] = activePrediction;
+  }
   const text = getCssVar('--muted'); const grid = getCssVar('--border');
 
   perfChart = new Chart(ctx, {
@@ -1129,8 +1150,9 @@ function renderDashboard3() {
       data: {
           labels: labels,
           datasets: [
-              { label: t.backReal, data: d.real, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
-              { label: t.backPred, data: d.pred, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 }
+              { label: t.backReal, data: [...d.real, null], borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
+              { label: t.backPred, data: [...d.pred, null], borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 },
+              { label: t.backCurrentPred, data: currentForecast, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [2,4], borderWidth: 3, pointRadius: 5, tension: 0.2 }
           ]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: text, font: { family: 'IBM Plex Mono'} } }, }, scales: { x: { ticks: { color: text }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
