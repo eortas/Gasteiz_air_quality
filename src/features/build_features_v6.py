@@ -664,10 +664,9 @@ def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
     información del futuro durante el entrenamiento, inflando las métricas de CV.
 
     Ahora:
-    - En el HISTÓRICO: no se generan features fc_* (el modelo entrena solo
-      con meteorología observada del día actual, que es lo disponible en producción)
-    - En la ÚLTIMA FILA (predicción real): se inyectan los pronósticos reales
-      de Open-Meteo como features fc_* para la predicción de mañana
+    - En el HISTÓRICO: usamos pronósticos archivados emitidos 24 horas antes.
+    - En PRODUCCIÓN: se inyecta el pronóstico real descargado a las 22:00.
+    Así el entrenamiento y la predicción usan información disponible en el corte.
     """
     section("9. Añadiendo snapshots históricos de pronóstico Open-Meteo")
     if not FORECAST_HISTORY_PATH.exists():

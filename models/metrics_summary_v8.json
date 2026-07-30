@@ -1,48 +1,48 @@
 {
   "NO2": {
-    "avg_cv_rmse": 2.7276,
-    "avg_cv_r2": -0.221
+    "avg_cv_rmse": 2.1621,
+    "avg_cv_r2": 0.5504
   },
   "PM10": {
-    "avg_cv_rmse": 4.9414,
-    "avg_cv_r2": 0.3612
+    "avg_cv_rmse": 4.903,
+    "avg_cv_r2": 0.4342
   },
   "PM2.5": {
-    "avg_cv_rmse": 3.3471,
-    "avg_cv_r2": 0.4546
+    "avg_cv_rmse": 3.1809,
+    "avg_cv_r2": 0.5434
   },
   "did_v8": {
     "NO2": {
-      "beta3": -0.4675,
-      "pvalue": 0.0021,
-      "ci_low": -0.7655,
-      "ci_high": -0.1694,
-      "r2": 0.6143,
-      "n_obs": 1410,
+      "beta3": -0.4924,
+      "pvalue": 0.0014,
+      "ci_low": -0.7942,
+      "ci_high": -0.1906,
+      "r2": 0.6161,
+      "n_obs": 1412,
       "significant": true,
       "fe_dummies": 24,
       "se_type": "clustered_by_date",
       "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
     },
     "PM10": {
-      "beta3": 3.7513,
+      "beta3": 3.7514,
       "pvalue": 0.0,
-      "ci_low": 3.2608,
-      "ci_high": 4.2419,
-      "r2": 0.35,
-      "n_obs": 1408,
+      "ci_low": 3.262,
+      "ci_high": 4.2407,
+      "r2": 0.3503,
+      "n_obs": 1410,
       "significant": true,
       "fe_dummies": 24,
       "se_type": "clustered_by_date",
       "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
     },
     "PM2.5": {
-      "beta3": 1.0348,
+      "beta3": 1.0356,
       "pvalue": 0.0,
-      "ci_low": 0.8316,
-      "ci_high": 1.2381,
-      "r2": 0.3544,
-      "n_obs": 1408,
+      "ci_low": 0.8326,
+      "ci_high": 1.2385,
+      "r2": 0.3549,
+      "n_obs": 1410,
       "significant": true,
       "fe_dummies": 24,
       "se_type": "clustered_by_date",

@@ -155,6 +155,20 @@ def mape(y_true, y_pred):
     return np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100
 
 
+def directional_accuracy(y_true, y_pred, baseline):
+    """Mide si acertamos subida, bajada o estabilidad frente al día actual."""
+    actual_change = np.asarray(y_true) - np.asarray(baseline)
+    predicted_change = np.asarray(y_pred) - np.asarray(baseline)
+    tolerance = 0.25
+    actual_direction = np.where(
+        actual_change > tolerance, 1, np.where(actual_change < -tolerance, -1, 0)
+    )
+    predicted_direction = np.where(
+        predicted_change > tolerance, 1, np.where(predicted_change < -tolerance, -1, 0)
+    )
+    return np.mean(actual_direction == predicted_direction)
+
+
 # ??? 1. CARGAR DATOS ??????????????????????????????????????????????????????????
 def load_dataset():
     section("1. Cargando dataset")
@@ -187,7 +201,6 @@ def load_dataset():
                      if pd.api.types.is_datetime64_any_dtype(df[c])]
     feature_cols = [c for c in df.columns
                     if not c.startswith("target_")
-                    and not c.startswith("fc_")
                     and c != "date"
                     and c not in raw_contaminants
                     and c not in raw_air_cols
@@ -368,20 +381,29 @@ def train_all(df, feature_cols, target_cols, tune=False):
     pbar = tqdm(target_cols, desc="Entrenando", unit="target")
     for target_col in pbar:
         pbar.set_description(f"Procesando {target_col}")
-        
-        valid_mask = df[target_col].notna()
+
+        persistence_col = target_col.replace("target_", "").replace("_d1", "")
+        if persistence_col not in df.columns:
+            log(f"    [WARN] Falta baseline {persistence_col}; omitimos {target_col}")
+            continue
+
+        valid_mask = df[target_col].notna() & df[persistence_col].notna()
         df_target = df.loc[valid_mask].copy()
-        y_full     = df_target[target_col]
+        y_level_full = df_target[target_col]
+        # Entrenamos el cambio D+1 respecto al nivel conocido a las 22:00.
+        y_full = y_level_full - df_target[persistence_col]
         test_size = max(60, int(len(df_target) * FINAL_TEST_FRACTION))
         df_cv = df_target.iloc[:-test_size].copy()
         df_test = df_target.iloc[-test_size:].copy()
         y_cv = y_full.iloc[:-test_size]
-        y_test = y_full.iloc[-test_size:]
-        persistence_col = target_col.replace("target_", "").replace("_d1", "")
+        y_level_cv = y_level_full.iloc[:-test_size]
+        y_level_test = y_level_full.iloc[-test_size:]
 
         # El tramo final queda intacto hasta el informe de evaluación.
         folds_t = list(tscv.split(df_cv[feature_cols]))
-        fold_metrics = {"rmse": [], "mae": [], "r2": [], "mape": [], "persistence_rmse": []}
+        oof_actual = []
+        oof_baseline = []
+        oof_delta = []
 
         # Configuración por defecto
         lgbm_params = LGBM_PARAMS.copy()
@@ -416,27 +438,42 @@ def train_all(df, feature_cols, target_cols, tune=False):
             model = train_single(X_tr_fold, y_cv.iloc[tr_idx],
                                  X_va_fold, y_cv.iloc[va_idx],
                                  lgbm_params)
-            pred = model.predict(X_va_fold)
-            
-            fold_metrics["rmse"].append(rmse(y_cv.iloc[va_idx].values, pred))
-            fold_metrics["mae"].append(mae(y_cv.iloc[va_idx].values, pred))
-            fold_metrics["r2"].append(r2(y_cv.iloc[va_idx].values, pred))
-            fold_metrics["mape"].append(mape(y_cv.iloc[va_idx].values, pred))
-            if persistence_col in df_cv.columns:
-                persistence = df_cv.iloc[va_idx][persistence_col].values
-                fold_metrics["persistence_rmse"].append(rmse(y_cv.iloc[va_idx].values, persistence))
+            baseline = df_cv.iloc[va_idx][persistence_col].values
+            predicted_delta = model.predict(X_va_fold)
+            actual = y_level_cv.iloc[va_idx].values
+            oof_actual.extend(actual)
+            oof_baseline.extend(baseline)
+            oof_delta.extend(predicted_delta)
 
         # 2. Evaluación final sobre un bloque cronológico nunca visto.
+        # Calibramos cuánto corregimos la persistencia usando solo predicciones OOF.
+        oof_actual = np.asarray(oof_actual)
+        oof_baseline = np.asarray(oof_baseline)
+        oof_delta = np.asarray(oof_delta)
+        actual_change = oof_actual - oof_baseline
+        denominator = np.sum(oof_delta ** 2)
+        residual_scale = (
+            np.clip(np.sum(oof_delta * actual_change) / denominator, 0.0, 1.5)
+            if denominator > 0 else 0.0
+        )
+        cv_pred = oof_baseline + residual_scale * oof_delta
+
         eval_selected = select_features_train_only(df_cv, y_cv, feature_cols, np.arange(len(df_cv)))
         eval_medians = df_cv[eval_selected].median().fillna(0)
         from lightgbm import LGBMRegressor
         eval_model = LGBMRegressor(**lgbm_params)
         eval_model.fit(df_cv[eval_selected].fillna(eval_medians), y_cv)
-        test_pred = eval_model.predict(df_test[eval_selected].fillna(eval_medians))
-        test_rmse = rmse(y_test.values, test_pred)
-        test_persistence_rmse = (
-            rmse(y_test.values, df_test[persistence_col].values)
-            if persistence_col in df_test.columns else np.nan
+        test_baseline = df_test[persistence_col].values
+        test_pred = test_baseline + residual_scale * eval_model.predict(
+            df_test[eval_selected].fillna(eval_medians)
+        )
+        test_rmse = rmse(y_level_test.values, test_pred)
+        test_persistence_rmse = rmse(y_level_test.values, test_baseline)
+        test_directional_accuracy = directional_accuracy(
+            y_level_test.values, test_pred, test_baseline
+        )
+        test_persistence_directional_accuracy = directional_accuracy(
+            y_level_test.values, test_baseline, test_baseline
         )
 
         # 3. Modelo productivo: selección interna y ajuste con todo el histórico.
@@ -451,13 +488,23 @@ def train_all(df, feature_cols, target_cols, tune=False):
         log(f"    [OK] Modelo final re-entrenado con {len(X_sel_final)} muestras (100% datos)")
 
         all_metrics[target_col] = {
-            "cv_rmse":    round(np.mean(fold_metrics["rmse"]), 4),
-            "cv_mae":     round(np.mean(fold_metrics["mae"]), 4),
-            "cv_r2":      round(np.mean(fold_metrics["r2"]), 4),
-            "cv_mape":    round(np.nanmean(fold_metrics["mape"]), 2),
-            "cv_persistence_rmse": round(np.nanmean(fold_metrics["persistence_rmse"]), 4),
+            "cv_rmse": round(rmse(oof_actual, cv_pred), 4),
+            "cv_mae": round(mae(oof_actual, cv_pred), 4),
+            "cv_r2": round(r2(oof_actual, cv_pred), 4),
+            "cv_mape": round(mape(oof_actual, cv_pred), 2),
+            "cv_persistence_rmse": round(rmse(oof_actual, oof_baseline), 4),
+            "cv_directional_accuracy": round(
+                directional_accuracy(oof_actual, cv_pred, oof_baseline), 4
+            ),
+            "cv_persistence_directional_accuracy": round(
+                directional_accuracy(oof_actual, oof_baseline, oof_baseline), 4
+            ),
             "test_rmse": round(test_rmse, 4),
             "test_persistence_rmse": round(test_persistence_rmse, 4),
+            "test_directional_accuracy": round(test_directional_accuracy, 4),
+            "test_persistence_directional_accuracy": round(
+                test_persistence_directional_accuracy, 4
+            ),
             "n_test": len(df_test),
             "test_start": pd.to_datetime(df_test["date"].iloc[0], utc=True).date().isoformat(),
             "test_end": pd.to_datetime(df_test["date"].iloc[-1], utc=True).date().isoformat(),
@@ -465,6 +512,8 @@ def train_all(df, feature_cols, target_cols, tune=False):
                 "lightgbm" if not np.isfinite(test_persistence_rmse) or test_rmse < test_persistence_rmse
                 else "persistence"
             ),
+            "prediction_mode": "residual",
+            "residual_scale": round(float(residual_scale), 6),
             "n_features": len(selected),
         }
         

@@ -67,6 +67,7 @@ jobs:
           git add traffic_map.html || true
           git add "**/*.png" || true
           git add data/processed/*.json || true
+          git add data/processed/weather_forecast_history.jsonl || true
           git add data/raw/**/checkpoint_air.json || true
           git add data/processed/predictions_latest.json || true
           git add data/processed/station_daily.csv || true

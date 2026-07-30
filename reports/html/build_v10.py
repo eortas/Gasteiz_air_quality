@@ -354,20 +354,31 @@ try:
         if history_path.exists():
             try:
                 history_list = json.loads(history_path.read_text(encoding="utf-8"))
+                valid_entries = {}
                 for entry in history_list:
-                    if entry.get("run_type", "production") != "production":
+                    if entry.get("run_type") != "production":
                         continue
                     prediction_date = entry.get("prediction_date")
+                    source_date = entry.get("source_date")
                     generated_at = entry.get("generated_at")
                     try:
                         emitted_on_time = pd.Timestamp(generated_at) < pd.Timestamp(prediction_date, tz="UTC")
+                        expected_source = (
+                            pd.Timestamp(prediction_date) - pd.Timedelta(days=1)
+                        ).date().isoformat()
                     except Exception:
                         emitted_on_time = False
-                    if not emitted_on_time:
+                        expected_source = None
+                    if not emitted_on_time or source_date != expected_source:
                         continue
-                    # Si hubo reejecuciones, conservamos la primera emisión válida.
-                    if prediction_date not in pred_history:
-                        pred_history[prediction_date] = entry.get("predictions", {})
+                    # Si hubo reejecuciones válidas, conservamos la más reciente.
+                    previous = valid_entries.get(prediction_date)
+                    if previous is None or generated_at > previous.get("generated_at", ""):
+                        valid_entries[prediction_date] = entry
+                pred_history = {
+                    key: entry.get("predictions", {})
+                    for key, entry in valid_entries.items()
+                }
                 print(f"  OK Historial válido cargado: {len(pred_history)} días de predicciones")
             except Exception as e:
                 print(f"  WARN Error leyendo historial: {e}")
@@ -410,7 +421,7 @@ try:
 
                 # Asegurar longitud 7
                 while len(real_vals) < 7: real_vals.insert(0, None)
-                while len(pred_vals) < 7: pred_vals.insert(0, 0)
+                while len(pred_vals) < 7: pred_vals.insert(0, None)
 
                 perf_data[zone][cont] = {
                     "real": real_vals[-7:],
@@ -448,11 +459,22 @@ try:
                         if r_no2 is None or r_pm10 is None or r_pm25 is None:
                             ica_real.append(None)
                         else:
-                            val_r = float(model_ica.predict([[r_no2, r_pm10, r_pm25]])[0])
+                            input_real = pd.DataFrame(
+                                [[r_no2, r_pm10, r_pm25]],
+                                columns=[no2_col, pm10_col, pm25_col],
+                            )
+                            val_r = float(model_ica.predict(input_real)[0])
                             ica_real.append(round(max(0.0, val_r), 1))
 
-                        val_p = float(model_ica.predict([[p_no2, p_pm10, p_pm25]])[0])
-                        ica_pred.append(round(max(0.0, val_p), 1))
+                        if p_no2 is None or p_pm10 is None or p_pm25 is None:
+                            ica_pred.append(None)
+                        else:
+                            input_pred = pd.DataFrame(
+                                [[p_no2, p_pm10, p_pm25]],
+                                columns=[no2_col, pm10_col, pm25_col],
+                            )
+                            val_p = float(model_ica.predict(input_pred)[0])
+                            ica_pred.append(round(max(0.0, val_p), 1))
 
                     # Si hay predicciones históricas de ICA, usar esas para pred
                     for i in range(len(targets_backtest)):

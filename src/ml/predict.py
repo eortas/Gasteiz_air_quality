@@ -167,6 +167,12 @@ def load_models() -> dict:
             "production_method": MODEL_METRICS.get(
                 f"target_{target}", {}
             ).get("production_method", "lightgbm"),
+            "prediction_mode": MODEL_METRICS.get(
+                f"target_{target}", {}
+            ).get("prediction_mode", "level"),
+            "residual_scale": MODEL_METRICS.get(
+                f"target_{target}", {}
+            ).get("residual_scale", 1.0),
             "test_persistence_rmse": MODEL_METRICS.get(
                 f"target_{target}", {}
             ).get("test_persistence_rmse"),
@@ -236,14 +242,13 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
     # build_features_v6.py guarda todo el dataset (con features completas pero
     # sin d2/d3 targets) antes de filtrar. Esto permite predecir ma?ana real.
     pred_row_path = PROCESSED_DIR / "features_latest.parquet"
+    source = df
+    if pred_row_path.exists():
+        source = pd.read_parquet(pred_row_path)
+        source["date"] = pd.to_datetime(source["date"], utc=True)
+        source = source.sort_values("date").reset_index(drop=True)
 
     if target_date is None:
-        source = df
-        if pred_row_path.exists():
-            source = pd.read_parquet(pred_row_path)
-            source["date"] = pd.to_datetime(source["date"], utc=True)
-            source = source.sort_values("date").reset_index(drop=True)
-
         now_local = pd.Timestamp.now(tz="Europe/Madrid")
         if now_local.hour < PREDICTION_CUTOFF_HOUR:
             raise RuntimeError(
@@ -268,10 +273,10 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
         # Predecir un d?a hist?rico: buscar la fila del d?a anterior
         target_date = pd.Timestamp(target_date, tz="UTC")
         source_date = target_date - pd.Timedelta(days=1)
-        row = df[df["date"] == source_date]
+        row = source[source["date"] == source_date]
         if row.empty:
             # Intentar con la fila m?s cercana anterior
-            row = df[df["date"] <= source_date].iloc[[-1]]
+            row = source[source["date"] <= source_date].iloc[[-1]]
             if row.empty:
                 log(f"  ? No hay datos disponibles para predecir el {target_date.date()}")
                 sys.exit(1)
@@ -305,9 +310,10 @@ def fetch_forecast_d1(target_date: pd.Timestamp) -> dict:
             "wind_gusts_10m", "cloud_cover", "boundary_layer_height",
             "sunshine_duration", "weather_code",
         ]),
-        "forecast_days":  3,  # Aumentado a 3 para evitar problemas de desfase horario (timezone/UTC) en el runner de GitHub Actions
-        "timezone":       "UTC",
+        "forecast_days":  3,
+        "timezone":       "Europe/Madrid",
         "wind_speed_unit": "ms",
+        "models":          "icon_seamless",
     }
 
     try:
@@ -319,15 +325,15 @@ def fetch_forecast_d1(target_date: pd.Timestamp) -> dict:
         return {}
 
     df = pd.DataFrame(data.get("hourly", {}))
-    df["timestamp"] = pd.to_datetime(df["time"], utc=True)
-    df["date"]      = df["timestamp"].dt.floor("D")
+    # Open-Meteo devuelve horas locales y agregamos el día civil de Vitoria.
+    df["timestamp"] = pd.to_datetime(df["time"])
+    df["date"] = df["timestamp"].dt.date
 
-    # Alinear la fecha objetivo en UTC (normalizada a las 00:00:00 UTC)
-    tomorrow = target_date.normalize()
+    tomorrow = target_date.date()
     df_tomorrow = df[df["date"] == tomorrow]
 
     if df_tomorrow.empty:
-        log(f"  [WARN]  Sin datos de {tomorrow.date()} en Open-Meteo")
+        log(f"  [WARN]  Sin datos de {tomorrow} en Open-Meteo")
         return {}
 
     agg = {}
@@ -376,7 +382,7 @@ def fetch_forecast_d1(target_date: pd.Timestamp) -> dict:
     except Exception as e:
         log(f"  [WARN] Falló cálculo de lluvia acumulada pronosticada: {e}")
 
-    log(f"  [OK] Pron?stico descargado: {len(agg)} features fc_*_d1 para {tomorrow.date()}")
+    log(f"  [OK] Pron?stico descargado: {len(agg)} features fc_*_d1 para {tomorrow}")
     return agg
 
 
@@ -725,6 +731,8 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
         medians  = m.get("medians", {})
         seasonal_medians = m.get("seasonal_medians", {})
         production_method = m.get("production_method", "lightgbm")
+        prediction_mode = m.get("prediction_mode", "level")
+        residual_scale = m.get("residual_scale", 1.0)
 
         # Construir vector de entrada con las features del modelo
         missing_features = [f for f in features if f not in row.columns]
@@ -740,6 +748,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
         X_raw = row.reindex(columns=features)
         n_nan = int(X_raw.isna().sum(axis=1).iloc[0])
         X = X_raw.fillna(fill_values).astype(float)
+        current_col = target.replace("_d1", "")
         if production_method == "persistence":
             current_col = target.replace("_d1", "")
             if current_col not in row.columns or pd.isna(row.iloc[0][current_col]):
@@ -750,7 +759,15 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
                 "narrative": "La persistencia superó al modelo en el bloque final reservado.",
             }
         else:
-            pred = float(model.predict(X)[0])
+            model_output = float(model.predict(X)[0])
+            if prediction_mode == "residual":
+                if current_col not in row.columns or pd.isna(row.iloc[0][current_col]):
+                    raise RuntimeError(
+                        f"Falta {current_col} para reconstruir la predicción residual"
+                    )
+                pred = float(row.iloc[0][current_col]) + residual_scale * model_output
+            else:
+                pred = model_output
             foresight = None
         pred = max(0.0, pred)  # los contaminantes no pueden ser negativos
 
@@ -762,7 +779,14 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
             try:
                 contribs = model.predict(X, pred_contrib=True)
                 base_value = float(contribs[0, -1])
-                feats_impact = list(zip(features, contribs[0, :-1]))
+                if prediction_mode == "residual":
+                    base_value = (
+                        float(row.iloc[0][current_col]) + residual_scale * base_value
+                    )
+                    feature_contributions = residual_scale * contribs[0, :-1]
+                else:
+                    feature_contributions = contribs[0, :-1]
+                feats_impact = list(zip(features, feature_contributions))
                 # Ordenar por magnitud de impacto
                 feats_impact.sort(key=lambda x: abs(x[1]), reverse=True)
 
@@ -794,6 +818,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
             "upper":      round(pred + 1.645 * rmse_cv, 2),
             "rmse_cv":    rmse_cv,
             "method":     production_method,
+            "prediction_mode": prediction_mode,
             "foresight":  foresight
         }
 
@@ -926,7 +951,8 @@ def main():
         if not json_only:
             section("3. Descargando pronóstico Open-Meteo")
         forecast_override = fetch_forecast_d1(pred_date)
-        save_forecast_snapshot(pred_date, forecast_override)
+        if not date_arg:
+            save_forecast_snapshot(pred_date, forecast_override)
 
     # Aplicar pronóstico real a row si está disponible
     if forecast_override:
@@ -940,8 +966,9 @@ def main():
     # 4. Predecir (con medianas estacionales)
     results = predict(models, row, None, pred_date=pred_date)
 
-    # 4b. Refinar con Meta-Modelos
-    if "--no-meta" not in sys.argv:
+    # Los meta-modelos antiguos se activan solo de forma explícita porque fueron
+    # entrenados con el modelo de nivel anterior y no son compatibles con residuos.
+    if "--with-meta" in sys.argv:
         if not json_only:
             section("4. Refinando con Meta-Modelos (v2) + Clamp v8.1")
         df_history = pd.read_parquet(DATASET_PATH)
