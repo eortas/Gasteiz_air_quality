@@ -101,7 +101,8 @@ async def get_browser_session(playwright):
 
             page.on("request", capture_token)
 
-            await page.goto("https://kunakcloud.com/websites/aytoVitoria.html", wait_until="networkidle", timeout=60000)
+            # Kunak mantiene conexiones abiertas y `networkidle` puede no llegar nunca.
+            await page.goto("https://kunakcloud.com/websites/aytoVitoria.html", wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(2)
             try:
                 btn = page.locator("#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")
