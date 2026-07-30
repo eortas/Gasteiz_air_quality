@@ -355,8 +355,20 @@ try:
             try:
                 history_list = json.loads(history_path.read_text(encoding="utf-8"))
                 for entry in history_list:
-                    pred_history[entry["prediction_date"]] = entry.get("predictions", {})
-                print(f"  OK Historial cargado: {len(pred_history)} días de predicciones")
+                    if entry.get("run_type", "production") != "production":
+                        continue
+                    prediction_date = entry.get("prediction_date")
+                    generated_at = entry.get("generated_at")
+                    try:
+                        emitted_on_time = pd.Timestamp(generated_at) < pd.Timestamp(prediction_date, tz="UTC")
+                    except Exception:
+                        emitted_on_time = False
+                    if not emitted_on_time:
+                        continue
+                    # Si hubo reejecuciones, conservamos la primera emisión válida.
+                    if prediction_date not in pred_history:
+                        pred_history[prediction_date] = entry.get("predictions", {})
+                print(f"  OK Historial válido cargado: {len(pred_history)} días de predicciones")
             except Exception as e:
                 print(f"  WARN Error leyendo historial: {e}")
 
@@ -393,21 +405,8 @@ try:
                         pred_val = pred_history[target_date][target_name]
                         pred_vals.append(round(pred_val, 1))
                     else:
-                        # Opción 2: Fallback - recalcular con modelo
-                        # Necesitamos la fila del día anterior como input
-                        target_idx_pos = targets_backtest.index[idx_i]
-                        # Buscar la fila anterior en df_past
-                        pos_in_past = df_past.index.get_loc(target_idx_pos)
-                        if pos_in_past > 0:
-                            row_input = df_past.iloc[pos_in_past - 1]
-                        else:
-                            row_input = df_past.iloc[0]
-
-                        pred_val = _fallback_predict(
-                            target_name, row_input, targets_backtest.iloc[idx_i],
-                            df_past, meta_models_fallback, fallback_models
-                        )
-                        pred_vals.append(round(pred_val, 1))
+                        # No recalcular con el modelo actual: sería información futura.
+                        pred_vals.append(None)
 
                 # Asegurar longitud 7
                 while len(real_vals) < 7: real_vals.insert(0, None)

@@ -31,6 +31,7 @@ Uso:
 """
 
 import sys
+import json
 import warnings
 from pathlib import Path
 from datetime import datetime
@@ -54,6 +55,9 @@ TRAFFIC_DIR   = ROOT_DIR / "data" / "raw" / "traffic"
 WEATHER_DIR   = ROOT_DIR / "data" / "raw" / "weather"
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+AIR_CLEAN_PATH = PROCESSED_DIR / "air_clean_hourly.parquet"
+FORECAST_HISTORY_PATH = PROCESSED_DIR / "weather_forecast_history.jsonl"
+MIN_AIR_HOURS = 18
 
 # -- CONFIG (importado de src/config.py + locales) --
 # ZBE_STATIONS, OUT_STATIONS, CONTAMINANTS, ZBE_DATE, HDD_BASE_TEMP,
@@ -98,21 +102,41 @@ def load_csvs(directory: Path, pattern: str, ts_col: str) -> pd.DataFrame:
 def load_air_daily() -> pd.DataFrame:
     section("1. Calidad del aire -> media diaria por grupo ZBE / OUT")
 
-    df = load_csvs(AIR_DIR, "kunak_[0-9]*.csv", "timestamp")
+    if not AIR_CLEAN_PATH.exists():
+        raise FileNotFoundError(
+            f"No existe {AIR_CLEAN_PATH}. Ejecuta src/transformation/prepare_air_clean.py"
+        )
+    df = pd.read_parquet(AIR_CLEAN_PATH)
+    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+    df = df.dropna(subset=["timestamp"])
     log(f"  Filas brutas    : {len(df):,}")
     log(f"  Estaciones      : {sorted(df['estacion'].unique())}")
 
-    df["date"] = df["timestamp"].dt.floor("D")
+    # Kunak entrega instantes UTC; agregamos por día local de Vitoria.
+    df["date"] = (
+        df["timestamp"].dt.tz_convert("Europe/Madrid").dt.normalize()
+        .dt.tz_localize(None).dt.tz_localize("UTC")
+    )
+    df["valid_hour"] = df.get("valid_hour", df["valor"].notna()).astype(bool)
+
+    # Primero media por estación. Así una estación con más lecturas no pesa más.
+    station_daily = (
+        df.groupby(["date", "estacion", "contaminante"])
+        .agg(valor=("valor", "mean"), valid_hours=("valid_hour", "sum"))
+        .reset_index()
+    )
+    station_daily.loc[station_daily["valid_hours"] < MIN_AIR_HOURS, "valor"] = np.nan
+
     frames = []
 
-    df_zbe = df[df["estacion"].isin(ZBE_STATIONS)]
+    df_zbe = station_daily[station_daily["estacion"].isin(ZBE_STATIONS)]
     daily_zbe = (df_zbe.groupby(["date", "contaminante"])["valor"]
-                       .mean().unstack("contaminante").reset_index())
+                        .mean().unstack("contaminante").reset_index())
     daily_zbe.columns = (["date"] +
                          [f"{c}_zbe" for c in daily_zbe.columns[1:]])
     frames.append(daily_zbe)
 
-    df_out = df[df["estacion"].isin(OUT_STATIONS)]
+    df_out = station_daily[station_daily["estacion"].isin(OUT_STATIONS)]
     daily_out = (df_out.groupby(["date", "contaminante"])["valor"]
                        .mean().unstack("contaminante").reset_index())
     daily_out.columns = (["date"] +
@@ -127,6 +151,16 @@ def load_air_daily() -> pd.DataFrame:
             daily[t] = np.nan
 
     daily["date"] = pd.to_datetime(daily["date"], utc=True)
+
+    coverage = station_daily.assign(valid=station_daily["valid_hours"] >= MIN_AIR_HOURS)
+    for group_name, stations in {"zbe": ZBE_STATIONS, "out": OUT_STATIONS}.items():
+        group_coverage = (
+            coverage[coverage["estacion"].isin(stations)]
+            .groupby("date")["valid"].sum()
+            .rename(f"air_stations_valid_{group_name}")
+            .reset_index()
+        )
+        daily = daily.merge(group_coverage, on="date", how="left")
 
     # Verificación pre/post ZBE
     subsection("Verificación pre/post ZBE por grupo")
@@ -472,14 +506,6 @@ def merge_daily(air, traffic, weather) -> pd.DataFrame:
     # Colapsar filas duplicadas para la misma fecha (ej. diferencias microscópicas de merge)
     df = df.groupby("date", as_index=False).first().sort_values("date").reset_index(drop=True)
 
-    # === REPARTO FINAL: PREVENCIÓN DE CORTES POR LAGS DE KUNAK ===
-    # Añadimos fila de hoy explícita si falta (outer join puede no traerla si nadie la tiene)
-    today_dt = pd.to_datetime(pd.Timestamp.now(tz="Europe/Madrid").date()).tz_localize("UTC")
-    if not (df["date"] == today_dt).any():
-        log(f"  Añadiendo fila de hoy {today_dt.strftime('%Y-%m-%d')} para predicciones...")
-        today_df = pd.DataFrame({"date": [today_dt]})
-        df = pd.concat([df, today_df], ignore_index=True)
-
     log(f"  Días tras merge: {len(df):,}")
     log(f"  Rango: {df['date'].min().date()} -> {df['date'].max().date()}")
     return df.sort_values("date").reset_index(drop=True)
@@ -633,43 +659,28 @@ def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
     - En la ÚLTIMA FILA (predicción real): se inyectan los pronósticos reales
       de Open-Meteo como features fc_* para la predicción de mañana
     """
-    df = df.set_index("date").sort_index()
+    section("9. Añadiendo snapshots históricos de pronóstico Open-Meteo")
+    if not FORECAST_HISTORY_PATH.exists():
+        log("  Sin snapshots todavía: se empezarán a guardar en la siguiente predicción")
+        return df
 
-    if fc.empty:
-        log("  Sin pronóstico Open-Meteo - el modelo usará solo features observadas")
-        log("  (Fix auditoría: eliminado shift(-h) que causaba data leakage)")
-        return df.reset_index()
+    records = []
+    for line in FORECAST_HISTORY_PATH.read_text(encoding="utf-8").splitlines():
+        try:
+            record = json.loads(line)
+            target_date = pd.Timestamp(record["target_date"], tz="UTC")
+            records.append({"date": target_date - pd.Timedelta(days=1), **record["features"]})
+        except (ValueError, KeyError, TypeError):
+            continue
+    if not records:
+        log("  No hay snapshots válidos")
+        return df
 
-    # Identificar columnas meteorológicas base para generar nombres fc_*
-    weather_base_cols = [c for c in df.columns if any(x in c for x in
-        ["temperature", "precipitation", "wind", "cloud",
-         "humidity", "boundary", "sunshine", "HDD", "dew_point", "ventilation_index"])
-        and "_lag_" not in c and "_roll_" not in c
-        and "_diff_" not in c
-        and ("_acum_" not in c or "precipitation_acum" in c)
-        and not c.startswith("fc_")]
-
-    section("9. Añadiendo features del pronóstico Open-Meteo (solo última fila)")
-
-    # Solo inyectar pronóstico real de Open-Meteo en la última fila
-    # Las filas históricas NO tienen features fc_* → no hay leakage
-    n_fc_added = 0
-    for col in weather_base_cols:
-        fc_col_name = f"fc_{col}_d1"
-        if col in fc.columns:
-            # Crear columna con NaN en el histórico y pronóstico real en la última fila
-            df[fc_col_name] = np.nan
-            df.loc[df.index[-1], fc_col_name] = fc[col].iloc[0]
-            n_fc_added += 1
-
-    # También inyectar columnas que vengan directamente del pronóstico
-    for col in fc.columns:
-        if col in df.columns:
-            df.loc[df.index[-1], col] = fc[col].iloc[0]
-
-    log(f"  Features fc_* creadas: {n_fc_added} (solo con valor en última fila)")
-    log(f"  Histórico: sin features fc_* (evita data leakage)")
-    return df.reset_index()
+    forecast_df = pd.DataFrame(records).drop_duplicates("date", keep="last")
+    forecast_cols = [c for c in forecast_df.columns if c.startswith("fc_")]
+    df = df.merge(forecast_df[["date"] + forecast_cols], on="date", how="left")
+    log(f"  Snapshots disponibles: {len(forecast_df):,} días, {len(forecast_cols)} features")
+    return df
 
 
 # -- 10. ANÁLISIS PRUEBA DEL DOMINGO ---------------------

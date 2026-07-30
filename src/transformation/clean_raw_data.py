@@ -300,6 +300,12 @@ def save_clean(df, dry_run=False):
 
 # ─── MAIN ─────────────────────────────────────────────────────────────────────
 def main():
+    if "--legacy-overwrite" not in sys.argv:
+        print("Este script está deprecado para proteger la descarga original de Kunak.")
+        print("Usa: python src/transformation/prepare_air_clean.py")
+        print("No se ha modificado ningún CSV.")
+        return
+
     dry_run = "--dry-run" in sys.argv
 
     log("=" * 65)

@@ -90,7 +90,7 @@ jobs:
           # Sube/sobrescribe los archivos (con reintentos en caso de errores temporales de GitHub API)
           for i in {1..5}; do
             echo "Intento $i de subir assets a GitHub Releases..."
-            gh release upload latest-data data/raw/traffic/*.csv.gz data/raw/air/*.csv.gz data/raw/weather/*.csv.gz --clobber && break || {
+            gh release upload latest-data data/raw/traffic/*.csv.gz data/raw/air/source/*.csv.gz data/raw/weather/*.csv.gz data/processed/air_source_manifest.json --clobber && break || {
               echo "Error de subida (posible error 502/503 de red). Reintentando en 15 segundos..."
               sleep 15
             }

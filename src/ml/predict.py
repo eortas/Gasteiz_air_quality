@@ -49,6 +49,7 @@ if env_path.exists():
 
 DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
 STATION_DAILY_PATH = PROCESSED_DIR / "station_daily.csv"
+FORECAST_HISTORY_PATH = PROCESSED_DIR / "weather_forecast_history.jsonl"
 
 # ??? CONFIG ???????????????????????????????????????????????????????????????????
 TARGETS = [
@@ -73,6 +74,8 @@ def get_cv_rmse() -> dict:
             for k, v in data.items():
                 clean_k = k.replace("target_", "")
                 res[clean_k] = v.get("cv_rmse", defaults.get(clean_k, 4.0))
+            if not res:
+                return defaults
             res["ICA_zbe_d1"] = res.get("PM10_zbe_d1", 4.758)
             res["ICA_out_d1"] = res.get("NO2_out_d1", 4.557)
             return res
@@ -81,6 +84,20 @@ def get_cv_rmse() -> dict:
     return defaults
 
 CV_RMSE = get_cv_rmse()
+
+
+def get_model_metrics() -> dict:
+    """Carga la decisión de producción obtenida en el bloque final reservado."""
+    metrics_path = MODELS_DIR / "metrics_v8.json"
+    if not metrics_path.exists():
+        return {}
+    try:
+        return json.loads(metrics_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+MODEL_METRICS = get_model_metrics()
 
 # Unidades y umbrales de alerta (WHO 2021 guidelines, medias diarias)
 META = {
@@ -146,6 +163,12 @@ def load_models() -> dict:
             "features": features,
             "medians": medians,
             "seasonal_medians": seasonal_medians,
+            "production_method": MODEL_METRICS.get(
+                f"target_{target}", {}
+            ).get("production_method", "lightgbm"),
+            "test_persistence_rmse": MODEL_METRICS.get(
+                f"target_{target}", {}
+            ).get("test_persistence_rmse"),
         }
 
     if missing:
@@ -214,23 +237,29 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
     pred_row_path = PROCESSED_DIR / "features_latest.parquet"
 
     if target_date is None:
-        last_training_date = df["date"].iloc[-1]
-
+        source = df
         if pred_row_path.exists():
-            df_pred_row = pd.read_parquet(pred_row_path)
-            df_pred_row["date"] = pd.to_datetime(df_pred_row["date"], utc=True)
-            pred_row_date = df_pred_row["date"].iloc[-1]
+            source = pd.read_parquet(pred_row_path)
+            source["date"] = pd.to_datetime(source["date"], utc=True)
+            source = source.sort_values("date").reset_index(drop=True)
 
-            if pred_row_date > last_training_date:
-                row = df_pred_row.iloc[[-1]]
-                pred_date = pred_row_date + pd.Timedelta(days=1)
-                log(f"  Usando features_latest.parquet: {pred_row_date.date()} -> predice {pred_date.date()}")
-            else:
-                row = df.iloc[[-1]]
-                pred_date = last_training_date + pd.Timedelta(days=1)
-        else:
-            row = df.iloc[[-1]]
-            pred_date = last_training_date + pd.Timedelta(days=1)
+        # El modelo d1 exige el último día local ya terminado, nunca el día en curso.
+        today = pd.Timestamp.now(tz="Europe/Madrid").normalize().tz_localize(None).tz_localize("UTC")
+        latest_allowed = today - pd.Timedelta(days=1)
+        source = source[source["date"] == latest_allowed].copy()
+
+        required = ["NO2_zbe", "NO2_out", "PM10_zbe", "PM10_out", "PM2.5_zbe", "PM2.5_out",
+                    "traffic_volume", "temperature_2m"]
+        available = [column for column in required if column in source.columns]
+        source = source.dropna(subset=available)
+        if source.empty:
+            raise RuntimeError(
+                f"El día completo {latest_allowed.date()} no tiene aire, tráfico y meteorología. "
+                "Se cancela la predicción para evitar datos obsoletos."
+            )
+
+        row = source.iloc[[-1]]
+        pred_date = row["date"].iloc[0] + pd.Timedelta(days=1)
     else:
         # Predecir un d?a hist?rico: buscar la fila del d?a anterior
         target_date = pd.Timestamp(target_date, tz="UTC")
@@ -247,7 +276,7 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
 
     source_date = row["date"].iloc[0]
     log(f"  Fila fuente   : {source_date.date()} (datos conocidos hasta este d?a)")
-    log(f"  Predicci?n    : {pred_date.date()} (ma?ana)")
+    log(f"  Predicci?n    : {pred_date.date()} (d1 desde el último día completo)")
     log(f"  Features disp.: {len(df.columns)} columnas en parquet")
 
     return row, pred_date
@@ -345,6 +374,19 @@ def fetch_forecast_d1(target_date: pd.Timestamp) -> dict:
 
     log(f"  [OK] Pron?stico descargado: {len(agg)} features fc_*_d1 para {tomorrow.date()}")
     return agg
+
+
+def save_forecast_snapshot(target_date: pd.Timestamp, forecast: dict):
+    """Guarda el pronóstico emitido para poder entrenar con forecasts reales."""
+    if not forecast:
+        return
+    record = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "target_date": target_date.date().isoformat(),
+        "features": forecast,
+    }
+    with open(FORECAST_HISTORY_PATH, "a", encoding="utf-8") as file:
+        file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.DataFrame, pred_date: pd.Timestamp) -> dict:
@@ -475,8 +517,8 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
             refined_results[target] = {
                 "prediction_v1": r["prediction"],
                 "prediction":    round(pred_v2, 2),
-                "lower":         round(max(0, pred_v2 - 1.28 * r["rmse_cv"]), 2),
-                "upper":         round(pred_v2 + 1.28 * r["rmse_cv"], 2),
+                "lower":         round(max(0, pred_v2 - 1.645 * r["rmse_cv"]), 2),
+                "upper":         round(pred_v2 + 1.645 * r["rmse_cv"], 2),
                 "rmse_cv":       r["rmse_cv"],
                 "correction":    round(pred_v2 - r["prediction"], 2)
             }
@@ -635,8 +677,8 @@ def add_deterministic_ica(results: dict):
             results[f"ICA_{zone}_d1"] = {
                 "prediction_v1": round(pred_ica_v1, 2),
                 "prediction":    round(pred_ica, 2),
-                "lower":         round(max(0, pred_ica - 1.28 * rmse_cv * 0.5), 2),
-                "upper":         round(pred_ica + 1.28 * rmse_cv * 0.5, 2),
+                "lower":         round(max(0, pred_ica - 1.645 * rmse_cv * 0.5), 2),
+                "upper":         round(pred_ica + 1.645 * rmse_cv * 0.5, 2),
                 "rmse_cv":       round(rmse_cv * 0.5, 3),
                 "correction":    round(pred_ica - pred_ica_v1, 2),
                 "foresight": {
@@ -678,6 +720,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
         features = m["features"]
         medians  = m.get("medians", {})
         seasonal_medians = m.get("seasonal_medians", {})
+        production_method = m.get("production_method", "lightgbm")
 
         # Construir vector de entrada con las features del modelo
         missing_features = [f for f in features if f not in row.columns]
@@ -693,46 +736,60 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
         X_raw = row.reindex(columns=features)
         n_nan = int(X_raw.isna().sum(axis=1).iloc[0])
         X = X_raw.fillna(fill_values).astype(float)
-        pred = float(model.predict(X)[0])
+        if production_method == "persistence":
+            current_col = target.replace("_d1", "")
+            if current_col not in row.columns or pd.isna(row.iloc[0][current_col]):
+                raise RuntimeError(f"Falta {current_col} para la predicción de persistencia")
+            pred = float(row.iloc[0][current_col])
+            foresight = {
+                "method": "persistence",
+                "narrative": "La persistencia superó al modelo en el bloque final reservado.",
+            }
+        else:
+            pred = float(model.predict(X)[0])
+            foresight = None
         pred = max(0.0, pred)  # los contaminantes no pueden ser negativos
 
         if n_nan > 0:
             log(f"  [INFO] {target}: {n_nan}/{len(features)} features imputadas con mediana mes {pred_month}")
         
         # Calcular SHAP / Feature Contributions
-        try:
-            contribs = model.predict(X, pred_contrib=True)
-            base_value = float(contribs[0, -1])
-            feats_impact = list(zip(features, contribs[0, :-1]))
-            # Ordenar por magnitud de impacto
-            feats_impact.sort(key=lambda x: abs(x[1]), reverse=True)
-            
-            # Asegurarnos de tener al menos las top features para el gráfico
-            positive_feats = [f for f in feats_impact if f[1] >= 0]
-            negative_feats = [f for f in feats_impact if f[1] < 0]
-            
-            # Si no hay ninguna negativa, incluimos las más cercanas a cero
-            if not negative_feats:
-                negative_feats = [f for f in feats_impact if f[1] <= 0]
-            
-            # Generar narrativa para todos los targets
-            narrative = generate_llm_narrative(target, pred, base_value, positive_feats, negative_feats)
-                
-            foresight = {
-                "base_value": round(float(base_value), 2),
-                "positive_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in positive_feats[:5]],
-                "negative_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in negative_feats[:5]],
-                "narrative": narrative
-            }
-        except Exception as e:
-            foresight = {"error": str(e)}
+        if foresight is None:
+            try:
+                contribs = model.predict(X, pred_contrib=True)
+                base_value = float(contribs[0, -1])
+                feats_impact = list(zip(features, contribs[0, :-1]))
+                # Ordenar por magnitud de impacto
+                feats_impact.sort(key=lambda x: abs(x[1]), reverse=True)
 
-        rmse_cv = CV_RMSE.get(target, 0)
+                # Asegurarnos de tener al menos las top features para el gráfico
+                positive_feats = [f for f in feats_impact if f[1] >= 0]
+                negative_feats = [f for f in feats_impact if f[1] < 0]
+
+                # Si no hay ninguna negativa, incluimos las más cercanas a cero
+                if not negative_feats:
+                    negative_feats = [f for f in feats_impact if f[1] <= 0]
+
+                # Generar narrativa para todos los targets
+                narrative = generate_llm_narrative(target, pred, base_value, positive_feats, negative_feats)
+
+                foresight = {
+                    "base_value": round(float(base_value), 2),
+                    "positive_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in positive_feats[:5]],
+                    "negative_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in negative_feats[:5]],
+                    "narrative": narrative
+                }
+            except Exception as e:
+                foresight = {"error": str(e)}
+
+        rmse_cv = m.get("test_persistence_rmse") if production_method == "persistence" else CV_RMSE.get(target, 0)
+        rmse_cv = rmse_cv or CV_RMSE.get(target, 0)
         results[target] = {
             "prediction": round(pred, 2),
-            "lower":      round(max(0, pred - 1.28 * rmse_cv), 2),  # ~90% CI
-            "upper":      round(pred + 1.28 * rmse_cv, 2),
+            "lower":      round(max(0, pred - 1.645 * rmse_cv), 2),
+            "upper":      round(pred + 1.645 * rmse_cv, 2),
             "rmse_cv":    rmse_cv,
+            "method":     production_method,
             "foresight":  foresight
         }
 
@@ -766,21 +823,35 @@ def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
                 f"[{lower:.1f} - {upper:.1f}]  {alert}")
 
     log()
-    log(f"  Intervalo de confianza: ?1.28 ? RMSE_CV (~90%)")
-    log(f"  Correcci?n: Aplicado Meta-Modelo Ridge (Error Correction)")
+    log("  Intervalo de confianza: ±1.645 × RMSE_CV (aproximación normal 90%)")
+    methods = {result.get("method", "lightgbm") for result in results.values()}
+    method_label = ", ".join(sorted(methods))
+    log(f"  Método de producción: {method_label}")
     source = "pron?stico Open-Meteo real" if with_forecast else "proxy hist?rico (parquet)"
     log(f"  Meteorolog?a d1: {source}")
-    log(f"  Modelos: LightGBM v8 + Ridge Meta-Model ? TimeSeriesSplit 5 folds")
+    log("  Selección: prueba temporal reservada + gap de un día")
 
 
 # ??? 6. GUARDAR JSON ??????????????????????????????????????????????????????????
-def save_json(results: dict, pred_date: pd.Timestamp):
+def save_json(results: dict, pred_date: pd.Timestamp, run_type: str = "production",
+              source_date: pd.Timestamp = None):
     out = {
         "prediction_date": pred_date.date().isoformat(),
         "generated_at":    datetime.now(timezone.utc).isoformat(),
         "model_version":   "v8",
+        "run_type":        run_type,
+        "source_date":     source_date.date().isoformat() if source_date is not None else None,
         "targets": results,
     }
+
+    if run_type == "backtest":
+        backtest_dir = PROCESSED_DIR / "backtests"
+        backtest_dir.mkdir(exist_ok=True)
+        out_path = backtest_dir / f"prediction_{pred_date.date().isoformat()}.json"
+        out_path.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+        log(f"\n  [OK] Backtest guardado fuera del histórico operativo: {out_path}")
+        return out
+
     out_path = PROCESSED_DIR / "predictions_latest.json"
     out_path.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     log(f"\n  [OK] JSON guardado: {out_path}")
@@ -795,19 +866,18 @@ def save_json(results: dict, pred_date: pd.Timestamp):
         else:
             history = []
 
-        # Crear entrada con la fecha y las predicciones finales
+        # Registro append-only: nunca sustituir una predicción ya emitida.
         entry = {
             "prediction_date": pred_date.date().isoformat(),
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "source_date": source_date.date().isoformat() if source_date is not None else None,
+            "run_type": "production",
             "predictions": {k: round(v["prediction"], 2) for k, v in results.items()}
         }
-
-        # Evitar duplicados: si ya existe una entrada para esa fecha, la reemplazamos
-        history = [h for h in history if h["prediction_date"] != entry["prediction_date"]]
         history.append(entry)
 
-        # Mantener máximo 90 días, ordenados por fecha
-        history = sorted(history, key=lambda x: x["prediction_date"])[-90:]
+        # Mantener las últimas 180 ejecuciones conservando su fecha de generación.
+        history = sorted(history, key=lambda x: x.get("generated_at", ""))[-180:]
 
         history_path.write_text(
             json.dumps(history, indent=2, ensure_ascii=False), encoding="utf-8"
@@ -852,6 +922,7 @@ def main():
         if not json_only:
             section("3. Descargando pronóstico Open-Meteo")
         forecast_override = fetch_forecast_d1(pred_date)
+        save_forecast_snapshot(pred_date, forecast_override)
 
     # Aplicar pronóstico real a row si está disponible
     if forecast_override:
@@ -859,36 +930,8 @@ def main():
         for feat, val in forecast_override.items():
             row[feat] = val
 
-    # FIX v8.1: Propagar variables fc_* del pronóstico a variables base cuando son NaN
-    # Esto es CRÍTICO: sin esto, variables como temperature_2m, HDD, wind_speed_10m
-    # quedan NaN en la fila de producción y se imputan con medianas que sesgan NO2.
-    fc_to_base_map = {
-        "fc_temperature_2m_d1": "temperature_2m",
-        "fc_wind_speed_10m_d1": "wind_speed_10m",
-        "fc_wind_gusts_10m_d1": "wind_gusts_10m",
-        "fc_wind_direction_10m_d1": "wind_direction_10m",
-        "fc_boundary_layer_height_d1": "boundary_layer_height",
-        "fc_cloud_cover_d1": "cloud_cover",
-        "fc_relative_humidity_2m_d1": "relative_humidity_2m",
-        "fc_precipitation_d1": "precipitation",
-        "fc_rain_d1": "rain",
-        "fc_sunshine_duration_d1": "sunshine_duration",
-        "fc_weather_code_d1": "weather_code",
-        "fc_dew_point_d1": "dew_point",
-        "fc_ventilation_index_d1": "ventilation_index",
-        "fc_HDD_d1": "HDD",
-        "fc_wind_u_d1": "wind_u",
-        "fc_wind_v_d1": "wind_v",
-    }
-    propagated = 0
-    for fc_col, base_col in fc_to_base_map.items():
-        if base_col in row.columns and fc_col in row.columns:
-            if pd.isna(row[base_col].iloc[0]) and pd.notna(row[fc_col].iloc[0]):
-                row = row.copy() if propagated == 0 else row
-                row[base_col] = row[fc_col].iloc[0]
-                propagated += 1
-    if propagated > 0 and not json_only:
-        log(f"  [FIX] Propagadas {propagated} variables fc_*_d1 -> base (relleno de NaN)")
+    # No mezclamos el pronóstico de D+1 con variables observadas de D.
+    # Las features fc_* se activarán al reentrenar con snapshots históricos.
 
     # 4. Predecir (con medianas estacionales)
     results = predict(models, row, None, pred_date=pred_date)
@@ -902,12 +945,14 @@ def main():
         results = refine_with_meta_models(results, row, df_history, pred_date)
 
     # 5. Mostrar o volcar JSON
+    run_type = "backtest" if date_arg else "production"
+    source_date = row["date"].iloc[0]
     if json_only:
-        out = save_json(results, pred_date)
+        out = save_json(results, pred_date, run_type, source_date)
         print(json.dumps(out, indent=2, ensure_ascii=False))
     else:
         print_results(results, pred_date, with_forecast=bool(forecast_override))
-        save_json(results, pred_date)
+        save_json(results, pred_date, run_type, source_date)
 
         log()
         log("=" * 65)

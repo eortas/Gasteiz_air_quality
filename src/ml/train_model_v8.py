@@ -69,6 +69,8 @@ N_SPLITS       = 5
 HORIZON        = "d1"
 TOP_N_FEATURES = 80
 EARLY_STOPPING_ROUNDS = 100
+CV_GAP         = 1
+FINAL_TEST_FRACTION = 0.15
 
 # HDD_FEATURES_REQUIRED -> importado de config.py (sin fc_HDD_* que ya no existen tras Fix #1)
 
@@ -170,7 +172,10 @@ def load_dataset():
     log(f"  Targets  : {len(all_target_cols)} (solo {HORIZON})")
 
     raw_contaminants = ["NO2", "PM10", "PM2.5", "ICA",
-                        "humedad", "presion", "temperatura", "viento_dir", "viento_vel"]
+                         "humedad", "presion", "temperatura", "viento_dir", "viento_vel"]
+    raw_target_cols = [f"{cont}_{zone}" for cont in TARGETS
+                       for zone in ["zbe", "out"]]
+    raw_target_cols += [f"ICA_{zone}" for zone in ["zbe", "out"]]
     datetime_cols = [c for c in df.columns
                      if pd.api.types.is_datetime64_any_dtype(df[c])]
     feature_cols = [c for c in df.columns
@@ -178,6 +183,7 @@ def load_dataset():
                     and not c.startswith("fc_")
                     and c != "date"
                     and c not in raw_contaminants
+                    and c not in raw_target_cols
                     and c not in datetime_cols]
 
     null_pct = df[feature_cols].isna().mean()
@@ -271,6 +277,37 @@ def select_features_aggregated(df_target, y_full, feature_cols, folds, target_na
     return selected
 
 
+def select_features_train_only(df_target, y_full, feature_cols, train_idx):
+    """Selecciona variables usando solo el tramo de entrenamiento del fold externo."""
+    from lightgbm import LGBMRegressor, early_stopping, log_evaluation
+
+    train = df_target.iloc[train_idx]
+    y_train = y_full.iloc[train_idx]
+    split = int(len(train) * 0.8)
+    if split < 30 or len(train) - split < 10:
+        return feature_cols[:TOP_N_FEATURES]
+
+    medians = train.iloc[:split][feature_cols].median().fillna(0)
+    X_inner_train = train.iloc[:split][feature_cols].fillna(medians)
+    X_inner_val = train.iloc[split:][feature_cols].fillna(medians)
+    model = LGBMRegressor(**{**LGBM_PARAMS, "n_estimators": 300})
+    model.fit(
+        X_inner_train,
+        y_train.iloc[:split],
+        eval_set=[(X_inner_val, y_train.iloc[split:])],
+        callbacks=[early_stopping(50, verbose=False), log_evaluation(-1)],
+    )
+    importance = permutation_importance(
+        model, X_inner_val, y_train.iloc[split:], n_repeats=3,
+        random_state=42, scoring="neg_root_mean_squared_error", n_jobs=-1,
+    ).importances_mean
+    selected_idx = np.argsort(importance)[::-1]
+    n_selected = max(min(TOP_N_FEATURES, int((importance > 0).sum())), 20)
+    selected = [feature_cols[i] for i in selected_idx[:n_selected]]
+    selected += [f for f in HDD_FEATURES_REQUIRED if f in feature_cols and f not in selected]
+    return selected
+
+
 # ??? 4. OPTUNA TUNING & ENSEMBLE TRAINING ?????????????????????????????????????
 def tune_lgbm_optuna(X_train, y_train, X_val, y_val, n_trials=25):
     import optuna
@@ -317,10 +354,7 @@ def train_single(X_train, y_train, X_val, y_val, lgbm_params):
 def train_all(df, feature_cols, target_cols, tune=False):
     section(f"3. Entrenamiento LightGBM v8 - {HORIZON} × TimeSeriesSplit ({N_SPLITS} Folds)")
 
-    tscv   = TimeSeriesSplit(n_splits=N_SPLITS)
-    # Definir los folds usando la mediana global solo para definir los índices de split (sin impacto en modelado)
-    global_medians = df[feature_cols].median().fillna(0)
-    folds  = list(tscv.split(df[feature_cols].fillna(global_medians)))
+    tscv = TimeSeriesSplit(n_splits=N_SPLITS, gap=CV_GAP)
 
     all_metrics, all_importances, all_selected = {}, {}, {}
 
@@ -331,60 +365,82 @@ def train_all(df, feature_cols, target_cols, tune=False):
         valid_mask = df[target_col].notna()
         df_target = df.loc[valid_mask].copy()
         y_full     = df_target[target_col]
+        test_size = max(60, int(len(df_target) * FINAL_TEST_FRACTION))
+        df_cv = df_target.iloc[:-test_size].copy()
+        df_test = df_target.iloc[-test_size:].copy()
+        y_cv = y_full.iloc[:-test_size]
+        y_test = y_full.iloc[-test_size:]
+        persistence_col = target_col.replace("target_", "").replace("_d1", "")
 
-        # Recalcular folds sobre las filas con target válido
-        folds_t = list(tscv.split(df_target[feature_cols]))
-        fold_metrics = {"rmse": [], "mae": [], "r2": [], "mape": []}
-
-        # 1. Feature selection agregada sobre TODOS los folds (Fix auditoría #5)
-        selected = select_features_aggregated(
-            df_target, y_full, feature_cols, folds_t, target_col
-        )
-        all_selected[target_col] = selected
+        # El tramo final queda intacto hasta el informe de evaluación.
+        folds_t = list(tscv.split(df_cv[feature_cols]))
+        fold_metrics = {"rmse": [], "mae": [], "r2": [], "mape": [], "persistence_rmse": []}
 
         # Configuración por defecto
         lgbm_params = LGBM_PARAMS.copy()
 
-        # Tuning con Optuna en el último fold
+        # Tuning dentro del tramo de entrenamiento del último fold.
         last_tr, last_va = folds_t[-1]
         if tune:
             log(f"    Tuning LightGBM con Optuna para {target_col} (30 trials)...")
             try:
-                tune_medians = df_target.iloc[last_tr][selected].median().fillna(0)
-                X_tune_tr = df_target.iloc[last_tr][selected].fillna(tune_medians)
-                X_tune_va = df_target.iloc[last_va][selected].fillna(tune_medians)
-                best_lgbm_params = tune_lgbm_optuna(X_tune_tr, y_full.iloc[last_tr],
-                                                     X_tune_va, y_full.iloc[last_va], n_trials=30)
+                inner_split = int(len(last_tr) * 0.8)
+                tune_features = select_features_train_only(df_cv, y_cv, feature_cols, last_tr)
+                tune_medians = df_cv.iloc[last_tr[:inner_split]][tune_features].median().fillna(0)
+                X_tune_tr = df_cv.iloc[last_tr[:inner_split]][tune_features].fillna(tune_medians)
+                X_tune_va = df_cv.iloc[last_tr[inner_split:]][tune_features].fillna(tune_medians)
+                best_lgbm_params = tune_lgbm_optuna(
+                    X_tune_tr, y_cv.iloc[last_tr[:inner_split]], X_tune_va,
+                    y_cv.iloc[last_tr[inner_split:]], n_trials=30,
+                )
                 lgbm_params.update(best_lgbm_params)
             except Exception as e:
                 log(f"    [WARN] Falló tuning de LightGBM: {e}. Usando default.")
 
-        # 2. Loop de Validación Cruzada sin Leakage
+        # 1. Validación externa. Cada selección se calcula exclusivamente con train.
         for tr_idx, va_idx in folds_t:
+            selected = select_features_train_only(df_cv, y_cv, feature_cols, tr_idx)
             # Calcular medianas de train del fold actual
-            fold_medians = df_target.iloc[tr_idx][selected].median().fillna(0)
+            fold_medians = df_cv.iloc[tr_idx][selected].median().fillna(0)
             
-            X_tr_fold = df_target.iloc[tr_idx][selected].fillna(fold_medians)
-            X_va_fold = df_target.iloc[va_idx][selected].fillna(fold_medians)
+            X_tr_fold = df_cv.iloc[tr_idx][selected].fillna(fold_medians)
+            X_va_fold = df_cv.iloc[va_idx][selected].fillna(fold_medians)
             
-            model = train_single(X_tr_fold, y_full.iloc[tr_idx],
-                                 X_va_fold, y_full.iloc[va_idx],
+            model = train_single(X_tr_fold, y_cv.iloc[tr_idx],
+                                 X_va_fold, y_cv.iloc[va_idx],
                                  lgbm_params)
             pred = model.predict(X_va_fold)
             
-            fold_metrics["rmse"].append(rmse(y_full.iloc[va_idx].values, pred))
-            fold_metrics["mae"].append(mae(y_full.iloc[va_idx].values, pred))
-            fold_metrics["r2"].append(r2(y_full.iloc[va_idx].values, pred))
-            fold_metrics["mape"].append(mape(y_full.iloc[va_idx].values, pred))
+            fold_metrics["rmse"].append(rmse(y_cv.iloc[va_idx].values, pred))
+            fold_metrics["mae"].append(mae(y_cv.iloc[va_idx].values, pred))
+            fold_metrics["r2"].append(r2(y_cv.iloc[va_idx].values, pred))
+            fold_metrics["mape"].append(mape(y_cv.iloc[va_idx].values, pred))
+            if persistence_col in df_cv.columns:
+                persistence = df_cv.iloc[va_idx][persistence_col].values
+                fold_metrics["persistence_rmse"].append(rmse(y_cv.iloc[va_idx].values, persistence))
 
-        # 3. Entrenamiento del Modelo Final
-        # Para el modelo productivo, imputamos con la mediana del histórico completo y la guardamos
+        # 2. Evaluación final sobre un bloque cronológico nunca visto.
+        eval_selected = select_features_train_only(df_cv, y_cv, feature_cols, np.arange(len(df_cv)))
+        eval_medians = df_cv[eval_selected].median().fillna(0)
+        from lightgbm import LGBMRegressor
+        eval_model = LGBMRegressor(**lgbm_params)
+        eval_model.fit(df_cv[eval_selected].fillna(eval_medians), y_cv)
+        test_pred = eval_model.predict(df_test[eval_selected].fillna(eval_medians))
+        test_rmse = rmse(y_test.values, test_pred)
+        test_persistence_rmse = (
+            rmse(y_test.values, df_test[persistence_col].values)
+            if persistence_col in df_test.columns else np.nan
+        )
+
+        # 3. Modelo productivo: selección interna y ajuste con todo el histórico.
+        selected = select_features_train_only(
+            df_target, y_full, feature_cols, np.arange(len(df_target))
+        )
+        all_selected[target_col] = selected
         final_medians = df_target[selected].median().fillna(0)
         X_sel_final = df_target[selected].fillna(final_medians)
-        
-        final_model = train_single(X_sel_final, y_full,
-                                   X_sel_final.iloc[-len(folds_t[-1][1]):], y_full.iloc[-len(folds_t[-1][1]):],
-                                   lgbm_params)
+        final_model = LGBMRegressor(**lgbm_params)
+        final_model.fit(X_sel_final, y_full)
         log(f"    [OK] Modelo final re-entrenado con {len(X_sel_final)} muestras (100% datos)")
 
         all_metrics[target_col] = {
@@ -392,6 +448,15 @@ def train_all(df, feature_cols, target_cols, tune=False):
             "cv_mae":     round(np.mean(fold_metrics["mae"]), 4),
             "cv_r2":      round(np.mean(fold_metrics["r2"]), 4),
             "cv_mape":    round(np.nanmean(fold_metrics["mape"]), 2),
+            "cv_persistence_rmse": round(np.nanmean(fold_metrics["persistence_rmse"]), 4),
+            "test_rmse": round(test_rmse, 4),
+            "test_persistence_rmse": round(test_persistence_rmse, 4),
+            "n_test": len(df_test),
+            "test_start": pd.to_datetime(df_test["date"].iloc[0], utc=True).date().isoformat(),
+            "test_end": pd.to_datetime(df_test["date"].iloc[-1], utc=True).date().isoformat(),
+            "production_method": (
+                "lightgbm" if test_rmse < test_persistence_rmse else "persistence"
+            ),
             "n_features": len(selected),
         }
         
@@ -876,11 +941,20 @@ def analyze_zbe_effect(df):
 
 def save_outputs(all_metrics, did_results=None):
     section("9. Guardando m?tricas y reporte")
-    with open(MODELS_DIR / "metrics_v8.json", "w") as f:
-        json.dump(all_metrics, f, indent=2)
+    metrics_path = MODELS_DIR / "metrics_v8.json"
+    metrics_to_save = all_metrics
+    if all_metrics:
+        with open(metrics_path, "w") as f:
+            json.dump(all_metrics, f, indent=2)
+    elif metrics_path.exists():
+        metrics_to_save = json.loads(metrics_path.read_text(encoding="utf-8"))
+        log("  [OK] Métricas CV existentes conservadas (--skip-cv)")
+    else:
+        log("  [WARN] No hay métricas CV para guardar")
+
     summary = {}
     for cont in TARGETS:
-        cm = {k: v for k, v in all_metrics.items() if f"_{cont}_" in k}
+        cm = {k: v for k, v in metrics_to_save.items() if f"_{cont}_" in k}
         if cm:
             summary[cont] = {
                 "avg_cv_rmse": round(np.mean([v["cv_rmse"] for v in cm.values()]), 4),

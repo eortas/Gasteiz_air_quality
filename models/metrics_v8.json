@@ -1,1 +1,86 @@
-{}
+{
+  "target_NO2_zbe_d1": {
+    "cv_rmse": 2.4202,
+    "cv_mae": 1.956,
+    "cv_r2": -0.3645,
+    "cv_mape": 18.48,
+    "cv_persistence_rmse": 2.0003,
+    "test_rmse": 2.1981,
+    "test_persistence_rmse": 1.6061,
+    "n_test": 107,
+    "test_start": "2026-04-13",
+    "test_end": "2026-07-28",
+    "production_method": "persistence",
+    "n_features": 86
+  },
+  "target_NO2_out_d1": {
+    "cv_rmse": 3.1197,
+    "cv_mae": 2.5182,
+    "cv_r2": -0.0331,
+    "cv_mape": 25.44,
+    "cv_persistence_rmse": 2.781,
+    "test_rmse": 4.8424,
+    "test_persistence_rmse": 2.9682,
+    "n_test": 107,
+    "test_start": "2026-04-13",
+    "test_end": "2026-07-28",
+    "production_method": "persistence",
+    "n_features": 27
+  },
+  "target_PM10_zbe_d1": {
+    "cv_rmse": 5.7805,
+    "cv_mae": 4.3512,
+    "cv_r2": 0.204,
+    "cv_mape": 31.66,
+    "cv_persistence_rmse": 5.147,
+    "test_rmse": 6.4733,
+    "test_persistence_rmse": 4.9848,
+    "n_test": 107,
+    "test_start": "2026-04-13",
+    "test_end": "2026-07-28",
+    "production_method": "persistence",
+    "n_features": 88
+  },
+  "target_PM10_out_d1": {
+    "cv_rmse": 5.3721,
+    "cv_mae": 4.0336,
+    "cv_r2": 0.1421,
+    "cv_mape": 30.64,
+    "cv_persistence_rmse": 4.6979,
+    "test_rmse": 5.6693,
+    "test_persistence_rmse": 3.5298,
+    "n_test": 107,
+    "test_start": "2026-04-13",
+    "test_end": "2026-07-28",
+    "production_method": "persistence",
+    "n_features": 79
+  },
+  "target_PM2.5_zbe_d1": {
+    "cv_rmse": 3.8937,
+    "cv_mae": 2.8857,
+    "cv_r2": 0.251,
+    "cv_mape": 28.59,
+    "cv_persistence_rmse": 3.3846,
+    "test_rmse": 3.7889,
+    "test_persistence_rmse": 3.0769,
+    "n_test": 107,
+    "test_start": "2026-04-13",
+    "test_end": "2026-07-28",
+    "production_method": "persistence",
+    "n_features": 86
+  },
+  "target_PM2.5_out_d1": {
+    "cv_rmse": 3.9857,
+    "cv_mae": 2.9544,
+    "cv_r2": 0.2094,
+    "cv_mape": 27.75,
+    "cv_persistence_rmse": 3.5244,
+    "test_rmse": 4.4433,
+    "test_persistence_rmse": 2.8127,
+    "n_test": 107,
+    "test_start": "2026-04-13",
+    "test_end": "2026-07-28",
+    "production_method": "persistence",
+    "n_features": 81
+  }
+}

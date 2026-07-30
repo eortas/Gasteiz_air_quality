@@ -1,0 +1,109 @@
+{
+  "prediction_date": "2026-07-29",
+  "generated_at": "2026-07-30T11:58:20.438943+00:00",
+  "model_version": "v8",
+  "run_type": "backtest",
+  "source_date": "2026-07-28",
+  "targets": {
+    "NO2_zbe_d1": {
+      "prediction": 6.36,
+      "lower": 3.72,
+      "upper": 9.01,
+      "rmse_cv": 1.6061,
+      "method": "persistence",
+      "foresight": {
+        "method": "persistence",
+        "narrative": "La persistencia superó al modelo en el bloque final reservado."
+      }
+    },
+    "NO2_out_d1": {
+      "prediction": 11.35,
+      "lower": 6.47,
+      "upper": 16.24,
+      "rmse_cv": 2.9682,
+      "method": "persistence",
+      "foresight": {
+        "method": "persistence",
+        "narrative": "La persistencia superó al modelo en el bloque final reservado."
+      }
+    },
+    "PM10_zbe_d1": {
+      "prediction": 11.22,
+      "lower": 3.02,
+      "upper": 19.42,
+      "rmse_cv": 4.9848,
+      "method": "persistence",
+      "foresight": {
+        "method": "persistence",
+        "narrative": "La persistencia superó al modelo en el bloque final reservado."
+      }
+    },
+    "PM10_out_d1": {
+      "prediction": 8.67,
+      "lower": 2.86,
+      "upper": 14.48,
+      "rmse_cv": 3.5298,
+      "method": "persistence",
+      "foresight": {
+        "method": "persistence",
+        "narrative": "La persistencia superó al modelo en el bloque final reservado."
+      }
+    },
+    "PM2.5_zbe_d1": {
+      "prediction": 5.96,
+      "lower": 0.9,
+      "upper": 11.02,
+      "rmse_cv": 3.0769,
+      "method": "persistence",
+      "foresight": {
+        "method": "persistence",
+        "narrative": "La persistencia superó al modelo en el bloque final reservado."
+      }
+    },
+    "PM2.5_out_d1": {
+      "prediction": 5.28,
+      "lower": 0.66,
+      "upper": 9.91,
+      "rmse_cv": 2.8127,
+      "method": "persistence",
+      "foresight": {
+        "method": "persistence",
+        "narrative": "La persistencia superó al modelo en el bloque final reservado."
+      }
+    },
+    "ICA_zbe_d1": {
+      "prediction_v1": 11.22,
+      "prediction": 11.22,
+      "lower": 7.12,
+      "upper": 15.32,
+      "rmse_cv": 2.492,
+      "correction": 0.0,
+      "foresight": {
+        "base_value": 11.22,
+        "positive_top": [],
+        "negative_top": [],
+        "narrative": {
+          "es": "ICA calculado con subíndices CAQI: NO2=3, PM10=11, PM2.5=10. Concentraciones: NO2=6.4, PM10=11.2, PM2.5=6.0 µg/m³.",
+          "eu": "ICA CAQI azpi-indizeekin: NO2=3, PM10=11, PM2.5=10."
+        }
+      }
+    },
+    "ICA_out_d1": {
+      "prediction_v1": 8.8,
+      "prediction": 8.8,
+      "lower": 5.9,
+      "upper": 11.7,
+      "rmse_cv": 1.765,
+      "correction": 0.0,
+      "foresight": {
+        "base_value": 8.8,
+        "positive_top": [],
+        "negative_top": [],
+        "narrative": {
+          "es": "ICA calculado con subíndices CAQI: NO2=6, PM10=9, PM2.5=9. Concentraciones: NO2=11.3, PM10=8.7, PM2.5=5.3 µg/m³.",
+          "eu": "ICA CAQI azpi-indizeekin: NO2=6, PM10=9, PM2.5=9."
+        }
+      }
+    }
+  }
+}

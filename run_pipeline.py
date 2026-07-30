@@ -138,6 +138,7 @@ def main():
     decompress_local_csvs([
         ROOT_DIR / "data" / "raw" / "traffic",
         ROOT_DIR / "data" / "raw" / "air",
+        ROOT_DIR / "data" / "raw" / "air" / "source",
         ROOT_DIR / "data" / "raw" / "weather",
     ])
 
@@ -152,10 +153,11 @@ def main():
     if not ok:
         logger.warning("[WARN]  Una o más fuentes de ingesta fallaron - el pipeline continúa con lo disponible.")
 
-    # ── 2. LIMPIEZA ───────────────────────────────────────────────────────────
-    logger.info("\n── FASE 2: Limpieza de datos")
-    if not run_script("Limpieza datos aire (clean_raw_data)", "src/transformation/clean_raw_data.py"):
-        logger.warning("[WARN]  La limpieza de datos falló - continuando con datos sin limpiar.")
+    # ── 2. PREPARACIÓN NO DESTRUCTIVA DEL AIRE ────────────────────────────────
+    logger.info("\n── FASE 2: Preparación de datos aire")
+    if not run_script("Preparar aire Kunak sin sobrescribir raw", "src/transformation/prepare_air_clean.py"):
+        logger.error("[ERROR] No se pudo preparar el aire. Abortando para no predecir con datos incompletos.")
+        sys.exit(1)
 
     # ── 3. TRANSFORMACIÓN ─────────────────────────────────────────────────────
     logger.info("\n── FASE 3: Transformación")
@@ -169,6 +171,7 @@ def main():
     compress_csvs([
         ROOT_DIR / "data" / "raw" / "traffic",
         ROOT_DIR / "data" / "raw" / "air",
+        ROOT_DIR / "data" / "raw" / "air" / "source",
         ROOT_DIR / "data" / "raw" / "weather",
     ])
 
@@ -232,7 +235,8 @@ def main():
     # ── 8. PREDICCIÓN (d1) ───────────────────────────────────────────────────
     logger.info("\n── FASE 8: Predicción d1")
     if not run_script("Predecir mañana", "src/ml/predict.py", ["--with-forecast", "--no-meta"]):
-        logger.warning("[WARN]  La predicción falló.")
+        logger.error("[ERROR] La predicción falló o los datos no están frescos. Abortando para no publicar una predicción antigua.")
+        sys.exit(1)
 
     # ── 8b. META-MODELO (OMITIDO HASTA ESTABILIZACIÓN) ───────────────────────
     logger.info("\n── FASE 8b: Meta-Modelo - OMITIDO (modelo simple base)")

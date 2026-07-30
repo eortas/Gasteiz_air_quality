@@ -3,7 +3,7 @@ download_air_quality.py
 =======================
 Descarga el historico completo de calidad del aire de Vitoria-Gasteiz
 desde la API Kunak del Ayuntamiento (kunakcloud.com/websites/aytoVitoria.html)
-y lo guarda en CSVs locales → data/raw/air/kunak_YYYY.csv (cache local).
+y lo guarda sin transformar en → data/raw/air/source/kunak_YYYY.csv.
 
 En cada ejecucion:
   - Descarga los meses nuevos desde el checkpoint
@@ -33,7 +33,7 @@ from playwright.async_api import async_playwright
 
 # ─── RUTAS ────────────────────────────────────────────────────────────────────
 ROOT_DIR   = Path(__file__).parent.parent.parent
-DATA_DIR   = ROOT_DIR / "data" / "raw" / "air"
+DATA_DIR   = ROOT_DIR / "data" / "raw" / "air" / "source"
 CHECKPOINT = DATA_DIR / "checkpoint_air.json"
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -247,12 +247,12 @@ def update_local_checkpoint(mes_dt: datetime):
 
 
 # ─── FUNCION PRINCIPAL ────────────────────────────────────────────────────────
-async def main(manual_token: str = None):
+async def main(manual_token: str = None, refresh_history: bool = False):
     print("=============================================")
     print("INGESTA LOCAL DE CALIDAD DEL AIRE")
     print("=============================================")
     
-    last_run = get_local_checkpoint()
+    last_run = START_DATE if refresh_history else get_local_checkpoint()
     rangos   = generar_rangos(last_run, END_DATE)
 
     if not rangos:
@@ -281,6 +281,7 @@ async def main(manual_token: str = None):
         for mes_dt, from_date, to_date in rangos:
             es_mes_completo = mes_dt.month != END_DATE.month or mes_dt.year != END_DATE.year
             df_mes = []
+            month_errors = 0
 
             for device_id, nombre in ESTACIONES.items():
                 meses_ya_hechos += 1
@@ -316,11 +317,13 @@ async def main(manual_token: str = None):
                     if not token:
                         print("\n  ERROR: no se pudo renovar sesión")
                         errors += 1
+                        month_errors += 1
                         continue
                     data = await fetch_mes_async(browser_ctx, token, device_id, from_date, to_date)
 
                 if not data:
                     errors += 1
+                    month_errors += 1
                     continue
 
                 filas = json_to_records(data, device_id, nombre)
@@ -345,7 +348,7 @@ async def main(manual_token: str = None):
                 df_final.sort_values(["timestamp", "estacion_id", "contaminante"], inplace=True)
                 df_final.to_csv(csv_path, index=False)
                 
-            if es_mes_completo and errors == 0:
+            if es_mes_completo and month_errors == 0:
                 siguiente_mes = mes_dt.replace(day=28) + timedelta(days=4)
                 update_local_checkpoint(siguiente_mes.replace(day=1))
 
@@ -371,6 +374,8 @@ async def main(manual_token: str = None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Descarga datos de calidad del aire (Kunak)")
     parser.add_argument("--token", type=str, help="Token manual de Kunak")
+    parser.add_argument("--refresh-history", action="store_true",
+                        help="Vuelve a descargar todo el histórico desde Kunak sin tocar datos procesados")
     args = parser.parse_args()
 
-    asyncio.run(main(manual_token=args.token))
+    asyncio.run(main(manual_token=args.token, refresh_history=args.refresh_history))
