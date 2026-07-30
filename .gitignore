@@ -1,6 +1,9 @@
 # Entorno
 .env
 .venv/
+.agents/
+AGENTS.md
+RTK.md
 __pycache__/
 *.pyc
 *.pyo
