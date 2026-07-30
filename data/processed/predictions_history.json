@@ -1,19 +1,5 @@
 [
   {
-    "prediction_date": "2026-07-08",
-    "generated_at": "2026-07-07T11:31:31.506011+00:00",
-    "predictions": {
-      "NO2_zbe_d1": 6.39,
-      "NO2_out_d1": 5.94,
-      "PM10_zbe_d1": 9.44,
-      "PM10_out_d1": 8.96,
-      "PM2.5_zbe_d1": 5.76,
-      "PM2.5_out_d1": 5.9,
-      "ICA_zbe_d1": 15.82,
-      "ICA_out_d1": 16.02
-    }
-  },
-  {
     "prediction_date": "2026-06-15",
     "generated_at": "2026-07-08T10:38:54.198694+00:00",
     "predictions": {
@@ -294,6 +280,20 @@
     }
   },
   {
+    "prediction_date": "2026-07-08",
+    "generated_at": "2026-07-07T11:31:31.506011+00:00",
+    "predictions": {
+      "NO2_zbe_d1": 6.39,
+      "NO2_out_d1": 5.94,
+      "PM10_zbe_d1": 9.44,
+      "PM10_out_d1": 8.96,
+      "PM2.5_zbe_d1": 5.76,
+      "PM2.5_out_d1": 5.9,
+      "ICA_zbe_d1": 15.82,
+      "ICA_out_d1": 16.02
+    }
+  },
+  {
     "prediction_date": "2026-07-09",
     "generated_at": "2026-07-08T11:49:05.213012+00:00",
     "predictions": {
@@ -389,20 +389,6 @@
       "PM2.5_out_d1": 14.5,
       "ICA_zbe_d1": 25.4,
       "ICA_out_d1": 24.17
-    }
-  },
-  {
-    "prediction_date": "2026-07-23",
-    "generated_at": "2026-07-22T01:05:27.604482+00:00",
-    "predictions": {
-      "NO2_zbe_d1": 9.75,
-      "NO2_out_d1": 11.16,
-      "PM10_zbe_d1": 21.99,
-      "PM10_out_d1": 15.91,
-      "PM2.5_zbe_d1": 10.29,
-      "PM2.5_out_d1": 9.54,
-      "ICA_zbe_d1": 21.99,
-      "ICA_out_d1": 15.91
     }
   },
   {
@@ -504,101 +490,143 @@
     }
   },
   {
-    "prediction_date": "2026-07-24",
-    "generated_at": "2026-07-23T12:17:58.344557+00:00",
+    "prediction_date": "2026-07-23",
+    "generated_at": "2026-07-22T01:05:27.604482+00:00",
     "predictions": {
-      "NO2_zbe_d1": 10.8,
-      "NO2_out_d1": 14.53,
-      "PM10_zbe_d1": 17.74,
-      "PM10_out_d1": 13.45,
-      "PM2.5_zbe_d1": 9.08,
-      "PM2.5_out_d1": 7.85,
-      "ICA_zbe_d1": 17.74,
-      "ICA_out_d1": 13.45
+      "NO2_zbe_d1": 9.75,
+      "NO2_out_d1": 11.16,
+      "PM10_zbe_d1": 21.99,
+      "PM10_out_d1": 15.91,
+      "PM2.5_zbe_d1": 10.29,
+      "PM2.5_out_d1": 9.54,
+      "ICA_zbe_d1": 21.99,
+      "ICA_out_d1": 15.91
+    }
+  },
+  {
+    "prediction_date": "2026-07-24",
+    "generated_at": "2026-07-30T23:36:21.240253+00:00",
+    "available_at": "2026-07-23T22:00:00+02:00",
+    "source_date": "2026-07-23",
+    "run_type": "backfill_no_leakage",
+    "model_version": "v8_expanding_replay",
+    "predictions": {
+      "NO2_zbe_d1": 9.32,
+      "NO2_out_d1": 15.2,
+      "PM10_zbe_d1": 18.71,
+      "PM10_out_d1": 11.72,
+      "PM2.5_zbe_d1": 7.91,
+      "PM2.5_out_d1": 7.89,
+      "ICA_zbe_d1": 18.71,
+      "ICA_out_d1": 13.15
     }
   },
   {
     "prediction_date": "2026-07-25",
-    "generated_at": "2026-07-24T01:02:49.908918+00:00",
+    "generated_at": "2026-07-30T23:36:47.784495+00:00",
+    "available_at": "2026-07-24T22:00:00+02:00",
+    "source_date": "2026-07-24",
+    "run_type": "backfill_no_leakage",
+    "model_version": "v8_expanding_replay",
     "predictions": {
-      "NO2_zbe_d1": 7.62,
-      "NO2_out_d1": 7.63,
-      "PM10_zbe_d1": 14.66,
-      "PM10_out_d1": 14.58,
-      "PM2.5_zbe_d1": 9.88,
-      "PM2.5_out_d1": 9.03,
-      "ICA_zbe_d1": 16.47,
-      "ICA_out_d1": 15.05
+      "NO2_zbe_d1": 9.59,
+      "NO2_out_d1": 13.7,
+      "PM10_zbe_d1": 20.46,
+      "PM10_out_d1": 15.43,
+      "PM2.5_zbe_d1": 12.79,
+      "PM2.5_out_d1": 10.74,
+      "ICA_zbe_d1": 21.32,
+      "ICA_out_d1": 17.9
     }
   },
   {
     "prediction_date": "2026-07-26",
-    "generated_at": "2026-07-25T01:09:23.669038+00:00",
+    "generated_at": "2026-07-30T23:37:13.041036+00:00",
+    "available_at": "2026-07-25T22:00:00+02:00",
+    "source_date": "2026-07-25",
+    "run_type": "backfill_no_leakage",
+    "model_version": "v8_expanding_replay",
     "predictions": {
-      "NO2_zbe_d1": 7.18,
-      "NO2_out_d1": 7.6,
-      "PM10_zbe_d1": 13.23,
-      "PM10_out_d1": 13.3,
-      "PM2.5_zbe_d1": 9.92,
-      "PM2.5_out_d1": 9.27,
-      "ICA_zbe_d1": 16.53,
-      "ICA_out_d1": 15.45
+      "NO2_zbe_d1": 7.51,
+      "NO2_out_d1": 7.79,
+      "PM10_zbe_d1": 19.48,
+      "PM10_out_d1": 17.48,
+      "PM2.5_zbe_d1": 12.71,
+      "PM2.5_out_d1": 12.75,
+      "ICA_zbe_d1": 21.18,
+      "ICA_out_d1": 21.25
     }
   },
   {
     "prediction_date": "2026-07-27",
-    "generated_at": "2026-07-26T01:13:31.453636+00:00",
+    "generated_at": "2026-07-30T23:37:39.662596+00:00",
+    "available_at": "2026-07-26T22:00:00+02:00",
+    "source_date": "2026-07-26",
+    "run_type": "backfill_no_leakage",
+    "model_version": "v8_expanding_replay",
     "predictions": {
-      "NO2_zbe_d1": 9.25,
-      "NO2_out_d1": 8.12,
-      "PM10_zbe_d1": 14.57,
-      "PM10_out_d1": 14.33,
-      "PM2.5_zbe_d1": 10.95,
-      "PM2.5_out_d1": 9.9,
-      "ICA_zbe_d1": 18.25,
-      "ICA_out_d1": 16.5
+      "NO2_zbe_d1": 6.92,
+      "NO2_out_d1": 7.28,
+      "PM10_zbe_d1": 14.52,
+      "PM10_out_d1": 11.62,
+      "PM2.5_zbe_d1": 9.19,
+      "PM2.5_out_d1": 7.61,
+      "ICA_zbe_d1": 15.32,
+      "ICA_out_d1": 12.68
     }
   },
   {
     "prediction_date": "2026-07-28",
-    "generated_at": "2026-07-27T01:15:29.259688+00:00",
+    "generated_at": "2026-07-30T23:38:07.109043+00:00",
+    "available_at": "2026-07-27T22:00:00+02:00",
+    "source_date": "2026-07-27",
+    "run_type": "backfill_no_leakage",
+    "model_version": "v8_expanding_replay",
     "predictions": {
-      "NO2_zbe_d1": 7.58,
-      "NO2_out_d1": 8.01,
-      "PM10_zbe_d1": 15.3,
-      "PM10_out_d1": 13.94,
-      "PM2.5_zbe_d1": 10.49,
-      "PM2.5_out_d1": 9.9,
-      "ICA_zbe_d1": 17.48,
-      "ICA_out_d1": 16.5
+      "NO2_zbe_d1": 6.71,
+      "NO2_out_d1": 6.49,
+      "PM10_zbe_d1": 11.25,
+      "PM10_out_d1": 8.85,
+      "PM2.5_zbe_d1": 5.83,
+      "PM2.5_out_d1": 5.82,
+      "ICA_zbe_d1": 11.25,
+      "ICA_out_d1": 9.7
     }
   },
   {
     "prediction_date": "2026-07-29",
-    "generated_at": "2026-07-28T01:03:04.003602+00:00",
+    "generated_at": "2026-07-30T23:38:46.286146+00:00",
+    "available_at": "2026-07-28T22:00:00+02:00",
+    "source_date": "2026-07-28",
+    "run_type": "backfill_no_leakage",
+    "model_version": "v8_expanding_replay",
     "predictions": {
-      "NO2_zbe_d1": 7.04,
-      "NO2_out_d1": 6.52,
-      "PM10_zbe_d1": 14.82,
-      "PM10_out_d1": 13.65,
-      "PM2.5_zbe_d1": 9.03,
-      "PM2.5_out_d1": 9.33,
-      "ICA_zbe_d1": 15.05,
-      "ICA_out_d1": 15.55
+      "NO2_zbe_d1": 6.73,
+      "NO2_out_d1": 11.56,
+      "PM10_zbe_d1": 12.54,
+      "PM10_out_d1": 9.48,
+      "PM2.5_zbe_d1": 7.39,
+      "PM2.5_out_d1": 5.94,
+      "ICA_zbe_d1": 12.54,
+      "ICA_out_d1": 9.9
     }
   },
   {
     "prediction_date": "2026-07-30",
-    "generated_at": "2026-07-29T11:09:20.490749+00:00",
+    "generated_at": "2026-07-30T23:39:28.835795+00:00",
+    "available_at": "2026-07-29T22:00:00+02:00",
+    "source_date": "2026-07-29",
+    "run_type": "backfill_no_leakage",
+    "model_version": "v8_expanding_replay",
     "predictions": {
-      "NO2_zbe_d1": 9.26,
-      "NO2_out_d1": 8.42,
-      "PM10_zbe_d1": 18.13,
-      "PM10_out_d1": 15.51,
-      "PM2.5_zbe_d1": 10.4,
-      "PM2.5_out_d1": 11.2,
-      "ICA_zbe_d1": 18.13,
-      "ICA_out_d1": 18.67
+      "NO2_zbe_d1": 7.83,
+      "NO2_out_d1": 15.82,
+      "PM10_zbe_d1": 19.67,
+      "PM10_out_d1": 14.19,
+      "PM2.5_zbe_d1": 12.0,
+      "PM2.5_out_d1": 9.91,
+      "ICA_zbe_d1": 20.0,
+      "ICA_out_d1": 16.52
     }
   },
   {

@@ -356,13 +356,14 @@ try:
                 history_list = json.loads(history_path.read_text(encoding="utf-8"))
                 valid_entries = {}
                 for entry in history_list:
-                    if entry.get("run_type") != "production":
+                    if entry.get("run_type") not in {"production", "backfill_no_leakage"}:
                         continue
                     prediction_date = entry.get("prediction_date")
                     source_date = entry.get("source_date")
                     generated_at = entry.get("generated_at")
                     try:
-                        emitted_on_time = pd.Timestamp(generated_at) < pd.Timestamp(prediction_date, tz="UTC")
+                        available_at = entry.get("available_at", generated_at)
+                        emitted_on_time = pd.Timestamp(available_at) < pd.Timestamp(prediction_date, tz="UTC")
                         expected_source = (
                             pd.Timestamp(prediction_date) - pd.Timedelta(days=1)
                         ).date().isoformat()
