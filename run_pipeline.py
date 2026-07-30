@@ -232,9 +232,9 @@ def main():
         logger.warning("[WARN]  station_daily.csv no encontrado - omitiendo análisis v9.")
         logger.warning("    Ejecuta build_station_daily.py o coloca el CSV en data/processed/")
 
-    # ── 8. PREDICCIÓN (d1) ───────────────────────────────────────────────────
-    logger.info("\n── FASE 8: Predicción d1")
-    if not run_script("Predecir mañana", "src/ml/predict.py", ["--with-forecast", "--no-meta"]):
+    # d1 se calcula desde el último día completo y se publica para el día local en curso.
+    logger.info("\n── FASE 8: Predicción del día en curso")
+    if not run_script("Predecir hoy", "src/ml/predict.py", ["--with-forecast", "--no-meta"]):
         logger.error("[ERROR] La predicción falló o los datos no están frescos. Abortando para no publicar una predicción antigua.")
         sys.exit(1)
 

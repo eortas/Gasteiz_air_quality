@@ -605,7 +605,7 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
     zone_name = target.split('_')[1].upper()
     
     es_text = (
-        f"Para mañana se estima una concentración de {cont_name} de {round(pred_val, 1)} µg/m³ en la zona {zone_name}, "
+        f"Para hoy se estima una concentración de {cont_name} de {round(pred_val, 1)} µg/m³ en la zona {zone_name}, "
         f"frente a la media habitual de {round(base_val, 1)} µg/m³. "
         f"Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, "
         f"donde factores como {pos_str} actúan incrementando los niveles atmosféricos.\n\n"

@@ -173,9 +173,6 @@ def load_dataset():
 
     raw_contaminants = ["NO2", "PM10", "PM2.5", "ICA",
                          "humedad", "presion", "temperatura", "viento_dir", "viento_vel"]
-    raw_target_cols = [f"{cont}_{zone}" for cont in TARGETS
-                       for zone in ["zbe", "out"]]
-    raw_target_cols += [f"ICA_{zone}" for zone in ["zbe", "out"]]
     datetime_cols = [c for c in df.columns
                      if pd.api.types.is_datetime64_any_dtype(df[c])]
     feature_cols = [c for c in df.columns
@@ -183,7 +180,6 @@ def load_dataset():
                     and not c.startswith("fc_")
                     and c != "date"
                     and c not in raw_contaminants
-                    and c not in raw_target_cols
                     and c not in datetime_cols]
 
     null_pct = df[feature_cols].isna().mean()
