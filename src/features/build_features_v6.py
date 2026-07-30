@@ -58,6 +58,7 @@ PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 AIR_CLEAN_PATH = PROCESSED_DIR / "air_clean_hourly.parquet"
 FORECAST_HISTORY_PATH = PROCESSED_DIR / "weather_forecast_history.jsonl"
 MIN_AIR_HOURS = 18
+CUTOFF_TIMEZONE = "Europe/Madrid"
 
 # -- CONFIG (importado de src/config.py + locales) --
 # ZBE_STATIONS, OUT_STATIONS, CONTAMINANTS, ZBE_DATE, HDD_BASE_TEMP,
@@ -98,8 +99,18 @@ def load_csvs(directory: Path, pattern: str, ts_col: str) -> pd.DataFrame:
     return df.dropna(subset=[ts_col]).sort_values(ts_col).reset_index(drop=True)
 
 
+def apply_local_cutoff(df: pd.DataFrame, ts_col: str, cutoff_hour: int | None) -> pd.DataFrame:
+    """Conserva solo observaciones anteriores a la hora local de corte."""
+    local_time = df[ts_col].dt.tz_convert(CUTOFF_TIMEZONE)
+    df = df.copy()
+    df["date"] = local_time.dt.normalize().dt.tz_localize(None).dt.tz_localize("UTC")
+    if cutoff_hour is not None:
+        df = df[local_time.dt.hour < cutoff_hour].copy()
+    return df
+
+
 # -- 1. AIRE ---------------------------------
-def load_air_daily() -> pd.DataFrame:
+def load_air_daily(cutoff_hour: int | None = None) -> pd.DataFrame:
     section("1. Calidad del aire -> media diaria por grupo ZBE / OUT")
 
     if not AIR_CLEAN_PATH.exists():
@@ -113,10 +124,9 @@ def load_air_daily() -> pd.DataFrame:
     log(f"  Estaciones      : {sorted(df['estacion'].unique())}")
 
     # Kunak entrega instantes UTC; agregamos por día local de Vitoria.
-    df["date"] = (
-        df["timestamp"].dt.tz_convert("Europe/Madrid").dt.normalize()
-        .dt.tz_localize(None).dt.tz_localize("UTC")
-    )
+    df = apply_local_cutoff(df, "timestamp", cutoff_hour)
+    if cutoff_hour is not None:
+        log(f"  Corte operativo: antes de las {cutoff_hour:02d}:00 locales")
     df["valid_hour"] = df.get("valid_hour", df["valor"].notna()).astype(bool)
 
     # Primero media por estación. Así una estación con más lecturas no pesa más.
@@ -182,11 +192,11 @@ def load_air_daily() -> pd.DataFrame:
 
 
 # -- 2. TRÁFICO --------------------------------
-def load_traffic_daily() -> pd.DataFrame:
+def load_traffic_daily(cutoff_hour: int | None = None) -> pd.DataFrame:
     section("2. Tráfico -> agregado diario + proxy futuro")
 
     df = load_csvs(TRAFFIC_DIR, "trafico_[0-9]*.csv", "start_date")
-    df["date"] = df["start_date"].dt.floor("D")
+    df = apply_local_cutoff(df, "start_date", cutoff_hour)
 
     daily = df.groupby("date").agg(
         traffic_volume   =("volume",    "sum"),
@@ -282,11 +292,11 @@ def _circular_mean_deg(x):
     )) % 360)
 
 
-def load_weather_daily() -> pd.DataFrame:
+def load_weather_daily(cutoff_hour: int | None = None) -> pd.DataFrame:
     section("3. Meteorología -> agregado diario + variables de demanda térmica")
 
     df = load_csvs(WEATHER_DIR, "weather_[0-9]*.csv", "timestamp")
-    df["date"] = df["timestamp"].dt.floor("D")
+    df = apply_local_cutoff(df, "timestamp", cutoff_hour)
 
     agg_dict = {}
     for col in FORECAST_VARS:
@@ -307,7 +317,7 @@ def load_weather_daily() -> pd.DataFrame:
 
     # - VARIABLES DE DEMANDA TÉRMICA (hipótesis calderas) ---------
     # Si no vienen precalculadas las columnas daily_*, las calculamos nosotros
-    if "daily_temperature_2m_max" in df.columns:
+    if cutoff_hour is None and "daily_temperature_2m_max" in df.columns:
         # Los CSV ya traen columnas daily_ precalculadas - usarlas directamente
         daily_agg = (df.groupby("date")[
             ["daily_temperature_2m_mean",
@@ -814,6 +824,11 @@ def main():
     save_csv      = "--csv"           in sys.argv
     with_forecast = "--with-forecast" in sys.argv
     days_arg      = next((a for a in sys.argv if "--days" in a), None)
+    cutoff_arg    = next((sys.argv[i + 1] for i, arg in enumerate(sys.argv)
+                          if arg == "--cutoff-hour" and i + 1 < len(sys.argv)), None)
+    cutoff_hour   = int(cutoff_arg) if cutoff_arg else None
+    if cutoff_hour is not None and not 1 <= cutoff_hour <= 23:
+        raise ValueError("--cutoff-hour debe estar entre 1 y 23")
 
     log("=" * 65)
     log("  BUILD FEATURES v6 - Vitoria Air Quality (ZBE + Calderas)")
@@ -824,9 +839,9 @@ def main():
     log(f"  NUEVO v6  : HDD (Heating Degree Days) + variables de calderas")
     log("=" * 65)
 
-    air     = load_air_daily()
-    traffic = load_traffic_daily()
-    weather = load_weather_daily()
+    air     = load_air_daily(cutoff_hour)
+    traffic = load_traffic_daily(cutoff_hour)
+    weather = load_weather_daily(cutoff_hour)
 
     if days_arg:
         n_days = int(''.join(filter(str.isdigit, days_arg.split("days")[-1])) or
@@ -858,6 +873,9 @@ def main():
     log(f"  -> features_latest.parquet: {len(df_latest)} filas (para predecir mañana y backtest)")
 
     df = clean_and_save(df, save_csv=save_csv)
+
+    contract = {"cutoff_hour_local": cutoff_hour, "timezone": CUTOFF_TIMEZONE}
+    (PROCESSED_DIR / "feature_contract.json").write_text(json.dumps(contract, indent=2), encoding="utf-8")
 
     log()
     log("=" * 65)

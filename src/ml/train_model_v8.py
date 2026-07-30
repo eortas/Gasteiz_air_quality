@@ -165,6 +165,9 @@ def load_dataset():
 
     df = pd.read_parquet(DATASET_PATH)
     log(f"  Filas    : {len(df):,}")
+    contract_path = PROCESSED_DIR / "feature_contract.json"
+    contract = json.loads(contract_path.read_text(encoding="utf-8")) if contract_path.exists() else {}
+    cutoff_hour = contract.get("cutoff_hour_local")
 
     all_target_cols = [c for c in df.columns
                        if c.startswith("target_") and c.endswith(f"_{HORIZON}")
@@ -173,6 +176,13 @@ def load_dataset():
 
     raw_contaminants = ["NO2", "PM10", "PM2.5", "ICA",
                          "humedad", "presion", "temperatura", "viento_dir", "viento_vel"]
+    raw_air_cols = [f"{cont}_{zone}" for cont in ["NO2", "PM10", "PM2.5", "ICA"]
+                    for zone in ["zbe", "out"]]
+    if cutoff_hour is not None:
+        # A las 22:00 estas concentraciones parciales ya existen y son válidas.
+        raw_contaminants = [c for c in raw_contaminants if c not in ["NO2", "PM10", "PM2.5", "ICA"]]
+        raw_air_cols = []
+        log(f"  Contrato operativo: corte {cutoff_hour:02d}:00 local; se incluyen observaciones parciales de aire.")
     datetime_cols = [c for c in df.columns
                      if pd.api.types.is_datetime64_any_dtype(df[c])]
     feature_cols = [c for c in df.columns
@@ -180,6 +190,7 @@ def load_dataset():
                     and not c.startswith("fc_")
                     and c != "date"
                     and c not in raw_contaminants
+                    and c not in raw_air_cols
                     and c not in datetime_cols]
 
     null_pct = df[feature_cols].isna().mean()
@@ -451,7 +462,8 @@ def train_all(df, feature_cols, target_cols, tune=False):
             "test_start": pd.to_datetime(df_test["date"].iloc[0], utc=True).date().isoformat(),
             "test_end": pd.to_datetime(df_test["date"].iloc[-1], utc=True).date().isoformat(),
             "production_method": (
-                "lightgbm" if test_rmse < test_persistence_rmse else "persistence"
+                "lightgbm" if not np.isfinite(test_persistence_rmse) or test_rmse < test_persistence_rmse
+                else "persistence"
             ),
             "n_features": len(selected),
         }

@@ -154,12 +154,12 @@ except Exception:
     did_json_str = "{}"
 
 # ==============================================================================
-# 4. PREDICCIONES DEL DÍA EN CURSO
+# 4. PREDICCIONES DE MAÑANA
 # ==============================================================================
-print("Leyendo predicciones del día en curso desde predictions_latest.json...")
+print("Leyendo predicciones de mañana desde predictions_latest.json...")
 pred_json_path = PROCESSED_DIR / "predictions_latest.json"
 manana_data = {'zbe': {}, 'out': {}}
-prediction_date_str = datetime.now().strftime("%d/%m/%Y")
+prediction_date_str = (datetime.now() + timedelta(days=1)).strftime("%d/%m/%Y")
 
 try:
     with open(pred_json_path, encoding="utf-8") as f:
@@ -1017,7 +1017,7 @@ html_template = """<!DOCTYPE html>
     <div class="header-left">
       <div class="label-tag" data-i18n="mapTag">Vitoria-Gasteiz — Red Sensores Municipales</div>
       <h1 data-i18n="mapTitle">Mapa de <span>Estaciones</span></h1>
-      <p class="subtitle" data-i18n="mapSubtitle">Media diaria de ayer por estación y predicción para hoy. Haz click sobre un punto para ver el detalle.</p>
+      <p class="subtitle" data-i18n="mapSubtitle">Media parcial de hoy por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.</p>
     </div>
     <div class="map-legend">
       <div class="card-label" style="margin-bottom:4px" data-i18n="mapLegendTitle">Semáforo ICA</div>
@@ -1056,7 +1056,7 @@ html_template = """<!DOCTYPE html>
     <div class="header-left">
       <div class="label-tag" data-i18n="fsTag">Explicación de la predicción</div>
       <h1 data-i18n="fsTitle">Foresight <span> con IA</span></h1>
-      <p class="subtitle" data-i18n="fsSubtitle">Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para hoy (SHAP Values).</p>
+      <p class="subtitle" data-i18n="fsSubtitle">Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para mañana (SHAP Values).</p>
     </div>
   </div>
   
@@ -1215,7 +1215,7 @@ const translations = {
     mapeThreshold: "Umbral de aceptación: MAPE < 35%, R² > 0.35.",
     mapTag: "Vitoria-Gasteiz — Red Sensores Municipales",
     mapTitle: "Mapa de <span>Estaciones</span>",
-    mapSubtitle: "Medias del día anterior y predicción para hoy. Haga clic en un punto para ver detalles.",
+    mapSubtitle: "Medias parciales de hoy y predicción para mañana. Haga clic en un punto para ver detalles.",
     mapLegendTitle: "Semáforo ICA",
     icaGood: "Buena (≤25)",
     icaMod: "Moderada (25-50)",
@@ -1237,7 +1237,7 @@ const translations = {
     v8Fig3: "<strong>Figura 3</strong> — Gap medio por contaminante y zona",
     v9Fig1: "<strong>Figura 1</strong> — Control Sintético (Serie Suavizada)",
     v9Fig2: "<strong>Figura 2</strong> — Event Study DiD",
-    v10Tomorrow: "hoy",
+    v10Tomorrow: "mañana",
     sumSinZBE: "sin ZBE",
     sumAbsoluto: "absoluto",
     fig1Obs: "Observado",
@@ -1262,8 +1262,8 @@ const translations = {
     backGood: "✓ Precisión Buena",
     backAccept: "✓ Precisión Aceptable",
     backReview: "🔴 Revisar Modelo",
-    mapDailyAyer: "Medias del día anterior",
-    mapPredManana: "▶ Predicción hoy",
+    mapDailyAyer: "Medias parciales de hoy",
+    mapPredManana: "▶ Predicción mañana",
     mapZone: "Zona",
     mapNote: "⚠ Los valores son medias diarias, no lecturas horarias",
     colRMSE: "RMSE (µg/m³)",
@@ -1271,7 +1271,7 @@ const translations = {
     colMAPE: "MAPE %",
     fsTag: "Explicación de la predicción",
     fsTitle: "Foresight <span> con IA</span>",
-    fsSubtitle: "Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para hoy (SHAP Values).",
+    fsSubtitle: "Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para mañana (SHAP Values).",
     fsNarrativeTitle: "Explicación de la predicción",
     fsShapTitle: "Top Factores de Impacto (SHAP)",
     fsLoading: "Cargando narrativa...",
@@ -1329,7 +1329,7 @@ const translations = {
     mapeThreshold: "Onarpen-atalasea: MAPE < %35, R² > 0.35.",
     mapTag: "Vitoria-Gasteiz — Udaltzaingoaren sentsoreen sarea",
     mapTitle: "Estazioen <span>Mapa</span>",
-    mapSubtitle: "Gaurko batez bestekoak (partziala) eta biharko aurreikuspenak. Egin klik puntu batean xehetasunak ikusteko.",
+    mapSubtitle: "Gaurko batez besteko partzialak eta biharko aurreikuspena. Egin klik puntu batean xehetasunak ikusteko.",
     mapLegendTitle: "ICA Semaforoa",
     icaGood: "Ona (≤25)",
     icaMod: "Ertaina (25-50)",
@@ -1361,8 +1361,8 @@ const translations = {
     backGood: "✓ Doitasun ona",
     backAccept: "✓ Doitasun onargarria",
     backReview: "🔴 Eredua berrikusi",
-    mapDailyAyer: "Gaurko batez bestekoak (partziala)",
-    mapPredManana: "▶ Gaurko aurreikuspena",
+    mapDailyAyer: "Gaurko batez besteko partzialak",
+    mapPredManana: "▶ Biharko aurreikuspena",
     mapZone: "Eremua",
     mapNote: "⚠ Balioak eguneroko batez bestekoak dira, ez orduko irakurketak",
     colRMSE: "RMSE (µg/m³)",
@@ -1373,7 +1373,7 @@ const translations = {
     v8Fig3: "<strong>3. Irudia</strong> — Gap-a batez beste, kutsatzaile eta eremuka",
     v9Fig1: "<strong>1. Irudia</strong> — Kontrol Sintetikoa (Serie Leundua)",
     v9Fig2: "<strong>2. Irudia</strong> — Event Study DiD",
-    v10Tomorrow: "gaur",
+    v10Tomorrow: "bihar",
     sumSinZBE: "EGE barik",
     sumAbsoluto: "absolutua",
     fig1Obs: "Behatua",

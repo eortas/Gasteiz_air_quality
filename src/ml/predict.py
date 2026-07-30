@@ -50,6 +50,7 @@ if env_path.exists():
 DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
 STATION_DAILY_PATH = PROCESSED_DIR / "station_daily.csv"
 FORECAST_HISTORY_PATH = PROCESSED_DIR / "weather_forecast_history.jsonl"
+PREDICTION_CUTOFF_HOUR = 22
 
 # ??? CONFIG ???????????????????????????????????????????????????????????????????
 TARGETS = [
@@ -243,9 +244,12 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
             source["date"] = pd.to_datetime(source["date"], utc=True)
             source = source.sort_values("date").reset_index(drop=True)
 
-        # El modelo d1 exige el último día local ya terminado, nunca el día en curso.
-        today = pd.Timestamp.now(tz="Europe/Madrid").normalize().tz_localize(None).tz_localize("UTC")
-        latest_allowed = today - pd.Timedelta(days=1)
+        now_local = pd.Timestamp.now(tz="Europe/Madrid")
+        if now_local.hour < PREDICTION_CUTOFF_HOUR:
+            raise RuntimeError(
+                f"La predicción para mañana se ejecuta después de las {PREDICTION_CUTOFF_HOUR:02d}:00 locales."
+            )
+        latest_allowed = now_local.normalize().tz_localize(None).tz_localize("UTC")
         source = source[source["date"] == latest_allowed].copy()
 
         required = ["NO2_zbe", "NO2_out", "PM10_zbe", "PM10_out", "PM2.5_zbe", "PM2.5_out",
@@ -254,7 +258,7 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
         source = source.dropna(subset=available)
         if source.empty:
             raise RuntimeError(
-                f"El día completo {latest_allowed.date()} no tiene aire, tráfico y meteorología. "
+                f"El corte de las {PREDICTION_CUTOFF_HOUR:02d}:00 del día {latest_allowed.date()} no tiene aire, tráfico y meteorología. "
                 "Se cancela la predicción para evitar datos obsoletos."
             )
 
@@ -276,7 +280,7 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
 
     source_date = row["date"].iloc[0]
     log(f"  Fila fuente   : {source_date.date()} (datos conocidos hasta este d?a)")
-    log(f"  Predicci?n    : {pred_date.date()} (d1 desde el último día completo)")
+    log(f"  Predicci?n    : {pred_date.date()} (mañana desde el corte local de las {PREDICTION_CUTOFF_HOUR:02d}:00)")
     log(f"  Features disp.: {len(df.columns)} columnas en parquet")
 
     return row, pred_date
@@ -565,7 +569,7 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
         f"Contaminante: {target.split('_')[0]} | Zona: {target.split('_')[1].upper()} | Predicción: {round(pred_val, 1)} µg/m³ | Valor base histórico: {round(base_val, 1)} µg/m³\n"
         f"Variables que AUMENTAN la concentración: {pos_str}\n"
         f"Variables que REDUCEN la concentración: {neg_str}\n\n"
-        f"Genera un análisis ambiental directo y fluido en 2 párrafos breves explicando la influencia del tráfico, viento y condiciones meteorológicas.\n"
+        f"Genera un análisis ambiental directo y fluido para mañana, en 2 párrafos breves, explicando la influencia del tráfico, viento y condiciones meteorológicas.\n"
         f"Responde ÚNICAMENTE con un JSON con el formato: {{\"es\": \"texto en castellano\", \"eu\": \"texto en euskera\"}}"
     )
 
@@ -605,7 +609,7 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
     zone_name = target.split('_')[1].upper()
     
     es_text = (
-        f"Para hoy se estima una concentración de {cont_name} de {round(pred_val, 1)} µg/m³ en la zona {zone_name}, "
+        f"Para mañana se estima una concentración de {cont_name} de {round(pred_val, 1)} µg/m³ en la zona {zone_name}, "
         f"frente a la media habitual de {round(base_val, 1)} µg/m³. "
         f"Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, "
         f"donde factores como {pos_str} actúan incrementando los niveles atmosféricos.\n\n"
