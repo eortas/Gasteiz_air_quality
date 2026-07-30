@@ -1,7 +1,7 @@
 """
 build_station_daily.py
 ======================
-Genera data/processed/station_daily.csv a partir de los kunak_*.csv limpios.
+Genera data/processed/station_daily.csv desde la capa limpia de Kunak.
 
 El CSV resultante tiene una fila por día y una columna por cada combinación
 estación × contaminante (ej. PAUL_NO2, BEATO_PM10, ...).
@@ -27,11 +27,11 @@ import pandas as pd
 
 # ─── RUTAS ────────────────────────────────────────────────────────────────────
 ROOT_DIR      = Path(__file__).parent.parent.parent
-RAW_AIR_DIR   = ROOT_DIR / "data" / "raw" / "air"
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 OUTPUT_PATH   = PROCESSED_DIR / "station_daily.csv"
+AIR_CLEAN_PATH = PROCESSED_DIR / "air_clean_hourly.parquet"
 
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
 CONTAMINANTS  = ["NO2", "PM10", "PM2.5", "ICA"]
@@ -39,8 +39,7 @@ ZBE_STATIONS  = ["PAUL", "FUEROS"]
 OUT_STATIONS  = ["LANDAZURI", "HUETOS", "ZUMABIDE", "BEATO"]
 ALL_STATIONS  = ZBE_STATIONS + OUT_STATIONS
 
-# Interpolación máxima: 7 días (huecos más largos se dejan como NaN)
-MAX_INTERP_DAYS = 7
+MIN_AIR_HOURS = 18
 
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -53,27 +52,20 @@ def section(title):
 
 
 # ─── CARGA ────────────────────────────────────────────────────────────────────
-def load_kunak_csvs(start_date: pd.Timestamp | None = None) -> pd.DataFrame:
-    section("1. Cargando kunak CSVs")
+def load_clean_air(start_date: pd.Timestamp | None = None) -> pd.DataFrame:
+    section("1. Cargando aire limpio de Kunak")
 
-    csv_files = sorted(RAW_AIR_DIR.glob("kunak_*.csv"))
-    if not csv_files:
-        log(f"  [ERROR] No se encontraron kunak_*.csv en {RAW_AIR_DIR}")
+    if not AIR_CLEAN_PATH.exists():
+        log(f"  [ERROR] No se encuentra {AIR_CLEAN_PATH}")
+        log("  Ejecuta primero: python src/transformation/prepare_air_clean.py")
         sys.exit(1)
 
-    dfs = []
-    for f in csv_files:
-        size_mb = f.stat().st_size / 1024 / 1024
-        log(f"  Leyendo {f.name} ({size_mb:.1f} MB)...")
-        df = pd.read_csv(f, low_memory=False)
-        dfs.append(df)
-
-    df = pd.concat(dfs, ignore_index=True)
+    df = pd.read_parquet(AIR_CLEAN_PATH)
     log(f"\n  Filas brutas    : {len(df):,}")
 
-    # Normalizar timestamp
-    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
-    df["date"]      = df["timestamp"].dt.floor("D").dt.tz_localize(None)
+    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+    df = df.dropna(subset=["timestamp"])
+    df["date"] = df["timestamp"].dt.tz_convert("Europe/Madrid").dt.normalize().dt.tz_localize(None)
 
     # Filtrar contaminantes relevantes
     df = df[df["contaminante"].isin(CONTAMINANTS)].copy()
@@ -81,7 +73,7 @@ def load_kunak_csvs(start_date: pd.Timestamp | None = None) -> pd.DataFrame:
     # Filtrar estaciones conocidas
     df = df[df["estacion"].isin(ALL_STATIONS)].copy()
 
-    # Eliminar duplicados
+    # Conservamos NaN de apagones y solo aceptamos estaciones-día con cobertura suficiente.
     before = len(df)
     df = df.drop_duplicates(subset=["timestamp", "estacion", "contaminante"])
     removed = before - len(df)
@@ -105,12 +97,13 @@ def load_kunak_csvs(start_date: pd.Timestamp | None = None) -> pd.DataFrame:
 def build_daily_pivot(df: pd.DataFrame) -> pd.DataFrame:
     section("2. Agregando a media diaria")
 
-    # Media diaria por estación y contaminante
+    df["valid_hour"] = df.get("valid_hour", df["valor"].notna()).astype(bool)
     daily = (
-        df.groupby(["date", "estacion", "contaminante"])["valor"]
-        .mean()
+        df.groupby(["date", "estacion", "contaminante"])
+        .agg(valor=("valor", "mean"), valid_hours=("valid_hour", "sum"))
         .reset_index()
     )
+    daily.loc[daily["valid_hours"] < MIN_AIR_HOURS, "valor"] = np.nan
 
     # Nombre de columna: PAUL_NO2, BEATO_PM10, etc.
     daily["col"] = (
@@ -132,17 +125,11 @@ def build_daily_pivot(df: pd.DataFrame) -> pd.DataFrame:
         .rename(columns={"index": "date"})
     )
 
-    # Interpolación lineal para huecos cortos
     data_cols = [c for c in pivot.columns if c != "date"]
-    before_nan = pivot[data_cols].isna().sum().sum()
-    for col in data_cols:
-        pivot[col] = pivot[col].interpolate(method="linear", limit=MAX_INTERP_DAYS)
-    after_nan = pivot[data_cols].isna().sum().sum()
-    interpolated = before_nan - after_nan
 
     log(f"  Días en el pivote   : {len(pivot)}")
     log(f"  Columnas            : {len(data_cols)}")
-    log(f"  Registros interpolados (<={MAX_INTERP_DAYS}d): {interpolated:,}")
+    log("  Apagones y huecos   : conservados como NaN (sin interpolación)")
 
     # Cobertura por columna
     log(f"\n  Cobertura por columna:")
@@ -203,7 +190,7 @@ def main():
     log(f"  Output: {OUTPUT_PATH}")
     log("=" * 60)
 
-    df    = load_kunak_csvs(start_date)
+    df    = load_clean_air(start_date)
     pivot = build_daily_pivot(df)
     print_zbe_stats(pivot)
 
