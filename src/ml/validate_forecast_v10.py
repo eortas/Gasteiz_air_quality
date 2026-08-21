@@ -43,6 +43,9 @@ def validate():
     metrics = json.loads(
         (MODELS_DIR / "forecast_v10_metrics.json").read_text(encoding="utf-8")
     )
+    training_data = pd.read_parquet(
+        PROCESSED_DIR / "features_daily.parquet", columns=["date"]
+    )
     latest = pd.read_parquet(PROCESSED_DIR / "features_latest.parquet")
 
     if contract.get("cutoff_hour_local") != 22:
@@ -51,10 +54,14 @@ def validate():
         errors.append("El objetivo no representa el día local completo")
     if not manifest.get("ready_for_production"):
         errors.append("El manifiesto no supera el control técnico")
-    if manifest.get("dataset_sha256") != file_sha256(
-        PROCESSED_DIR / "features_daily.parquet"
-    ):
-        errors.append("La huella del dataset no coincide con el manifiesto")
+    current_data_end = pd.to_datetime(training_data["date"], utc=True).max().date()
+    trained_data_end = pd.Timestamp(manifest["data_end"]).date()
+    if current_data_end < trained_data_end:
+        errors.append("El dataset disponible es anterior al usado para entrenar")
+    if current_data_end == trained_data_end and manifest.get(
+        "dataset_sha256"
+    ) != file_sha256(PROCESSED_DIR / "features_daily.parquet"):
+        errors.append("La huella del dataset de entrenamiento no coincide")
     if latest.empty:
         errors.append("features_latest.parquet está vacío")
 

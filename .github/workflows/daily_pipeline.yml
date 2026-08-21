@@ -48,7 +48,7 @@ jobs:
         run: playwright install chromium --with-deps
 
       # ── 4. Pipeline completo ─────────────────────────────────────────────────
-      - name: Ejecutar pipeline (ingesta → features → modelo → predicción)
+      - name: Ejecutar pipeline con el modelo v10 aprobado
         run: python run_pipeline.py --with-releases --skip-training
 
       # ── 5. Asegurar archivos para la web ─────────────────────────────────────
