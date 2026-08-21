@@ -206,6 +206,22 @@ def _fallback_predict(target_name, row_input, row_target, df_past, meta_models_f
     try:
         # Cachear el modelo para no recargarlo en cada iteración
         if target_name not in cache:
+            v10_path = MODELS_DIR / f"forecast_v10_{target_name}.joblib"
+            if v10_path.exists():
+                artifact = joblib.load(v10_path)
+                cache[target_name] = {
+                    "version": "forecast_v10",
+                    "model": artifact["lightgbm"],
+                    "extra_model": artifact["extra_trees"],
+                    "ridge_model": artifact.get("ridge"),
+                    "features": artifact["features"],
+                    "medians": artifact["medians"],
+                    "seasonal_medians": {},
+                    "weights": artifact["weights"],
+                    "production_method": artifact["production_method"],
+                }
+
+        if target_name not in cache:
             model = joblib.load(model_path)
             features = json.loads(feat_path.read_text(encoding="utf-8"))
 
@@ -222,6 +238,7 @@ def _fallback_predict(target_name, row_input, row_target, df_past, meta_models_f
                 except: pass
 
             cache[target_name] = {
+                "version": "v8",
                 "model": model, "features": features,
                 "medians": medians, "seasonal_medians": seasonal_medians
             }
@@ -231,6 +248,18 @@ def _fallback_predict(target_name, row_input, row_target, df_past, meta_models_f
         features = m["features"]
         medians = m["medians"]
         seasonal_medians = m["seasonal_medians"]
+
+        if m.get("version") == "forecast_v10":
+            row_input = row_input.copy()
+            target_date = pd.Timestamp(row_target["date"])
+            row_input["d1_day_of_week"] = target_date.dayofweek
+            row_input["d1_month"] = target_date.month
+            row_input["d1_day_of_year"] = target_date.dayofyear
+            row_input["d1_is_weekend"] = int(target_date.dayofweek >= 5)
+            row_input["d1_dow_sin"] = np.sin(2 * np.pi * target_date.dayofweek / 7)
+            row_input["d1_dow_cos"] = np.cos(2 * np.pi * target_date.dayofweek / 7)
+            row_input["d1_doy_sin"] = np.sin(2 * np.pi * target_date.dayofyear / 365.25)
+            row_input["d1_doy_cos"] = np.cos(2 * np.pi * target_date.dayofyear / 365.25)
 
         pred_month = row_target["date"].month
         month_key = str(pred_month)
@@ -246,6 +275,21 @@ def _fallback_predict(target_name, row_input, row_target, df_past, meta_models_f
                 fill_values[f] = 0.0
 
         X = row_input.to_frame().T.reindex(columns=features).fillna(fill_values).astype(float)
+        if m.get("version") == "forecast_v10":
+            current_column = target_name.replace("_d1", "")
+            if m.get("production_method") == "persistence":
+                return max(0.0, float(row_input[current_column]))
+            weights = m["weights"]
+            predicted_delta = (
+                weights["lightgbm"] * float(model.predict(X)[0])
+                + weights["extra_trees"] * float(m["extra_model"].predict(X)[0])
+            )
+            if m.get("ridge_model") is not None:
+                predicted_delta += weights.get("ridge", 0.0) * float(
+                    m["ridge_model"].predict(X)[0]
+                )
+            return max(0.0, float(row_input[current_column]) + predicted_delta)
+
         pred = max(0.0, float(model.predict(X)[0]))
 
         # Aplicar meta-modelo si existe
@@ -517,7 +561,10 @@ perf_json_str = json.dumps(perf_data)
 manana_json_str = json.dumps(manana_data)
 
 try:
-    metrics_raw = json.loads((MODELS_DIR / "metrics_v8.json").read_text(encoding="utf-8"))
+    metrics_path = MODELS_DIR / "forecast_v10_metrics.json"
+    if not metrics_path.exists():
+        metrics_path = MODELS_DIR / "metrics_v8.json"
+    metrics_raw = json.loads(metrics_path.read_text(encoding="utf-8"))
 except Exception:
     metrics_raw = {}
 metrics_json_str = json.dumps(metrics_raw)

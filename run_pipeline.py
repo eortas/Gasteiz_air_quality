@@ -207,16 +207,23 @@ def main():
     if not run_script("Build station daily CSV", "src/features/build_station_daily.py"):
         logger.warning("[WARN]  build_station_daily falló - el análisis v9 puede no ejecutarse.")
 
-    # ── 6. ENTRENAMIENTO v8 (100 iter RandomSearch, siempre con --tune) ───────
+    # ── 6. ENTRENAMIENTO OPERATIVO + ANÁLISIS CAUSAL ───────
     if not skip_training:
-        logger.info("\n── FASE 6: Entrenamiento v8 (100 iteraciones RandomSearch)")
-        if not run_script("Train model v8 --tune", "src/ml/train_model_v8.py", ["--tune"]):
-            logger.error("[ERROR] El entrenamiento falló. Abortando.")
+        logger.info("\n── FASE 6: Entrenamiento forecast v10 con backtesting")
+        if not run_script("Train forecast v10", "src/ml/train_forecast_v10.py"):
+            logger.error("[ERROR] El entrenamiento operativo falló. Abortando.")
             sys.exit(1)
     else:
-        logger.info("\n── FASE 6: Recálculo contrafactual v8 (--skip-cv)")
-        if not run_script("Actualizar contrafactual v8 --skip-cv", "src/ml/train_model_v8.py", ["--skip-cv"]):
-            logger.warning("[WARN] El recálculo contrafactual falló.")
+        logger.info("\n── FASE 6: Entrenamiento forecast v10 omitido")
+
+    logger.info("\n── FASE 6a: Validación de artefactos forecast v10")
+    if not run_script("Validar forecast v10", "src/ml/validate_forecast_v10.py"):
+        logger.error("[ERROR] Los artefactos operativos no son publicables. Abortando.")
+        sys.exit(1)
+
+    logger.info("\n── FASE 6b: Recálculo causal v8")
+    if not run_script("Actualizar contrafactual v8 --skip-cv", "src/ml/train_model_v8.py", ["--skip-cv"]):
+        logger.warning("[WARN] El recálculo contrafactual falló.")
 
     # ── 7. ANÁLISIS CAUSAL v9 (Event Study + Synthetic Control) ──────────────
     logger.info("\n── FASE 7: Análisis causal v9")

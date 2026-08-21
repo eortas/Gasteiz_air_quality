@@ -543,6 +543,17 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     df["doy_sin"]   = np.sin(2 * np.pi * df["day_of_year"] / 365)
     df["doy_cos"]   = np.cos(2 * np.pi * df["day_of_year"] / 365)
 
+    # Añadimos el calendario de D+1, que se conoce en el momento de predicción.
+    target_date = df["date"] + pd.Timedelta(days=1)
+    df["d1_day_of_week"] = target_date.dt.dayofweek
+    df["d1_month"] = target_date.dt.month
+    df["d1_day_of_year"] = target_date.dt.dayofyear
+    df["d1_is_weekend"] = (target_date.dt.dayofweek >= 5).astype(int)
+    df["d1_dow_sin"] = np.sin(2 * np.pi * target_date.dt.dayofweek / 7)
+    df["d1_dow_cos"] = np.cos(2 * np.pi * target_date.dt.dayofweek / 7)
+    df["d1_doy_sin"] = np.sin(2 * np.pi * target_date.dt.dayofyear / 365.25)
+    df["d1_doy_cos"] = np.cos(2 * np.pi * target_date.dt.dayofyear / 365.25)
+
     # ZBE flags
     df["is_post_zbe"]    = (df["date"] >= ZBE_DATE).astype(int)
     df["days_since_zbe"] = (df["date"] - ZBE_DATE).dt.days.clip(lower=0)
@@ -635,22 +646,32 @@ def add_lags_and_rolling(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # -- 8. TARGETS FUTUROS ----------------------------
-def add_targets(df: pd.DataFrame) -> pd.DataFrame:
+def add_targets(df: pd.DataFrame, full_day_air: pd.DataFrame = None) -> pd.DataFrame:
     section("8. Construyendo targets futuros")
 
-    df = df.set_index("date").sort_index()
+    df = df.sort_values("date").copy()
+
+    if full_day_air is not None:
+        full_day_air = full_day_air.copy()
+        full_day_air["date"] = pd.to_datetime(full_day_air["date"], utc=True)
+        full_day_air = full_day_air.set_index("date").sort_index()
 
     for target in TARGETS:
         if target not in df.columns:
             continue
         for h in range(1, HORIZON_DAYS + 1):
-            df[f"target_{target}_d{h}"] = df[target].shift(-h)
+            target_column = f"target_{target}_d{h}"
+            if full_day_air is None or target not in full_day_air.columns:
+                df[target_column] = df[target].shift(-h)
+            else:
+                future_dates = df["date"] + pd.Timedelta(days=h)
+                df[target_column] = full_day_air[target].reindex(future_dates).to_numpy()
 
     target_cols = [c for c in df.columns if c.startswith("target_")]
     log(f"  Targets: {len(target_cols)} columnas")
     log(f"  ({len(TARGETS)} series × {HORIZON_DAYS} días = {len(TARGETS)*HORIZON_DAYS})")
 
-    return df.reset_index()
+    return df.reset_index(drop=True)
 
 
 # -- 9. PRONÓSTICO COMO FEATURES -----------------------
@@ -839,6 +860,7 @@ def main():
     log("=" * 65)
 
     air     = load_air_daily(cutoff_hour)
+    full_day_air = load_air_daily(None) if cutoff_hour is not None else air.copy()
     traffic = load_traffic_daily(cutoff_hour)
     weather = load_weather_daily(cutoff_hour)
 
@@ -854,7 +876,7 @@ def main():
     df = merge_daily(air, traffic, weather)
     df = add_temporal_features(df)
     df = add_lags_and_rolling(df)
-    df = add_targets(df)
+    df = add_targets(df, full_day_air=full_day_air)
 
     fc = fetch_forecast() if with_forecast else pd.DataFrame()
     df = add_forecast_features(df, fc)
@@ -873,7 +895,12 @@ def main():
 
     df = clean_and_save(df, save_csv=save_csv)
 
-    contract = {"cutoff_hour_local": cutoff_hour, "timezone": CUTOFF_TIMEZONE}
+    contract = {
+        "cutoff_hour_local": cutoff_hour,
+        "timezone": CUTOFF_TIMEZONE,
+        "feature_window": "local_day_before_cutoff",
+        "target_window": "full_local_day",
+    }
     (PROCESSED_DIR / "feature_contract.json").write_text(json.dumps(contract, indent=2), encoding="utf-8")
 
     log()

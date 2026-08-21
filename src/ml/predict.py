@@ -1,11 +1,8 @@
 """
 predict.py
 ==================
-Genera predicciones d1 (ma?ana) para los 8 targets de calidad del aire
-usando los modelos LightGBM v8 entrenados.
-
-Cada modelo carga sus propias features seleccionadas por permutation importance
-(77-80 de las 256 totales) desde los archivos lgbm_v5_*_features.json.
+Genera predicciones D+1 para los 8 indicadores de calidad del aire.
+Prioriza el ensemble forecast v10 y conserva v8 como compatibilidad.
 
 Fuentes de datos para la predicci?n:
   - data/processed/features_daily.parquet  -> ?ltima fila con features conocidas
@@ -61,7 +58,9 @@ TARGETS = [
 
 # Función para obtener métricas CV v8 dinámicas
 def get_cv_rmse() -> dict:
-    metrics_path = MODELS_DIR / "metrics_v8.json"
+    metrics_path = MODELS_DIR / "forecast_v10_metrics.json"
+    if not metrics_path.exists():
+        metrics_path = MODELS_DIR / "metrics_v8.json"
     defaults = {
         "NO2_zbe_d1": 3.458, "NO2_out_d1": 4.557,
         "PM10_zbe_d1": 4.758, "PM10_out_d1": 4.435,
@@ -89,7 +88,9 @@ CV_RMSE = get_cv_rmse()
 
 def get_model_metrics() -> dict:
     """Carga la decisión de producción obtenida en el bloque final reservado."""
-    metrics_path = MODELS_DIR / "metrics_v8.json"
+    metrics_path = MODELS_DIR / "forecast_v10_metrics.json"
+    if not metrics_path.exists():
+        metrics_path = MODELS_DIR / "metrics_v8.json"
     if not metrics_path.exists():
         return {}
     try:
@@ -120,8 +121,12 @@ FORECAST_VARS = [
 
 
 # ??? HELPERS ??????????????????????????????????????????????????????????????????
+QUIET = False
+
+
 def log(msg=""):
-    print(msg)
+    if not QUIET:
+        print(msg)
 
 def section(title):
     log(); log("=" * 65); log(f"  {title}"); log("=" * 65)
@@ -129,11 +134,36 @@ def section(title):
 
 # ??? 1. CARGAR MODELOS Y FEATURES ????????????????????????????????????????????
 def load_models() -> dict:
-    """Carga los modelos v8 (LightGBM y CatBoost) y sus listas de features seleccionadas."""
+    """Carga forecast v10 y usa v8 solo como compatibilidad."""
     models = {}
     missing = []
+    v10_paths = [MODELS_DIR / f"forecast_v10_{target}.joblib" for target in TARGETS]
+    use_v10 = all(path.exists() for path in v10_paths)
 
     for target in TARGETS:
+        if use_v10:
+            artifact = joblib.load(MODELS_DIR / f"forecast_v10_{target}.joblib")
+            metric = MODEL_METRICS.get(f"target_{target}", {})
+            models[target] = {
+                "model": artifact["lightgbm"],
+                "extra_model": artifact["extra_trees"],
+                "ridge_model": artifact.get("ridge"),
+                "features": artifact["features"],
+                "medians": artifact["medians"],
+                "seasonal_medians": {},
+                "weights": artifact["weights"],
+                "production_method": artifact["production_method"],
+                "prediction_mode": artifact["prediction_mode"],
+                "interval_method": artifact["interval_method"],
+                "interval_half_width_90": artifact["interval_half_width_90"],
+                "quality_gate": artifact["quality_gate"],
+                "model_version": artifact["model_version"],
+                "cv_rmse": metric.get("cv_rmse", 0),
+                "cv_skill_vs_persistence": metric.get("cv_skill_vs_persistence", 0),
+                "test_persistence_rmse": metric.get("test_persistence_rmse"),
+            }
+            continue
+
         model_path = MODELS_DIR / f"lgbm_v8_{target}.pkl"
         feat_path  = MODELS_DIR / f"lgbm_v8_{target}_features.json"
 
@@ -176,6 +206,8 @@ def load_models() -> dict:
             "test_persistence_rmse": MODEL_METRICS.get(
                 f"target_{target}", {}
             ).get("test_persistence_rmse"),
+            "model_version": "v8",
+            "quality_gate": "legacy",
         }
 
     if missing:
@@ -185,7 +217,8 @@ def load_models() -> dict:
         log(f"\n  -> Ejecuta primero: python src/ml/train_model_v8.py")
         sys.exit(1)
 
-    log(f"  [OK] {len(models)} modelos cargados (LightGBM)")
+    model_label = "forecast v10 (LightGBM + ExtraTrees + Ridge)" if use_v10 else "v8 (compatibilidad)"
+    log(f"  [OK] {len(models)} modelos cargados: {model_label}")
     for target, m in models.items():
         medianas_status = "sí" if m.get("medians") else "no"
         seasonal_status = f"{len(m.get('seasonal_medians', {}))} meses" if m.get("seasonal_medians") else "no"
@@ -218,6 +251,21 @@ def get_seasonal_fill_values(features: list, medians: dict, seasonal_medians: di
         else:
             fill_values[f] = 0
     return fill_values
+
+
+def add_d1_calendar_features(row: pd.DataFrame, pred_date: pd.Timestamp) -> pd.DataFrame:
+    """Añadimos el calendario conocido del día que se quiere predecir."""
+    result = row.copy()
+    date = pd.Timestamp(pred_date)
+    result["d1_day_of_week"] = date.dayofweek
+    result["d1_month"] = date.month
+    result["d1_day_of_year"] = date.dayofyear
+    result["d1_is_weekend"] = int(date.dayofweek >= 5)
+    result["d1_dow_sin"] = np.sin(2 * np.pi * date.dayofweek / 7)
+    result["d1_dow_cos"] = np.cos(2 * np.pi * date.dayofweek / 7)
+    result["d1_doy_sin"] = np.sin(2 * np.pi * date.dayofyear / 365.25)
+    result["d1_doy_cos"] = np.cos(2 * np.pi * date.dayofyear / 365.25)
+    return result
 
 
 # ??? 2. CARGAR ROW DE PREDICCI?N ?????????????????????????????????????????????
@@ -546,14 +594,13 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
 def generate_llm_narrative(target: str, pred_val: float, base_val: float, positive_feats: list, negative_feats: list) -> dict:
     """Generate bilingual narratives using Groq LLM based on SHAP contributions."""
     import os
-    import requests
     import json
 
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         return {
-            "es": f"Predicción de {pred_val} µg/m³. Subidas por: {', '.join([f[0] for f in positive_feats[:2]])}.",
-            "eu": f"{pred_val} µg/m³-ko iragarpena. Igoerak: {', '.join([f[0] for f in positive_feats[:2]])}."
+            "es": f"Predicción de {pred_val:.1f} µg/m³. Factores al alza: {', '.join([f[0] for f in positive_feats[:2]])}.",
+            "eu": f"{pred_val:.1f} µg/m³-ko iragarpena. Goranzko faktoreak: {', '.join([f[0] for f in positive_feats[:2]])}."
         }
 
     feat_map = {
@@ -580,6 +627,7 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
     )
 
     try:
+        import requests
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={
@@ -683,14 +731,28 @@ def add_deterministic_ica(results: dict):
                 results[pm10_key].get("rmse_cv", 5.0),
                 results[pm25_key].get("rmse_cv", 5.0)
             )
+            lower_ica = max(
+                compute_ica_subindex("NO2", results[no2_key]["lower"]),
+                compute_ica_subindex("PM10", results[pm10_key]["lower"]),
+                compute_ica_subindex("PM2.5", results[pm25_key]["lower"]),
+            )
+            upper_ica = max(
+                compute_ica_subindex("NO2", results[no2_key]["upper"]),
+                compute_ica_subindex("PM10", results[pm10_key]["upper"]),
+                compute_ica_subindex("PM2.5", results[pm25_key]["upper"]),
+            )
             
             results[f"ICA_{zone}_d1"] = {
                 "prediction_v1": round(pred_ica_v1, 2),
                 "prediction":    round(pred_ica, 2),
-                "lower":         round(max(0, pred_ica - 1.645 * rmse_cv * 0.5), 2),
-                "upper":         round(pred_ica + 1.645 * rmse_cv * 0.5, 2),
+                "lower":         round(max(0, lower_ica), 2),
+                "upper":         round(upper_ica, 2),
                 "rmse_cv":       round(rmse_cv * 0.5, 3),
                 "correction":    round(pred_ica - pred_ica_v1, 2),
+                "method":        "deterministic_caqi",
+                "model_version": results[no2_key].get("model_version", "v8"),
+                "quality_gate":  results[no2_key].get("quality_gate", "legacy"),
+                "interval_method": "derived_from_pollutant_intervals",
                 "foresight": {
                     "base_value": round(pred_ica, 2),
                     "positive_top": [],
@@ -706,6 +768,42 @@ def add_deterministic_ica(results: dict):
         log(f"  [WARN] Falló el cálculo del ICA determinista: {e}")
 
 
+def extra_trees_local_contributions(model, X: pd.DataFrame):
+    """Descomponemos la predicción de Extra Trees siguiendo cada árbol."""
+    values = X.iloc[0].to_numpy(dtype=float)
+    contributions = np.zeros(len(values), dtype=float)
+    base_value = 0.0
+
+    for estimator in model.estimators_:
+        tree = estimator.tree_
+        node = 0
+        base_value += float(tree.value[node].reshape(-1)[0])
+
+        while tree.feature[node] >= 0:
+            feature_index = int(tree.feature[node])
+            if values[feature_index] <= tree.threshold[node]:
+                next_node = int(tree.children_left[node])
+            else:
+                next_node = int(tree.children_right[node])
+            parent_value = float(tree.value[node].reshape(-1)[0])
+            child_value = float(tree.value[next_node].reshape(-1)[0])
+            contributions[feature_index] += child_value - parent_value
+            node = next_node
+
+    n_estimators = len(model.estimators_)
+    return base_value / n_estimators, contributions / n_estimators
+
+
+def ridge_local_contributions(model, X: pd.DataFrame):
+    """Descomponemos Ridge después de aplicar el escalado robusto entrenado."""
+    scaler = model.named_steps["robustscaler"]
+    ridge = model.named_steps["ridge"]
+    scaled_values = scaler.transform(X)[0]
+    contributions = scaled_values * np.asarray(ridge.coef_, dtype=float)
+    base_value = float(np.asarray(ridge.intercept_).reshape(-1)[0])
+    return base_value, contributions
+
+
 # ??? 4. PREDECIR ??????????????????????????????????????????????????????????????
 def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
             pred_date: pd.Timestamp = None) -> dict:
@@ -718,6 +816,8 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
 
     # Determinar el mes de predicción para medianas estacionales
     pred_month = pred_date.month if pred_date is not None else datetime.now().month
+    if pred_date is not None:
+        row = add_d1_calendar_features(row, pred_date)
 
     # Aplicar pronóstico real si está disponible
     if forecast_override:
@@ -733,6 +833,11 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
         production_method = m.get("production_method", "lightgbm")
         prediction_mode = m.get("prediction_mode", "level")
         residual_scale = m.get("residual_scale", 1.0)
+        weights = m.get(
+            "weights", {"lightgbm": 1.0, "extra_trees": 0.0, "ridge": 0.0}
+        )
+        extra_output = 0.0
+        ridge_output = 0.0
 
         # Construir vector de entrada con las features del modelo
         missing_features = [f for f in features if f not in row.columns]
@@ -758,6 +863,22 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
                 "method": "persistence",
                 "narrative": "La persistencia superó al modelo en el bloque final reservado.",
             }
+        elif production_method == "ensemble":
+            if current_col not in row.columns or pd.isna(row.iloc[0][current_col]):
+                raise RuntimeError(
+                    f"Falta {current_col} para reconstruir la predicción del ensamblado"
+                )
+            model_output = float(model.predict(X)[0])
+            extra_output = float(m["extra_model"].predict(X)[0])
+            if m.get("ridge_model") is not None:
+                ridge_output = float(m["ridge_model"].predict(X)[0])
+            pred = (
+                float(row.iloc[0][current_col])
+                + weights["lightgbm"] * model_output
+                + weights["extra_trees"] * extra_output
+                + weights.get("ridge", 0.0) * ridge_output
+            )
+            foresight = None
         else:
             model_output = float(model.predict(X)[0])
             if prediction_mode == "residual":
@@ -779,7 +900,25 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
             try:
                 contribs = model.predict(X, pred_contrib=True)
                 base_value = float(contribs[0, -1])
-                if prediction_mode == "residual":
+                if production_method == "ensemble":
+                    extra_base, extra_contributions = extra_trees_local_contributions(
+                        m["extra_model"], X
+                    )
+                    ridge_base, ridge_contributions = ridge_local_contributions(
+                        m["ridge_model"], X
+                    )
+                    base_value = (
+                        float(row.iloc[0][current_col])
+                        + weights["lightgbm"] * base_value
+                        + weights["extra_trees"] * extra_base
+                        + weights.get("ridge", 0.0) * ridge_base
+                    )
+                    feature_contributions = (
+                        weights["lightgbm"] * contribs[0, :-1]
+                        + weights["extra_trees"] * extra_contributions
+                        + weights.get("ridge", 0.0) * ridge_contributions
+                    )
+                elif prediction_mode == "residual":
                     base_value = (
                         float(row.iloc[0][current_col]) + residual_scale * base_value
                     )
@@ -805,20 +944,30 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
                     "base_value": round(float(base_value), 2),
                     "positive_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in positive_feats[:5]],
                     "negative_top": [{"feature": str(f[0]), "value": round(float(f[1]), 2)} for f in negative_feats[:5]],
-                    "narrative": narrative
+                    "narrative": narrative,
+                    "explanation_method": (
+                        "weighted_additive_components"
+                        if production_method == "ensemble"
+                        else "lightgbm_contributions"
+                    ),
                 }
             except Exception as e:
                 foresight = {"error": str(e)}
 
-        rmse_cv = m.get("test_persistence_rmse") if production_method == "persistence" else CV_RMSE.get(target, 0)
+        rmse_cv = m.get("test_persistence_rmse") if production_method == "persistence" else m.get("cv_rmse")
         rmse_cv = rmse_cv or CV_RMSE.get(target, 0)
+        interval_half_width = m.get("interval_half_width_90", 1.645 * rmse_cv)
         results[target] = {
             "prediction": round(pred, 2),
-            "lower":      round(max(0, pred - 1.645 * rmse_cv), 2),
-            "upper":      round(pred + 1.645 * rmse_cv, 2),
+            "lower":      round(max(0, pred - interval_half_width), 2),
+            "upper":      round(pred + interval_half_width, 2),
             "rmse_cv":    rmse_cv,
             "method":     production_method,
             "prediction_mode": prediction_mode,
+            "model_version": m.get("model_version", "v8"),
+            "quality_gate": m.get("quality_gate", "legacy"),
+            "skill_vs_persistence": m.get("cv_skill_vs_persistence"),
+            "interval_method": m.get("interval_method", "normal_rmse_approximation"),
             "foresight":  foresight
         }
 
@@ -852,7 +1001,8 @@ def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
                 f"[{lower:.1f} - {upper:.1f}]  {alert}")
 
     log()
-    log("  Intervalo de confianza: ±1.645 × RMSE_CV (aproximación normal 90%)")
+    interval_methods = {result.get("interval_method", "aproximación normal") for result in results.values()}
+    log(f"  Intervalo 90%: {', '.join(sorted(interval_methods))}")
     methods = {result.get("method", "lightgbm") for result in results.values()}
     method_label = ", ".join(sorted(methods))
     log(f"  Método de producción: {method_label}")
@@ -867,7 +1017,9 @@ def save_json(results: dict, pred_date: pd.Timestamp, run_type: str = "productio
     out = {
         "prediction_date": pred_date.date().isoformat(),
         "generated_at":    datetime.now(timezone.utc).isoformat(),
-        "model_version":   "v8",
+        "model_version":   "forecast_v10" if any(
+            value.get("model_version") == "forecast_v10" for value in results.values()
+        ) else "v8",
         "run_type":        run_type,
         "source_date":     source_date.date().isoformat() if source_date is not None else None,
         "targets": results,
@@ -920,8 +1072,10 @@ def save_json(results: dict, pred_date: pd.Timestamp, run_type: str = "productio
 
 # ??? MAIN ?????????????????????????????????????????????????????????????????????
 def main():
+    global QUIET
     with_forecast = "--with-forecast" in sys.argv
     json_only     = "--json"          in sys.argv
+    QUIET = json_only
     publish_date  = "--publish-date"  in sys.argv
     date_arg      = next((sys.argv[i+1] for i, a in enumerate(sys.argv)
                           if a == "--date" and i+1 < len(sys.argv)), None)
@@ -931,13 +1085,13 @@ def main():
         log("=" * 65)
         log("  PREDICT - Vitoria Air Quality")
         log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        log(f"  Modelo: LightGBM v8 \u00d7 8 targets d1")
+        log("  Modelo: forecast v10 (ensamblado validado) × 6 targets d1 + ICA")
         log(f"  Meteo d1: {meteo_desc}")
         log("=" * 65)
 
     # 1. Cargar modelos
     if not json_only:
-        section("1. Cargando modelos v8")
+        section("1. Cargando modelos operativos")
     models = load_models()
 
     # 2. Fila de predicción

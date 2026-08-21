@@ -1,4 +1,6 @@
 {
   "cutoff_hour_local": 22,
-  "timezone": "Europe/Madrid"
+  "timezone": "Europe/Madrid",
+  "feature_window": "local_day_before_cutoff",
+  "target_window": "full_local_day"
 }
