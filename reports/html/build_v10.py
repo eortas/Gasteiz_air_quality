@@ -1087,7 +1087,7 @@ html_template = """<!DOCTYPE html>
     <div class="header-left">
       <div class="label-tag" data-i18n="mapTag">Vitoria-Gasteiz — Red Sensores Municipales</div>
       <h1 data-i18n="mapTitle">Mapa de <span>Estaciones</span></h1>
-      <p class="subtitle" data-i18n="mapSubtitle">Media parcial de hoy por estación y predicción para mañana. Haz click sobre un punto para ver el detalle.</p>
+      <p class="subtitle" data-i18n="mapSubtitle">Medias parciales por estación y predicción vigente para la fecha indicada. Haz click sobre un punto para ver el detalle.</p>
     </div>
     <div class="map-legend">
       <div class="card-label" style="margin-bottom:4px" data-i18n="mapLegendTitle">Semáforo ICA</div>
@@ -1126,7 +1126,7 @@ html_template = """<!DOCTYPE html>
     <div class="header-left">
       <div class="label-tag" data-i18n="fsTag">Explicación de la predicción</div>
       <h1 data-i18n="fsTitle">Foresight <span> con IA</span></h1>
-      <p class="subtitle" data-i18n="fsSubtitle">Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para mañana (SHAP Values).</p>
+      <p class="subtitle" data-i18n="fsSubtitle">Factores meteorológicos y de contexto asociados a la predicción vigente del modelo.</p>
     </div>
   </div>
   
@@ -1265,6 +1265,8 @@ const translations = {
     v10Tag: "EEA Standards — Air Quality Risk",
     v10Title: "Calidad del aire prevista para",
     v10Calculating: "CALCULANDO...",
+    v10Today: "hoy",
+    v10Date: "fecha",
     auditTitle: "<strong>Histórico validado:</strong> predicción vs. medición (últimos 7 días)",
     backtestTitle: "<strong>Último día validado</strong> — control de precisión",
     colParam: "Parametro",
@@ -1285,7 +1287,7 @@ const translations = {
     mapeThreshold: "Criterio operativo: mejora frente a persistencia y cobertura suficiente del intervalo.",
     mapTag: "Vitoria-Gasteiz — Red Sensores Municipales",
     mapTitle: "Mapa de <span>Estaciones</span>",
-    mapSubtitle: "Medias parciales de hoy y predicción para mañana. Haga clic en un punto para ver detalles.",
+    mapSubtitle: "Medias parciales por estación y predicción vigente para la fecha indicada. Haga clic en un punto para ver detalles.",
     mapLegendTitle: "Semáforo ICA",
     icaGood: "Buena (≤25)",
     icaMod: "Moderada (25-50)",
@@ -1308,6 +1310,7 @@ const translations = {
     v9Fig1: "<strong>Figura 1</strong> — Control Sintético (Serie Suavizada)",
     v9Fig2: "<strong>Figura 2</strong> — Event Study DiD",
     v10Tomorrow: "mañana",
+    mapPrediction: "Predicción",
     sumSinZBE: "sin ZBE",
     sumAbsoluto: "absoluto",
     fig1Obs: "Observado",
@@ -1342,7 +1345,7 @@ const translations = {
     colMAPE: "MAPE %",
     fsTag: "Explicación de la predicción",
     fsTitle: "Foresight <span> con IA</span>",
-    fsSubtitle: "Análisis avanzado de los factores meteorológicos y de contexto que influencian la predicción del modelo para mañana (SHAP Values).",
+    fsSubtitle: "Factores meteorológicos y de contexto asociados a la predicción vigente del modelo.",
     fsNarrativeTitle: "Explicación de la predicción",
     fsShapTitle: "Top Factores de Impacto (SHAP)",
     fsLoading: "Cargando narrativa...",
@@ -1378,8 +1381,10 @@ const translations = {
     v9Station: "EGE barneko estazioa",
     imgNotFound: "Irudia ez da aurkitu. Egiaztatu fitxategiaren izena.",
     v10Tag: "EEA Arauak — Airearen Kalitatearen Arriskua",
-    v10Title: "Biharko aurreikusitako aire-kalitatea",
+    v10Title: "Airearen kalitatearen aurreikuspena:",
     v10Calculating: "KALKULATZEN...",
+    v10Today: "gaur",
+    v10Date: "data",
     auditTitle: "<strong>Baliozkotutako historikoa:</strong> iragarpena vs. neurketa (azken 7 egunak)",
     backtestTitle: "<strong>Baliozkotutako azken eguna</strong> — doitasun-kontrola",
     trafficYoYTitle: "Eraginaren Azterketa: Perimetroko Trafikoaren Bilakaera (YoY)",
@@ -1400,7 +1405,7 @@ const translations = {
     mapeThreshold: "Irizpide operatiboa: persistentziarekiko hobekuntza eta tartearen estaldura nahikoa.",
     mapTag: "Vitoria-Gasteiz — Udaltzaingoaren sentsoreen sarea",
     mapTitle: "Estazioen <span>Mapa</span>",
-    mapSubtitle: "Gaurko batez besteko partzialak eta biharko aurreikuspena. Egin klik puntu batean xehetasunak ikusteko.",
+    mapSubtitle: "Estazioetako batez besteko partzialak eta adierazitako datarako indarrean dagoen iragarpena. Egin klik puntu batean xehetasunak ikusteko.",
     mapLegendTitle: "ICA Semaforoa",
     icaGood: "Ona (≤25)",
     icaMod: "Ertaina (25-50)",
@@ -1446,6 +1451,7 @@ const translations = {
     v9Fig1: "<strong>1. Irudia</strong> — Kontrol Sintetikoa (Serie Leundua)",
     v9Fig2: "<strong>2. Irudia</strong> — Event Study DiD",
     v10Tomorrow: "bihar",
+    mapPrediction: "Iragarpena",
     sumSinZBE: "EGE barik",
     sumAbsoluto: "absolutua",
     fig1Obs: "Behatua",
@@ -1464,7 +1470,7 @@ const translations = {
     didNo: "Ez",
     fsTag: "Aurreikuspenaren azalpena",
     fsTitle: "Foresight <span> AIarekin</span>",
-    fsSubtitle: "Biharko ereduaren aurreikuspenean eragina duten faktore meteorologikoen eta testuingurukoen analisi aurreratua (SHAP balioak).",
+    fsSubtitle: "Indarrean dagoen ereduaren iragarpenari lotutako faktore meteorologikoak eta testuingurukoak.",
     fsNarrativeTitle: "Aurreikuspenaren azalpena",
     fsShapTitle: "Eragin-faktore nagusiak (SHAP)",
     fsLoading: "Narratiba kargatzen...",
@@ -1516,11 +1522,38 @@ function updateI18n() {
   }
 }
 
+function predictionDateRelation() {
+    const parts = predDate.split('/').map(Number);
+    if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+    const [day, month, year] = parts;
+    const now = new Date();
+    const targetUtc = Date.UTC(year, month - 1, day);
+    const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((targetUtc - todayUtc) / 86400000);
+}
+
+function predictionDayLabel() {
+    const relation = predictionDateRelation();
+    const t = translations[currentLang];
+    if (relation === 0) return t.v10Today;
+    if (relation === 1) return t.v10Tomorrow;
+    return t.v10Date;
+}
+
+function adaptNarrativeDate(text) {
+    if (!text || typeof text !== 'string') return text;
+    const relation = predictionDateRelation();
+    if (relation === 0 && currentLang === 'es') return text.replaceAll('mañana', 'hoy');
+    if (relation === 0 && currentLang === 'eu') return text.replaceAll('Biharko', 'Gaurko');
+    if (relation !== 1 && currentLang === 'es') return text.replaceAll('mañana', `el ${predDate}`);
+    if (relation !== 1 && currentLang === 'eu') return text.replaceAll('Biharko', `${predDate}ko`);
+    return text;
+}
+
 function updateRiskDate() {
     const el = document.getElementById('riskDateSpan');
     if (el) {
-        const t = translations[currentLang];
-        el.innerHTML = `<span style="text-transform: uppercase;">${t.v10Tomorrow}</span> ${predDate}`;
+        el.innerHTML = `<span style="text-transform: uppercase;">${predictionDayLabel()}</span> ${predDate}`;
     }
 }
 
@@ -1935,7 +1968,7 @@ function initMap() {
       <div class="popup-row"><span class="popup-label">PM2.5</span><span class="popup-val">${fmt(s.PM25)} µg/m³</span></div>
       <div class="popup-row"><span class="popup-label">ICA</span><span class="popup-val">${fmt(s.ICA)}</span></div>
       <div class="popup-section">
-        <div class="popup-section-title">${t.mapPredManana}</div>
+        <div class="popup-section-title">${t.mapPrediction} · ${predictionDayLabel()} ${predDate}</div>
         <div class="popup-row"><span class="popup-label">NO₂</span><span class="popup-val">${fmt(s.pred_NO2)} µg/m³</span></div>
         <div class="popup-row"><span class="popup-label">PM10</span><span class="popup-val">${fmt(s.pred_PM10)} µg/m³</span></div>
         <div class="popup-row"><span class="popup-label">PM2.5</span><span class="popup-val">${fmt(s.pred_PM25)} µg/m³</span></div>
@@ -2074,6 +2107,7 @@ function renderForesight() {
   if (!narrativeText && fs.error) {
     narrativeText = `Error: ${fs.error}`;
   }
+  narrativeText = adaptNarrativeDate(narrativeText);
 
   // Construir vista estructurada: chips de features + narrativa LLM
   const posTop = fs.positive_top || [];
