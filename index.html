@@ -22,6 +22,7 @@
     --cf-lags:   #ef6c00;
     --accent:    #4f46e5;
     --green:     #059669;
+    --turquoise: #0d9488;
     --red:       #dc2626;
     --yellow:    #d97706;
   }
@@ -38,6 +39,7 @@
     --cf-lags:   #ffb74d;
     --accent:    #7c6af7;
     --green:     #4caf82;
+    --turquoise: #2dd4bf;
     --red:       #ef5350;
     --yellow:    #ffd54f;
   }
@@ -571,6 +573,7 @@ const getCssVar = (name) => {
     '--cf-lags':   '#ef6c00',
     '--accent':    '#4f46e5',
     '--green':     '#059669',
+    '--turquoise': '#0d9488',
     '--red':       '#dc2626',
     '--yellow':    '#d97706'
   };
@@ -587,6 +590,7 @@ const getCssVar = (name) => {
       '--cf-lags':   '#ffb74d',
       '--accent':    '#7c6af7',
       '--green':     '#4caf82',
+      '--turquoise': '#2dd4bf',
       '--red':       '#ef5350',
       '--yellow':    '#ffd54f'
     };
@@ -708,8 +712,8 @@ const translations = {
     v10Bad: "🔴 MALA",
     backReal: "Medición Real",
     backPred: "Predicción D+1 validada",
-    forecastD1: "Previsión D+1",
-    forecastD2: "Perspectiva D+2",
+    forecastD1: "Continuidad prevista hasta D+1",
+    forecastD2: "Trayectoria prevista D+1 → D+2",
     backCurrentPred: "Predicción de mañana",
     backWait: "⏳ Esperando sensores municipales",
     backExcel: "✓ Precisión Excelente",
@@ -813,8 +817,8 @@ const translations = {
     v10Bad: "🔴 TXARRA",
     backReal: "Neurketa Erreala",
     backPred: "Baliozkotutako D+1 iragarpena",
-    forecastD1: "D+1 iragarpena",
-    forecastD2: "D+2 ikuspegia",
+    forecastD1: "D+1era arteko aurreikuspen-jarraipena",
+    forecastD2: "D+1 → D+2 aurreikuspen-ibilbidea",
     backCurrentPred: "Biharko iragarpena",
     backWait: "⏳ Sentsoreen zain",
     backExcel: "✓ Doitasun bikaina",
@@ -1264,6 +1268,10 @@ function renderDashboard3() {
   const d1Forecast = Array(labels.length).fill(null);
   const d2Forecast = Array(labels.length).fill(null);
   if (d1Current !== null) {
+    const lastHistoricalPrediction = d.pred[d.pred.length - 1];
+    if (lastHistoricalPrediction !== null && lastHistoricalPrediction !== undefined) {
+      d1Forecast[historicalLabels.length - 1] = lastHistoricalPrediction;
+    }
     d1Forecast[historicalLabels.length] = d1Current;
   }
   if (d1Current !== null && d2Current !== null) {
@@ -1279,8 +1287,8 @@ function renderDashboard3() {
           datasets: [
               { label: t.backReal, data: historicalReal, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
               { label: t.backPred, data: historicalPred, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 },
-              { label: t.forecastD1, data: d1Forecast, borderColor: getCssVar('--green'), backgroundColor: getCssVar('--green'), showLine: false, pointRadius: 7, pointStyle: 'circle' },
-              { label: t.forecastD2, data: d2Forecast, borderColor: getCssVar('--yellow'), backgroundColor: getCssVar('--yellow'), borderDash: [3,3], borderWidth: 3, pointRadius: ctx => ctx.dataIndex === historicalLabels.length ? 0 : 8, pointStyle: 'triangle', tension: 0.2 }
+              { label: t.forecastD1, data: d1Forecast, borderColor: getCssVar('--green'), backgroundColor: getCssVar('--green'), borderDash: [7,5], borderWidth: 3, pointRadius: ctx => ctx.dataIndex === historicalLabels.length - 1 ? 0 : 7, pointStyle: 'circle', tension: 0.2 },
+              { label: t.forecastD2, data: d2Forecast, borderColor: getCssVar('--turquoise'), backgroundColor: getCssVar('--turquoise'), borderWidth: 3, pointRadius: ctx => ctx.dataIndex === historicalLabels.length ? 0 : 8, pointStyle: 'triangle', tension: 0.2 }
           ]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: text, font: { family: 'IBM Plex Mono'} } }, }, scales: { x: { ticks: { color: text }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
