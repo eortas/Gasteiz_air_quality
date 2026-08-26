@@ -370,6 +370,39 @@ try:
             if df_latest["date"].iloc[-1] >= df_feat["date"].iloc[-1]:
                 df_feat = df_latest
 
+    # station_daily se publica diariamente y puede ser más reciente que el
+    # parquet local. Lo usamos como fuente prioritaria de observaciones reales.
+    station_daily_path = PROCESSED_DIR / "station_daily.csv"
+    if station_daily_path.exists():
+        station_daily = pd.read_csv(station_daily_path)
+        station_daily["date"] = pd.to_datetime(station_daily["date"], utc=True)
+        observed_daily = pd.DataFrame({"date": station_daily["date"]})
+        station_groups = {
+            "zbe": ["PAUL", "FUEROS"],
+            "out": ["LANDAZURI", "HUETOS", "ZUMABIDE", "BEATO"],
+        }
+        station_suffixes = {
+            "NO2": "NO2", "PM10": "PM10", "PM2.5": "PM25", "ICA": "ICA"
+        }
+        for zone, stations in station_groups.items():
+            for contaminant, suffix in station_suffixes.items():
+                columns = [
+                    f"{station}_{suffix}"
+                    for station in stations
+                    if f"{station}_{suffix}" in station_daily.columns
+                ]
+                if columns:
+                    observed_daily[f"{contaminant}_{zone}"] = station_daily[columns].mean(
+                        axis=1, skipna=True
+                    )
+
+        df_feat = df_feat.set_index("date")
+        observed_daily = observed_daily.set_index("date")
+        df_feat = df_feat.reindex(df_feat.index.union(observed_daily.index))
+        for column in observed_daily.columns:
+            df_feat.loc[observed_daily.index, column] = observed_daily[column]
+        df_feat = df_feat.reset_index()
+
     if not df_feat.empty:
         df_feat = df_feat.sort_values("date").reset_index(drop=True)
 
