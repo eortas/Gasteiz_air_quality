@@ -421,7 +421,7 @@ try:
             targets_backtest = df_past.iloc[max(0, last_real_idx_pos-6) : last_real_idx_pos+1]
 
         # Fechas para las etiquetas del gráfico
-        fechas = targets_backtest['date'].dt.strftime('%d %b').tolist()
+        fechas = targets_backtest['date'].dt.strftime('%d/%m').tolist()
 
         # --- Cargar historial de predicciones del pipeline ---
         history_path = PROCESSED_DIR / "predictions_history.json"
@@ -1104,7 +1104,7 @@ html_template = """<!DOCTYPE html>
   <div class="charts-section">
     <div class="fig-block">
       <div class="fig-header">
-        <div class="fig-title" data-i18n="auditTitle"><strong>Histórico validado:</strong> predicción vs. medición (últimos 7 días)</div>
+        <div class="fig-title" data-i18n="auditTitle"><strong>Evolución y previsión:</strong> histórico validado + D+1 + D+2</div>
       </div>
       <div class="perf-chart-wrap">
         <canvas id="perfChart"></canvas>
@@ -1329,7 +1329,7 @@ const translations = {
     v10Calculating: "CALCULANDO...",
     v10Today: "hoy",
     v10Date: "fecha",
-    auditTitle: "<strong>Histórico validado:</strong> predicción vs. medición (últimos 7 días)",
+    auditTitle: "<strong>Evolución y previsión:</strong> histórico validado + D+1 + D+2",
     backtestTitle: "<strong>Último día validado</strong> — control de precisión",
     colParam: "Parametro",
     colPred: "Predicción emitida",
@@ -1395,7 +1395,9 @@ const translations = {
     v10Mod: "🟡 MODERADA",
     v10Bad: "🔴 MALA",
     backReal: "Medición Real",
-    backPred: "Predicción",
+    backPred: "Predicción D+1 validada",
+    forecastD1: "Previsión D+1",
+    forecastD2: "Perspectiva D+2",
     backCurrentPred: "Predicción de mañana",
     backWait: "⏳ Esperando sensores municipales",
     backExcel: "✓ Precisión Excelente",
@@ -1451,7 +1453,7 @@ const translations = {
     v10Calculating: "KALKULATZEN...",
     v10Today: "gaur",
     v10Date: "data",
-    auditTitle: "<strong>Baliozkotutako historikoa:</strong> iragarpena vs. neurketa (azken 7 egunak)",
+    auditTitle: "<strong>Bilakaera eta iragarpena:</strong> baliozkotutako historikoa + D+1 + D+2",
     backtestTitle: "<strong>Baliozkotutako azken eguna</strong> — doitasun-kontrola",
     trafficYoYTitle: "Eraginaren Azterketa: Perimetroko Trafikoaren Bilakaera (YoY)",
     trafficYoYSubtitle: "Gaur egungo trafikoaren eta aurreko urteko epe beraren arteko alderaketa (asteko egunaren arabera lerrokatuta).",
@@ -1498,7 +1500,9 @@ const translations = {
     v10Mod: "🟡 ERTAINA",
     v10Bad: "🔴 TXARRA",
     backReal: "Neurketa Erreala",
-    backPred: "Aurreikuspena",
+    backPred: "Baliozkotutako D+1 iragarpena",
+    forecastD1: "D+1 iragarpena",
+    forecastD2: "D+2 ikuspegia",
     backCurrentPred: "Biharko iragarpena",
     backWait: "⏳ Sentsoreen zain",
     backExcel: "✓ Doitasun bikaina",
@@ -1938,7 +1942,24 @@ function renderDashboard3() {
   const historicalLabels = (perfStats[currentZoneV10].labels || []).map(
     l => l === 'Ayer' ? predictionDateOffsetLabel(-2) : l
   );
-  const labels = historicalLabels;
+  const d1DateLabel = predDate.split('/').slice(0, 2).join('/');
+  const d2DateLabel = predictionDateOffsetFull(1).split('/').slice(0, 2).join('/');
+  const labels = [...historicalLabels, `${d1DateLabel} · D+1`, `${d2DateLabel} · D+2`];
+  const d1Current = targetsData[`${currentContV10}_${currentZoneV10}_d1`]?.prediction ?? null;
+  const d2Current = targetsData[`${currentContV10}_${currentZoneV10}_d2`]?.prediction ?? null;
+  const historicalReal = [...d.real, null, null];
+  const historicalPred = [...d.pred, null, null];
+  const d1Forecast = Array(labels.length).fill(null);
+  const d2Forecast = Array(labels.length).fill(null);
+  const lastObserved = d.real[d.real.length - 1];
+  if (lastObserved !== null && lastObserved !== undefined && d1Current !== null) {
+    d1Forecast[historicalLabels.length - 1] = lastObserved;
+    d1Forecast[historicalLabels.length] = d1Current;
+  }
+  if (d1Current !== null && d2Current !== null) {
+    d2Forecast[historicalLabels.length] = d1Current;
+    d2Forecast[historicalLabels.length + 1] = d2Current;
+  }
   const text = getCssVar('--muted'); const grid = getCssVar('--border');
 
   perfChart = new Chart(ctx, {
@@ -1946,8 +1967,10 @@ function renderDashboard3() {
       data: {
           labels: labels,
           datasets: [
-              { label: t.backReal, data: d.real, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
-              { label: t.backPred, data: d.pred, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 }
+              { label: t.backReal, data: historicalReal, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
+              { label: t.backPred, data: historicalPred, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 },
+              { label: t.forecastD1, data: d1Forecast, borderColor: getCssVar('--green'), backgroundColor: getCssVar('--green'), borderWidth: 3, pointRadius: 6, pointStyle: 'circle', tension: 0.2 },
+              { label: t.forecastD2, data: d2Forecast, borderColor: getCssVar('--yellow'), backgroundColor: getCssVar('--yellow'), borderDash: [3,3], borderWidth: 3, pointRadius: 7, pointStyle: 'triangle', tension: 0.2 }
           ]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: text, font: { family: 'IBM Plex Mono'} } }, }, scales: { x: { ticks: { color: text }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
