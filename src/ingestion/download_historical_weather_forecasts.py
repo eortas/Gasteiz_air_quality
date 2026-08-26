@@ -1,8 +1,7 @@
-"""
-Reconstruye pronósticos meteorológicos D+1 sin usar tiempo observado futuro.
+"""Reconstruye pronósticos meteorológicos D+1 y D+2 sin fuga temporal.
 
-Usamos Previous Runs de Open-Meteo. Cada valor ``previous_day1`` es el
-pronóstico publicado 24 horas antes de la hora para la que era válido.
+Usamos Previous Runs de Open-Meteo. ``previous_day1`` y ``previous_day2``
+representan lo que se conocía uno y dos días antes del día objetivo.
 """
 
 import argparse
@@ -40,14 +39,15 @@ FORECAST_VARS = [
 ]
 
 SUM_VARS = {"precipitation", "rain", "snowfall", "sunshine_duration"}
+HORIZONS = (1, 2)
 
 
-def aggregate_day(day_data: pd.DataFrame) -> dict:
+def aggregate_day(day_data: pd.DataFrame, horizon: int) -> dict:
     """Agregamos las 24 horas del día objetivo igual que en producción."""
     features = {}
 
     for variable in FORECAST_VARS:
-        column = f"{variable}_previous_day1"
+        column = f"{variable}_previous_day{horizon}"
         if column not in day_data.columns:
             continue
         values = pd.to_numeric(day_data[column], errors="coerce")
@@ -64,21 +64,22 @@ def aggregate_day(day_data: pd.DataFrame) -> dict:
         else:
             value = values.mean()
 
-        features[f"fc_{variable}_d1"] = float(value)
+        features[f"fc_{variable}_d{horizon}"] = float(value)
 
-    temperature = features.get("fc_temperature_2m_d1")
-    humidity = features.get("fc_relative_humidity_2m_d1")
-    wind_speed = features.get("fc_wind_speed_10m_d1")
-    wind_direction = features.get("fc_wind_direction_10m_d1")
+    suffix = f"d{horizon}"
+    temperature = features.get(f"fc_temperature_2m_{suffix}")
+    humidity = features.get(f"fc_relative_humidity_2m_{suffix}")
+    wind_speed = features.get(f"fc_wind_speed_10m_{suffix}")
+    wind_direction = features.get(f"fc_wind_direction_10m_{suffix}")
 
     if temperature is not None and humidity is not None:
-        features["fc_dew_point_d1"] = temperature - ((100.0 - humidity) / 5.0)
-        features["fc_HDD_d1"] = max(0.0, 15.0 - temperature)
+        features[f"fc_dew_point_{suffix}"] = temperature - ((100.0 - humidity) / 5.0)
+        features[f"fc_HDD_{suffix}"] = max(0.0, 15.0 - temperature)
 
     if wind_speed is not None and wind_direction is not None:
         radians = np.deg2rad(wind_direction)
-        features["fc_wind_u_d1"] = float(-wind_speed * np.sin(radians))
-        features["fc_wind_v_d1"] = float(-wind_speed * np.cos(radians))
+        features[f"fc_wind_u_{suffix}"] = float(-wind_speed * np.sin(radians))
+        features[f"fc_wind_v_{suffix}"] = float(-wind_speed * np.cos(radians))
 
     return features
 
@@ -88,7 +89,11 @@ def download_chunk(start_date: date, end_date: date) -> list[dict]:
     params = {
         "latitude": LATITUDE,
         "longitude": LONGITUDE,
-        "hourly": ",".join(f"{name}_previous_day1" for name in FORECAST_VARS),
+        "hourly": ",".join(
+            f"{name}_previous_day{horizon}"
+            for horizon in HORIZONS
+            for name in FORECAST_VARS
+        ),
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
         "timezone": TIMEZONE,
@@ -117,23 +122,30 @@ def download_chunk(start_date: date, end_date: date) -> list[dict]:
     hourly["target_date"] = pd.to_datetime(hourly["time"]).dt.date
     records = []
     for target_date, day_data in hourly.groupby("target_date"):
-        features = aggregate_day(day_data)
-        if not features:
-            continue
-        records.append(
-            {
-                "generated_at": datetime.combine(
-                    target_date - timedelta(days=1),
-                    datetime.min.time(),
-                    tzinfo=timezone.utc,
-                ).isoformat(),
-                "target_date": target_date.isoformat(),
-                "source": "open-meteo-previous-runs",
-                "lead_days": 1,
-                "features": features,
-            }
-        )
+        for horizon in HORIZONS:
+            features = aggregate_day(day_data, horizon)
+            if not features:
+                continue
+            records.append(
+                {
+                    "generated_at": datetime.combine(
+                        target_date - timedelta(days=horizon),
+                        datetime.min.time(),
+                        tzinfo=timezone.utc,
+                    ).isoformat(),
+                    "target_date": target_date.isoformat(),
+                    "source": "open-meteo-previous-runs",
+                    "lead_days": horizon,
+                    "features": features,
+                }
+            )
     return records
+
+
+def record_key(record: dict) -> str:
+    """Identificamos cada emisión por fecha objetivo y horizonte."""
+    horizon = int(record.get("lead_days", 1))
+    return f"{record['target_date']}|d{horizon}"
 
 
 def load_live_snapshots() -> dict[str, dict]:
@@ -153,7 +165,7 @@ def load_live_snapshots() -> dict[str, dict]:
                 record.get("source") != "open-meteo-previous-runs"
                 and generated_at <= target_start
             ):
-                snapshots[record["target_date"]] = record
+                snapshots[record_key(record)] = record
         except (json.JSONDecodeError, KeyError, TypeError, ValueError):
             continue
     return snapshots
@@ -183,7 +195,7 @@ def main():
         downloads = executor.map(lambda dates: download_chunk(*dates), chunks)
         for chunk_records in downloads:
             for record in chunk_records:
-                records[record["target_date"]] = record
+                records[record_key(record)] = record
 
     # Los snapshots ejecutados realmente tienen prioridad sobre la reconstrucción.
     records.update(load_live_snapshots())

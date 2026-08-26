@@ -1,7 +1,7 @@
 """
 predict.py
 ==================
-Genera predicciones D+1 para los 8 indicadores de calidad del aire.
+Genera predicciones D+1 y D+2 para los indicadores de calidad del aire.
 Prioriza el ensemble forecast v10 y conserva v8 como compatibilidad.
 
 Fuentes de datos para la predicci?n:
@@ -50,10 +50,12 @@ FORECAST_HISTORY_PATH = PROCESSED_DIR / "weather_forecast_history.jsonl"
 PREDICTION_CUTOFF_HOUR = 22
 
 # ??? CONFIG ???????????????????????????????????????????????????????????????????
+HORIZONS = (1, 2)
 TARGETS = [
-    "NO2_zbe_d1", "NO2_out_d1",
-    "PM10_zbe_d1", "PM10_out_d1",
-    "PM2.5_zbe_d1", "PM2.5_out_d1",
+    f"{pollutant}_{zone}_d{horizon}"
+    for horizon in HORIZONS
+    for pollutant in ["NO2", "PM10", "PM2.5"]
+    for zone in ["zbe", "out"]
 ]
 
 # Función para obtener métricas CV v8 dinámicas
@@ -130,6 +132,16 @@ def log(msg=""):
 
 def section(title):
     log(); log("=" * 65); log(f"  {title}"); log("=" * 65)
+
+
+def target_horizon(target: str) -> int:
+    """Obtenemos el horizonte incluido en el nombre del target."""
+    return int(target.rsplit("_d", 1)[1])
+
+
+def current_air_column(target: str) -> str:
+    """Convertimos NO2_zbe_d2 en la concentración conocida NO2_zbe."""
+    return target.rsplit("_d", 1)[0]
 
 
 # ??? 1. CARGAR MODELOS Y FEATURES ????????????????????????????????????????????
@@ -253,18 +265,23 @@ def get_seasonal_fill_values(features: list, medians: dict, seasonal_medians: di
     return fill_values
 
 
-def add_d1_calendar_features(row: pd.DataFrame, pred_date: pd.Timestamp) -> pd.DataFrame:
-    """Añadimos el calendario conocido del día que se quiere predecir."""
+def add_target_calendar_features(
+    row: pd.DataFrame, first_prediction_date: pd.Timestamp
+) -> pd.DataFrame:
+    """Añadimos el calendario conocido de D+1 y D+2."""
     result = row.copy()
-    date = pd.Timestamp(pred_date)
-    result["d1_day_of_week"] = date.dayofweek
-    result["d1_month"] = date.month
-    result["d1_day_of_year"] = date.dayofyear
-    result["d1_is_weekend"] = int(date.dayofweek >= 5)
-    result["d1_dow_sin"] = np.sin(2 * np.pi * date.dayofweek / 7)
-    result["d1_dow_cos"] = np.cos(2 * np.pi * date.dayofweek / 7)
-    result["d1_doy_sin"] = np.sin(2 * np.pi * date.dayofyear / 365.25)
-    result["d1_doy_cos"] = np.cos(2 * np.pi * date.dayofyear / 365.25)
+    first_date = pd.Timestamp(first_prediction_date)
+    for horizon in HORIZONS:
+        date = first_date + pd.Timedelta(days=horizon - 1)
+        prefix = f"d{horizon}"
+        result[f"{prefix}_day_of_week"] = date.dayofweek
+        result[f"{prefix}_month"] = date.month
+        result[f"{prefix}_day_of_year"] = date.dayofyear
+        result[f"{prefix}_is_weekend"] = int(date.dayofweek >= 5)
+        result[f"{prefix}_dow_sin"] = np.sin(2 * np.pi * date.dayofweek / 7)
+        result[f"{prefix}_dow_cos"] = np.cos(2 * np.pi * date.dayofweek / 7)
+        result[f"{prefix}_doy_sin"] = np.sin(2 * np.pi * date.dayofyear / 365.25)
+        result[f"{prefix}_doy_cos"] = np.cos(2 * np.pi * date.dayofyear / 365.25)
     return result
 
 
@@ -447,6 +464,44 @@ def save_forecast_snapshot(target_date: pd.Timestamp, forecast: dict):
         file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
+def fetch_forecasts(first_target_date: pd.Timestamp) -> dict:
+    """Descargamos los pronósticos D+1 y D+2 con el mismo corte operativo."""
+    forecasts = {}
+    for horizon in HORIZONS:
+        target_date = pd.Timestamp(first_target_date) + pd.Timedelta(days=horizon - 1)
+        horizon_forecast = fetch_forecast_d1(target_date)
+        forecasts.update({
+            key.replace("_d1", f"_d{horizon}"): value
+            for key, value in horizon_forecast.items()
+        })
+    return forecasts
+
+
+def save_forecast_snapshots(first_target_date: pd.Timestamp, forecast: dict):
+    """Guardamos por separado las emisiones meteorológicas D+1 y D+2."""
+    if not forecast:
+        return
+
+    generated_at = datetime.now(timezone.utc).isoformat()
+    with open(FORECAST_HISTORY_PATH, "a", encoding="utf-8") as file:
+        for horizon in HORIZONS:
+            suffix = f"_d{horizon}"
+            features = {
+                key: value for key, value in forecast.items() if key.endswith(suffix)
+            }
+            if not features:
+                continue
+            target_date = pd.Timestamp(first_target_date) + pd.Timedelta(days=horizon - 1)
+            record = {
+                "generated_at": generated_at,
+                "target_date": target_date.date().isoformat(),
+                "source": "live-open-meteo",
+                "lead_days": horizon,
+                "features": features,
+            }
+            file.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
 def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.DataFrame, pred_date: pd.Timestamp) -> dict:
     """
     Usa los meta-modelos Ridge para corregir las predicciones v1.
@@ -512,7 +567,7 @@ def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.Dat
                 p_h = float(model_v1.predict(X_h)[0])
                 
                 # target es "NO2_zbe_d1" -> la columna real en el parquet es "NO2_zbe"
-                contam_col = target.replace("_d1", "")
+                contam_col = current_air_column(target)
                 actual = h_row.get(contam_col) 
                 if pd.notna(actual):
                     errors.append(actual - p_h)
@@ -615,14 +670,20 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
         "fc_precipitation_d1": "Precipitación prevista",
     }
     
-    pos_str = ", ".join([f"{feat_map.get(f[0], f[0])} (+{round(f[1], 2)})" for f in positive_feats[:3]])
-    neg_str = ", ".join([f"{feat_map.get(f[0], f[0])} ({round(f[1], 2)})" for f in negative_feats[:3]])
+    def feature_label(name):
+        return feat_map.get(name, feat_map.get(name.replace("_d2", "_d1"), name))
 
+    pos_str = ", ".join([f"{feature_label(f[0])} (+{round(f[1], 2)})" for f in positive_feats[:3]])
+    neg_str = ", ".join([f"{feature_label(f[0])} ({round(f[1], 2)})" for f in negative_feats[:3]])
+
+    horizon = target_horizon(target)
+    period_es = "mañana" if horizon == 1 else "pasado mañana"
+    period_eu = "Bihar" if horizon == 1 else "Etzi"
     prompt = (
         f"Contaminante: {target.split('_')[0]} | Zona: {target.split('_')[1].upper()} | Predicción: {round(pred_val, 1)} µg/m³ | Valor base histórico: {round(base_val, 1)} µg/m³\n"
         f"Variables que AUMENTAN la concentración: {pos_str}\n"
         f"Variables que REDUCEN la concentración: {neg_str}\n\n"
-        f"Genera un análisis ambiental directo y fluido para mañana, en 2 párrafos breves, explicando la influencia del tráfico, viento y condiciones meteorológicas.\n"
+        f"Genera un análisis ambiental directo y fluido para {period_es}, en 2 párrafos breves, explicando la influencia del tráfico, viento y condiciones meteorológicas.\n"
         f"Responde ÚNICAMENTE con un JSON con el formato: {{\"es\": \"texto en castellano\", \"eu\": \"texto en euskera\"}}"
     )
 
@@ -663,7 +724,7 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
     zone_name = target.split('_')[1].upper()
     
     es_text = (
-        f"Para mañana se estima una concentración de {cont_name} de {round(pred_val, 1)} µg/m³ en la zona {zone_name}, "
+        f"Para {period_es} se estima una concentración de {cont_name} de {round(pred_val, 1)} µg/m³ en la zona {zone_name}, "
         f"frente a la media habitual de {round(base_val, 1)} µg/m³. "
         f"Esta tendencia viene determinada principalmente por la dinámica meteorológica y el volumen de emisiones locales, "
         f"donde factores como {pos_str} actúan incrementando los niveles atmosféricos.\n\n"
@@ -672,7 +733,7 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
     )
     
     eu_text = (
-        f"Biharko {cont_name} kontzentrazioa {round(pred_val, 1)} µg/m³-koa izatea aurreikusten da {zone_name} eremuan, "
+        f"{period_eu} {cont_name} kontzentrazioa {round(pred_val, 1)} µg/m³-koa izatea aurreikusten da {zone_name} eremuan, "
         f"ohiko {round(base_val, 1)} µg/m³-ko batez bestekoaren aldean. "
         f"Joera hau egoera meteorologikoak eta bertako isurketek baldintzatzen dute, "
         f"bereziki {pos_str} bezalako faktoreek kontzentrazioa handituz.\n\n"
@@ -683,7 +744,7 @@ def generate_llm_narrative(target: str, pred_val: float, base_val: float, positi
     return {"es": es_text, "eu": eu_text}
 
 
-def add_deterministic_ica(results: dict):
+def add_deterministic_ica(results: dict, horizon: int = 1):
     """Calcula el ICA con subíndices CAQI europeos normalizados.
     
     Fix auditoría #10: Reemplaza el Ridge entrenado al vuelo (sin validación)
@@ -696,9 +757,9 @@ def add_deterministic_ica(results: dict):
     
     try:
         for zone in ["zbe", "out"]:
-            no2_key  = f"NO2_{zone}_d1"
-            pm10_key = f"PM10_{zone}_d1"
-            pm25_key = f"PM2.5_{zone}_d1"
+            no2_key  = f"NO2_{zone}_d{horizon}"
+            pm10_key = f"PM10_{zone}_d{horizon}"
+            pm25_key = f"PM2.5_{zone}_d{horizon}"
             
             if no2_key not in results or pm10_key not in results or pm25_key not in results:
                 continue
@@ -742,7 +803,7 @@ def add_deterministic_ica(results: dict):
                 compute_ica_subindex("PM2.5", results[pm25_key]["upper"]),
             )
             
-            results[f"ICA_{zone}_d1"] = {
+            results[f"ICA_{zone}_d{horizon}"] = {
                 "prediction_v1": round(pred_ica_v1, 2),
                 "prediction":    round(pred_ica, 2),
                 "lower":         round(max(0, lower_ica), 2),
@@ -809,7 +870,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
             pred_date: pd.Timestamp = None) -> dict:
     """
     Genera predicciones para los targets usando sus respectivas features.
-    Si forecast_override tiene features fc_*_d1 reales, las sustituye en la fila.
+    Si forecast_override tiene features meteorológicas reales, las sustituye en la fila.
     Usa medianas estacionales (del mes de pred_date) para imputar NaN.
     """
     results = {}
@@ -817,7 +878,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
     # Determinar el mes de predicción para medianas estacionales
     pred_month = pred_date.month if pred_date is not None else datetime.now().month
     if pred_date is not None:
-        row = add_d1_calendar_features(row, pred_date)
+        row = add_target_calendar_features(row, pred_date)
 
     # Aplicar pronóstico real si está disponible
     if forecast_override:
@@ -853,9 +914,8 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
         X_raw = row.reindex(columns=features)
         n_nan = int(X_raw.isna().sum(axis=1).iloc[0])
         X = X_raw.fillna(fill_values).astype(float)
-        current_col = target.replace("_d1", "")
+        current_col = current_air_column(target)
         if production_method == "persistence":
-            current_col = target.replace("_d1", "")
             if current_col not in row.columns or pd.isna(row.iloc[0][current_col]):
                 raise RuntimeError(f"Falta {current_col} para la predicción de persistencia")
             pred = float(row.iloc[0][current_col])
@@ -972,7 +1032,8 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
         }
 
     # Añadir el ICA calculado de manera determinista en base a los contaminantes base
-    add_deterministic_ica(results)
+    for horizon in HORIZONS:
+        add_deterministic_ica(results, horizon)
 
     return results
 
@@ -1000,6 +1061,21 @@ def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
             log(f"  {meta['label']:<12} {zone_label:<6} {pred:>7.2f} {meta['unit']}  "
                 f"[{lower:.1f} - {upper:.1f}]  {alert}")
 
+    log(f"\n  D+2 · {pred_date.date() + pd.Timedelta(days=1)}")
+    for cont in ["NO2", "PM10", "PM2.5", "ICA"]:
+        meta = META[cont]
+        for zone in ["zbe", "out"]:
+            key = f"{cont}_{zone}_d2"
+            if key not in results:
+                continue
+            result = results[key]
+            alert = "[WARN] ALERTA" if result["prediction"] >= meta["alert"] else "[OK] OK"
+            zone_label = "ZBE" if zone == "zbe" else "OUT"
+            log(
+                f"  {meta['label']:<12} {zone_label:<6} {result['prediction']:>7.2f} {meta['unit']}  "
+                f"[{result['lower']:.1f} - {result['upper']:.1f}]  {alert}"
+            )
+
     log()
     interval_methods = {result.get("interval_method", "aproximación normal") for result in results.values()}
     log(f"  Intervalo 90%: {', '.join(sorted(interval_methods))}")
@@ -1016,6 +1092,11 @@ def save_json(results: dict, pred_date: pd.Timestamp, run_type: str = "productio
               source_date: pd.Timestamp = None):
     out = {
         "prediction_date": pred_date.date().isoformat(),
+        "prediction_dates": {
+            f"d{horizon}": (pred_date + pd.Timedelta(days=horizon - 1)).date().isoformat()
+            for horizon in HORIZONS
+        },
+        "forecast_horizons_days": list(HORIZONS),
         "generated_at":    datetime.now(timezone.utc).isoformat(),
         "model_version":   "forecast_v10" if any(
             value.get("model_version") == "forecast_v10" for value in results.values()
@@ -1050,6 +1131,10 @@ def save_json(results: dict, pred_date: pd.Timestamp, run_type: str = "productio
         # Registro append-only: nunca sustituir una predicción ya emitida.
         entry = {
             "prediction_date": pred_date.date().isoformat(),
+            "prediction_dates": {
+                f"d{horizon}": (pred_date + pd.Timedelta(days=horizon - 1)).date().isoformat()
+                for horizon in HORIZONS
+            },
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "source_date": source_date.date().isoformat() if source_date is not None else None,
             "run_type": "production",
@@ -1085,8 +1170,8 @@ def main():
         log("=" * 65)
         log("  PREDICT - Vitoria Air Quality")
         log(f"  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        log("  Modelo: forecast v10 (ensamblado validado) × 6 targets d1 + ICA")
-        log(f"  Meteo d1: {meteo_desc}")
+        log("  Modelo: forecast v10 validado · horizontes D+1 y D+2")
+        log(f"  Meteorología D+1/D+2: {meteo_desc}")
         log("=" * 65)
 
     # 1. Cargar modelos
@@ -1105,9 +1190,9 @@ def main():
     if with_forecast:
         if not json_only:
             section("3. Descargando pronóstico Open-Meteo")
-        forecast_override = fetch_forecast_d1(pred_date)
+        forecast_override = fetch_forecasts(pred_date)
         if not date_arg:
-            save_forecast_snapshot(pred_date, forecast_override)
+            save_forecast_snapshots(pred_date, forecast_override)
 
     # Aplicar pronóstico real a row si está disponible
     if forecast_override:

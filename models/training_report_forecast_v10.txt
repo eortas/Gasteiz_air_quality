@@ -1,5 +1,5 @@
 ==============================================================================
-FORECAST V10 - modelo operativo D+1
+FORECAST V10 - modelos operativos D+1 y D+2
 Dataset: 708 días | 2024-08-09 -> 2026-07-28
 Contrato: corte 22:00 Europe/Madrid
 Métrica entre paréntesis: skill RMSE frente a persistencia
@@ -10,5 +10,11 @@ Métrica entre paréntesis: skill RMSE frente a persistencia
   PM10_out_d1          CV=3.325 (+12.5%)  TEST=3.132 (+16.6%)  IC90=98.1%  passed
   PM2.5_zbe_d1         CV=2.739 (+17.4%)  TEST=2.672 (+17.8%)  IC90=98.1%  passed
   PM2.5_out_d1         CV=2.486 (+12.6%)  TEST=2.486 (+16.4%)  IC90=98.1%  passed
+  NO2_zbe_d2           CV=2.359 (+23.4%)  TEST=1.769 (+12.4%)  IC90=99.0%  passed
+  NO2_out_d2           CV=2.364 (+35.1%)  TEST=3.552 (+13.1%)  IC90=93.3%  passed
+  PM10_zbe_d2          CV=5.629 (+19.3%)  TEST=5.778 (+21.7%)  IC90=96.2%  passed
+  PM10_out_d2          CV=4.221 (+14.4%)  TEST=4.103 (+22.6%)  IC90=96.2%  passed
+  PM2.5_zbe_d2         CV=3.788 (+18.7%)  TEST=3.492 (+23.7%)  IC90=99.0%  passed
+  PM2.5_out_d2         CV=3.041 (+18.6%)  TEST=3.253 (+22.9%)  IC90=96.2%  passed
 ==============================================================================
-Control de calidad: 6/6 objetivos aprobados
+Control de calidad: 12/12 objetivos aprobados

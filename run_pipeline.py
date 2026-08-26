@@ -209,7 +209,7 @@ def main():
 
     # ── 6. ENTRENAMIENTO OPERATIVO + ANÁLISIS CAUSAL ───────
     if not skip_training:
-        logger.info("\n── FASE 6: Entrenamiento forecast v10 con backtesting")
+        logger.info("\n── FASE 6: Entrenamiento forecast v10 D+1/D+2 con backtesting")
         if not run_script("Train forecast v10", "src/ml/train_forecast_v10.py"):
             logger.error("[ERROR] El entrenamiento operativo falló. Abortando.")
             sys.exit(1)
@@ -239,8 +239,8 @@ def main():
         logger.warning("[WARN]  station_daily.csv no encontrado - omitiendo análisis v9.")
         logger.warning("    Ejecuta build_station_daily.py o coloca el CSV en data/processed/")
 
-    logger.info("\n── FASE 8: Predicción para mañana desde corte 22:00")
-    if not run_script("Predecir mañana", "src/ml/predict.py", ["--with-forecast", "--no-meta"]):
+    logger.info("\n── FASE 8: Predicción D+1 y D+2 desde corte 22:00")
+    if not run_script("Predecir D+1 y D+2", "src/ml/predict.py", ["--with-forecast", "--no-meta"]):
         logger.error("[ERROR] La predicción falló o los datos no están frescos. Abortando para no publicar una predicción antigua.")
         sys.exit(1)
 

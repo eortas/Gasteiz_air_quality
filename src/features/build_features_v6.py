@@ -543,16 +543,18 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     df["doy_sin"]   = np.sin(2 * np.pi * df["day_of_year"] / 365)
     df["doy_cos"]   = np.cos(2 * np.pi * df["day_of_year"] / 365)
 
-    # Añadimos el calendario de D+1, que se conoce en el momento de predicción.
-    target_date = df["date"] + pd.Timedelta(days=1)
-    df["d1_day_of_week"] = target_date.dt.dayofweek
-    df["d1_month"] = target_date.dt.month
-    df["d1_day_of_year"] = target_date.dt.dayofyear
-    df["d1_is_weekend"] = (target_date.dt.dayofweek >= 5).astype(int)
-    df["d1_dow_sin"] = np.sin(2 * np.pi * target_date.dt.dayofweek / 7)
-    df["d1_dow_cos"] = np.cos(2 * np.pi * target_date.dt.dayofweek / 7)
-    df["d1_doy_sin"] = np.sin(2 * np.pi * target_date.dt.dayofyear / 365.25)
-    df["d1_doy_cos"] = np.cos(2 * np.pi * target_date.dt.dayofyear / 365.25)
+    # Añadimos el calendario conocido de cada horizonte futuro.
+    for horizon in range(1, HORIZON_DAYS + 1):
+        target_date = df["date"] + pd.Timedelta(days=horizon)
+        prefix = f"d{horizon}"
+        df[f"{prefix}_day_of_week"] = target_date.dt.dayofweek
+        df[f"{prefix}_month"] = target_date.dt.month
+        df[f"{prefix}_day_of_year"] = target_date.dt.dayofyear
+        df[f"{prefix}_is_weekend"] = (target_date.dt.dayofweek >= 5).astype(int)
+        df[f"{prefix}_dow_sin"] = np.sin(2 * np.pi * target_date.dt.dayofweek / 7)
+        df[f"{prefix}_dow_cos"] = np.cos(2 * np.pi * target_date.dt.dayofweek / 7)
+        df[f"{prefix}_doy_sin"] = np.sin(2 * np.pi * target_date.dt.dayofyear / 365.25)
+        df[f"{prefix}_doy_cos"] = np.cos(2 * np.pi * target_date.dt.dayofyear / 365.25)
 
     # ZBE flags
     df["is_post_zbe"]    = (df["date"] >= ZBE_DATE).astype(int)
@@ -699,14 +701,17 @@ def add_forecast_features(df: pd.DataFrame, fc: pd.DataFrame) -> pd.DataFrame:
         try:
             record = json.loads(line)
             target_date = pd.Timestamp(record["target_date"], tz="UTC")
-            records.append({"date": target_date - pd.Timedelta(days=1), **record["features"]})
+            horizon = int(record.get("lead_days", 1))
+            source_date = target_date - pd.Timedelta(days=horizon)
+            records.append({"date": source_date, **record["features"]})
         except (ValueError, KeyError, TypeError):
             continue
     if not records:
         log("  No hay snapshots válidos")
         return df
 
-    forecast_df = pd.DataFrame(records).drop_duplicates("date", keep="last")
+    # Unimos en una sola fila los snapshots D+1 y D+2 emitidos en la misma fecha.
+    forecast_df = pd.DataFrame(records).groupby("date", as_index=False).first()
     forecast_cols = [c for c in forecast_df.columns if c.startswith("fc_")]
     df = df.merge(forecast_df[["date"] + forecast_cols], on="date", how="left")
     log(f"  Snapshots disponibles: {len(forecast_df):,} días, {len(forecast_cols)} features")

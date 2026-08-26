@@ -14,13 +14,12 @@ ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 MODELS_DIR = ROOT_DIR / "models"
 
+HORIZONS = (1, 2)
 TARGETS = [
-    "NO2_zbe_d1",
-    "NO2_out_d1",
-    "PM10_zbe_d1",
-    "PM10_out_d1",
-    "PM2.5_zbe_d1",
-    "PM2.5_out_d1",
+    f"{pollutant}_{zone}_d{horizon}"
+    for horizon in HORIZONS
+    for pollutant in ["NO2", "PM10", "PM2.5"]
+    for zone in ["zbe", "out"]
 ]
 
 
@@ -47,6 +46,18 @@ def validate():
         PROCESSED_DIR / "features_daily.parquet", columns=["date"]
     )
     latest = pd.read_parquet(PROCESSED_DIR / "features_latest.parquet")
+    latest["date"] = pd.to_datetime(latest["date"], utc=True)
+    for horizon in HORIZONS:
+        target_date = latest["date"] + pd.Timedelta(days=horizon)
+        prefix = f"d{horizon}"
+        latest[f"{prefix}_day_of_week"] = target_date.dt.dayofweek
+        latest[f"{prefix}_month"] = target_date.dt.month
+        latest[f"{prefix}_day_of_year"] = target_date.dt.dayofyear
+        latest[f"{prefix}_is_weekend"] = (target_date.dt.dayofweek >= 5).astype(int)
+        latest[f"{prefix}_dow_sin"] = np.sin(2 * np.pi * target_date.dt.dayofweek / 7)
+        latest[f"{prefix}_dow_cos"] = np.cos(2 * np.pi * target_date.dt.dayofweek / 7)
+        latest[f"{prefix}_doy_sin"] = np.sin(2 * np.pi * target_date.dt.dayofyear / 365.25)
+        latest[f"{prefix}_doy_cos"] = np.cos(2 * np.pi * target_date.dt.dayofyear / 365.25)
 
     if contract.get("cutoff_hour_local") != 22:
         errors.append("El corte operativo no es 22:00")
@@ -116,7 +127,7 @@ def validate():
         return 1
 
     print(
-        f"FORECAST V10 VÁLIDO: {len(TARGETS)}/{len(TARGETS)} objetivos, "
+        f"FORECAST V10 D+1/D+2 VÁLIDO: {len(TARGETS)}/{len(TARGETS)} objetivos, "
         f"{len(latest)} filas disponibles"
     )
     return 0

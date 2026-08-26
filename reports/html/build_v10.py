@@ -389,8 +389,6 @@ try:
 
         # Fechas para las etiquetas del gráfico
         fechas = targets_backtest['date'].dt.strftime('%d %b').tolist()
-        if len(fechas) > 0:
-            fechas[-1] = "Ayer"
 
         # --- Cargar historial de predicciones del pipeline ---
         history_path = PROCESSED_DIR / "predictions_history.json"
@@ -797,6 +795,11 @@ html_template = """<!DOCTYPE html>
   .view-container.active { display: block; }
   
   .v10-risk-container { text-align: center; padding: 50px 40px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .v10-planning-container { text-align: center; padding: 28px 40px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .v10-planning-note { max-width: 760px; margin: 0 auto 18px; color: var(--muted); font-size: 12px; }
+  .v10-planning-container .v10-risk-grid { gap: 48px; }
+  .v10-planning-container .v10-risk-item .val { font-size: 22px; }
+  .v10-interval { font-size: 10px; color: var(--muted); margin-top: 4px; font-family: 'IBM Plex Mono', monospace; }
   .v10-risk-badge { display: inline-block; font-size: 32px; font-weight: 800; padding: 12px 30px; border-radius: 8px; margin-bottom: 30px; font-family: 'IBM Plex Mono', monospace; border: 2px solid; }
   .v10-risk-grid { display: flex; justify-content: center; gap: 70px; }
   .v10-risk-item .val { font-size: 28px; font-weight: 700; color: var(--text); font-family: 'IBM Plex Mono', monospace;}
@@ -1033,6 +1036,22 @@ html_template = """<!DOCTYPE html>
     </div>
   </div>
 
+  <div class="v10-planning-container" id="d2PlanningBlock">
+    <div class="label-tag" data-i18n="v10PlanningTag">Planificación D+2 · menor confianza</div>
+    <h2 style="margin-bottom: 8px; color: var(--muted); font-weight: 400; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">
+      <span data-i18n="v10PlanningTitle">Perspectiva de calidad del aire para</span>
+      <span style="color:var(--text);font-weight:700;" id="riskDateD2Span"></span>
+    </h2>
+    <p class="v10-planning-note" data-i18n="v10PlanningNote">Horizonte orientado a planificación. Los intervalos son más amplios que en D+1.</p>
+    <div id="riskBadgeD2" class="v10-risk-badge" data-i18n="v10Calculating">CALCULANDO...</div>
+    <div class="v10-risk-grid">
+      <div class="v10-risk-item"><div class="val" id="val-no2-d2">--</div><div class="lab">NO₂ µg/m³</div><div class="v10-interval" id="range-no2-d2">IC90 --</div></div>
+      <div class="v10-risk-item"><div class="val" id="val-pm25-d2">--</div><div class="lab">PM2.5 µg/m³</div><div class="v10-interval" id="range-pm25-d2">IC90 --</div></div>
+      <div class="v10-risk-item"><div class="val" id="val-pm10-d2">--</div><div class="lab">PM10 µg/m³</div><div class="v10-interval" id="range-pm10-d2">IC90 --</div></div>
+      <div class="v10-risk-item"><div class="val" id="val-ica-d2">--</div><div class="lab">ICA</div><div class="v10-interval" id="range-ica-d2">IC90 --</div></div>
+    </div>
+  </div>
+
   <div class="controls">
     <span class="controls-label" data-i18n="contaminant">Contaminante</span>
     <div class="tab-group" id="contTabsV10">
@@ -1069,7 +1088,7 @@ html_template = """<!DOCTYPE html>
   </div>
 
   <div class="did-section" style="padding: 0 0 40px;">
-    <div class="did-title" style="padding: 0 0 16px;" data-i18n="perfTitle"><strong>Rendimiento forecast v10</strong> — validación temporal</div>
+      <div class="did-title" style="padding: 0 0 16px;" data-i18n="perfTitle"><strong>Rendimiento D+1 · forecast v10</strong> — validación temporal</div>
     <div class="table-scroll">
       <table id="metricsTable">
         <thead><tr><th data-i18n="colContZone">Contaminante + Zona</th><th data-i18n="colRMSE">RMSE (µg/m³)</th><th data-i18n="colMAE">MAE (µg/m³)</th><th data-i18n="colR2">R²</th><th data-i18n="colMAPE">MAPE %</th><th data-i18n="colNFeatures">N. Features</th></tr></thead>
@@ -1079,6 +1098,16 @@ html_template = """<!DOCTYPE html>
     <p style="padding: 12px 0 0; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace;">
       <span data-i18n="mapeNote">MAPE calculado solo sobre filas con valor observado > 5 µg/m³.</span>&nbsp;&nbsp;<span data-i18n="mapeThreshold">Criterio operativo: mejora frente a persistencia y cobertura suficiente del intervalo.</span>
     </p>
+  </div>
+
+  <div class="did-section" style="padding: 0 0 40px;">
+    <div class="did-title" style="padding: 0 0 16px;" data-i18n="perfTitleD2"><strong>Rendimiento D+2 · forecast v10</strong> — validación temporal</div>
+    <div class="table-scroll">
+      <table id="metricsTableD2">
+        <thead><tr><th data-i18n="colContZone">Contaminante + Zona</th><th data-i18n="colRMSE">RMSE (µg/m³)</th><th data-i18n="colMAE">MAE (µg/m³)</th><th data-i18n="colR2">R²</th><th data-i18n="colMAPE">MAPE %</th><th data-i18n="colNFeatures">N. Features</th></tr></thead>
+        <tbody id="metricsBodyD2"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -1279,7 +1308,8 @@ const translations = {
     colReal: "Medición real",
     colDev: "Desviación",
     colStatus: "Estado",
-    perfTitle: "<strong>Rendimiento forecast v10</strong> — validación temporal",
+    perfTitle: "<strong>Rendimiento D+1 · forecast v10</strong> — validación temporal",
+    perfTitleD2: "<strong>Rendimiento D+2 · forecast v10</strong> — validación temporal",
     colContZone: "Contaminante + Zona",
     colR2: "R²",
     colNFeatures: "N. Features",
@@ -1310,6 +1340,9 @@ const translations = {
     v9Fig1: "<strong>Figura 1</strong> — Control Sintético (Serie Suavizada)",
     v9Fig2: "<strong>Figura 2</strong> — Event Study DiD",
     v10Tomorrow: "mañana",
+    v10PlanningTag: "Planificación D+2 · menor confianza",
+    v10PlanningTitle: "Perspectiva de calidad del aire para",
+    v10PlanningNote: "Horizonte orientado a planificación. Los intervalos son más amplios que en D+1.",
     mapPrediction: "Predicción",
     sumSinZBE: "sin ZBE",
     sumAbsoluto: "absoluto",
@@ -1397,7 +1430,8 @@ const translations = {
     colReal: "Benetako neurketa",
     colDev: "Desbideratzea",
     colStatus: "Egoera",
-    perfTitle: "<strong>forecast v10 errendimendua</strong> — denborazko baliozkotzea",
+    perfTitle: "<strong>D+1 errendimendua · forecast v10</strong> — denborazko baliozkotzea",
+    perfTitleD2: "<strong>D+2 errendimendua · forecast v10</strong> — denborazko baliozkotzea",
     colContZone: "Kutsatzailea + Eremua",
     colR2: "R²",
     colNFeatures: "Ezaugarri Kopurua",
@@ -1451,6 +1485,9 @@ const translations = {
     v9Fig1: "<strong>1. Irudia</strong> — Kontrol Sintetikoa (Serie Leundua)",
     v9Fig2: "<strong>2. Irudia</strong> — Event Study DiD",
     v10Tomorrow: "bihar",
+    v10PlanningTag: "D+2 plangintza · konfiantza txikiagoa",
+    v10PlanningTitle: "Airearen kalitatearen ikuspegia:",
+    v10PlanningNote: "Plangintzarako horizontea. Tarteak D+1ekoak baino zabalagoak dira.",
     mapPrediction: "Iragarpena",
     sumSinZBE: "EGE barik",
     sumAbsoluto: "absolutua",
@@ -1540,6 +1577,27 @@ function predictionDayLabel() {
     return t.v10Date;
 }
 
+function predictionDateOffsetLabel(offsetDays) {
+    const parts = predDate.split('/').map(Number);
+    if (parts.length !== 3 || parts.some(Number.isNaN)) return predDate;
+    const [day, month, year] = parts;
+    const date = new Date(Date.UTC(year, month - 1, day + offsetDays));
+    return date.toLocaleDateString(
+        currentLang === 'es' ? 'es-ES' : 'eu-ES',
+        { day: 'numeric', month: 'short', timeZone: 'UTC' }
+    );
+}
+
+function predictionDateOffsetFull(offsetDays) {
+    const parts = predDate.split('/').map(Number);
+    if (parts.length !== 3 || parts.some(Number.isNaN)) return predDate;
+    const [day, month, year] = parts;
+    const date = new Date(Date.UTC(year, month - 1, day + offsetDays));
+    const resultDay = String(date.getUTCDate()).padStart(2, '0');
+    const resultMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
+    return `${resultDay}/${resultMonth}/${date.getUTCFullYear()}`;
+}
+
 function adaptNarrativeDate(text) {
     if (!text || typeof text !== 'string') return text;
     const relation = predictionDateRelation();
@@ -1555,6 +1613,8 @@ function updateRiskDate() {
     if (el) {
         el.innerHTML = `<span style="text-transform: uppercase;">${predictionDayLabel()}</span> ${predDate}`;
     }
+    const d2El = document.getElementById('riskDateD2Span');
+    if (d2El) d2El.textContent = predictionDateOffsetFull(1);
 }
 
 function toggleLang() {
@@ -1809,12 +1869,41 @@ function renderDashboard3() {
   document.getElementById('val-pm10').innerHTML = `${pm10.toFixed(1)}`;
   document.getElementById('val-ica').innerHTML = `${ica.toFixed(1)}`;
 
+  const d2Results = {};
+  for (const contaminant of ['NO2', 'PM10', 'PM2.5', 'ICA']) {
+    d2Results[contaminant] = targetsData[`${contaminant}_${currentZoneV10}_d2`] || null;
+  }
+  const hasD2 = Object.values(d2Results).every(Boolean);
+  document.getElementById('d2PlanningBlock').style.display = hasD2 ? 'block' : 'none';
+  const d2No2 = d2Results.NO2?.prediction || 0;
+  const d2Pm10 = d2Results.PM10?.prediction || 0;
+  const d2Pm25 = d2Results['PM2.5']?.prediction || 0;
+  const d2Ica = d2Results.ICA?.prediction || 0;
+  const d2Badge = document.getElementById('riskBadgeD2');
+  let d2RiskLevel = 0;
+  if (d2No2 >= 40 || d2Pm10 >= 20 || d2Pm25 >= 10) d2RiskLevel = 1;
+  if (d2No2 >= 90 || d2Pm10 >= 40 || d2Pm25 >= 20) d2RiskLevel = 2;
+  if (d2RiskLevel === 0) { d2Badge.innerText = t.v10Good; d2Badge.style.color = "var(--green)"; d2Badge.style.borderColor = "var(--green)"; d2Badge.style.backgroundColor = getCssVar('--green')+"1A"; }
+  else if (d2RiskLevel === 1) { d2Badge.innerText = t.v10Mod; d2Badge.style.color = "var(--yellow)"; d2Badge.style.borderColor = "var(--yellow)"; d2Badge.style.backgroundColor = getCssVar('--yellow')+"1A"; }
+  else { d2Badge.innerText = t.v10Bad; d2Badge.style.color = "var(--red)"; d2Badge.style.borderColor = "var(--red)"; d2Badge.style.backgroundColor = getCssVar('--red')+"1A"; }
+
+  const setD2Value = (id, rangeId, result) => {
+    document.getElementById(id).textContent = result ? Number(result.prediction).toFixed(1) : '--';
+    document.getElementById(rangeId).textContent = result
+      ? `IC90 ${Number(result.lower).toFixed(1)}–${Number(result.upper).toFixed(1)}`
+      : 'IC90 --';
+  };
+  setD2Value('val-no2-d2', 'range-no2-d2', d2Results.NO2);
+  setD2Value('val-pm25-d2', 'range-pm25-d2', d2Results['PM2.5']);
+  setD2Value('val-pm10-d2', 'range-pm10-d2', d2Results.PM10);
+  setD2Value('val-ica-d2', 'range-ica-d2', d2Results.ICA);
+
   const d = perfStats[currentZoneV10][currentContV10] || {labels:[], real:[], pred:[]};
   const ctx = document.getElementById('perfChart').getContext('2d');
   if(perfChart) perfChart.destroy();
   
   const historicalLabels = (perfStats[currentZoneV10].labels || []).map(
-    l => l === 'Ayer' ? (currentLang === 'es' ? 'Ayer' : 'Atzo') : l
+    l => l === 'Ayer' ? predictionDateOffsetLabel(-2) : l
   );
   const labels = historicalLabels;
   const text = getCssVar('--muted'); const grid = getCssVar('--border');
@@ -1905,6 +1994,34 @@ function renderMetricsTable() {
 
     return `<tr>
       <td><strong>${cont}</strong> <span style="color:var(--muted)">${zone.toUpperCase()}</span>${metaStr}</td>
+      <td style="font-family:'IBM Plex Mono',monospace">${m.cv_rmse.toFixed(2)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace">${m.cv_mae.toFixed(2)}</td>
+      <td style="color:${r2Color};font-family:'IBM Plex Mono',monospace">${m.cv_r2.toFixed(3)}</td>
+      <td style="color:${mapeColor};font-family:'IBM Plex Mono',monospace;font-weight:bold">${m.cv_mape.toFixed(1)}%</td>
+      <td style="color:var(--muted);font-family:'IBM Plex Mono',monospace">${m.n_features}</td>
+    </tr>`;
+  }).join('');
+  renderMetricsTableD2();
+}
+
+function renderMetricsTableD2() {
+  const body = document.getElementById('metricsBodyD2');
+  if (!body) return;
+  const order = [ ['NO2','zbe'], ['NO2','out'], ['PM10','zbe'], ['PM10','out'], ['PM2.5','zbe'], ['PM2.5','out'] ];
+  const t = translations[currentLang];
+  const headings = body.closest('table').querySelectorAll('thead th');
+  if (headings.length >= 5) {
+    headings[1].innerText = t.colRMSE || 'RMSE';
+    headings[2].innerText = t.colMAE || 'MAE';
+    headings[4].innerText = t.colMAPE || 'MAPE %';
+  }
+  body.innerHTML = order.map(([cont, zone]) => {
+    const m = metricsData[`target_${cont}_${zone}_d2`];
+    if (!m) return '';
+    const mapeColor = m.cv_mape <= 25 ? 'var(--green)' : 'var(--yellow)';
+    const r2Color = m.cv_r2 >= 0.35 ? 'var(--green)' : 'var(--yellow)';
+    return `<tr>
+      <td><strong>${cont}</strong> <span style="color:var(--muted)">${zone.toUpperCase()}</span></td>
       <td style="font-family:'IBM Plex Mono',monospace">${m.cv_rmse.toFixed(2)}</td>
       <td style="font-family:'IBM Plex Mono',monospace">${m.cv_mae.toFixed(2)}</td>
       <td style="color:${r2Color};font-family:'IBM Plex Mono',monospace">${m.cv_r2.toFixed(3)}</td>

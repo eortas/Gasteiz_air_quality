@@ -1,4 +1,4 @@
-"""Entrena el modelo operativo D+1 con backtesting y control de calidad."""
+"""Entrena los modelos operativos D+1 y D+2 con validación temporal."""
 
 import hashlib
 import json
@@ -24,22 +24,25 @@ METRICS_PATH = MODELS_DIR / "forecast_v10_metrics.json"
 MANIFEST_PATH = MODELS_DIR / "forecast_v10_manifest.json"
 REPORT_PATH = MODELS_DIR / "training_report_forecast_v10.txt"
 
+HORIZONS = (1, 2)
 TARGETS = [
-    "NO2_zbe_d1",
-    "NO2_out_d1",
-    "PM10_zbe_d1",
-    "PM10_out_d1",
-    "PM2.5_zbe_d1",
-    "PM2.5_out_d1",
+    f"{pollutant}_{zone}_d{horizon}"
+    for horizon in HORIZONS
+    for pollutant in ["NO2", "PM10", "PM2.5"]
+    for zone in ["zbe", "out"]
 ]
 
 CURRENT_AIR = {
     "NO2_zbe", "NO2_out", "PM10_zbe", "PM10_out",
     "PM2.5_zbe", "PM2.5_out", "ICA_zbe", "ICA_out",
 }
-D1_CALENDAR = {
-    "d1_day_of_week", "d1_month", "d1_day_of_year", "d1_is_weekend",
-    "d1_dow_sin", "d1_dow_cos", "d1_doy_sin", "d1_doy_cos",
+TARGET_CALENDAR = {
+    f"d{horizon}_{name}"
+    for horizon in HORIZONS
+    for name in [
+        "day_of_week", "month", "day_of_year", "is_weekend",
+        "dow_sin", "dow_cos", "doy_sin", "doy_cos",
+    ]
 }
 WEATHER_TERMS = (
     "temperature", "precipitation", "rain", "snowfall", "wind_",
@@ -52,7 +55,6 @@ MIN_TEST_DAYS = 90
 BACKTEST_WINDOWS = 5
 BACKTEST_WINDOW_DAYS = 45
 MIN_TRAIN_DAYS = 330
-CV_GAP_DAYS = 1
 MIN_CV_SKILL = 0.03
 MIN_TEST_SKILL = 0.00
 MIN_TEST_COVERAGE = 0.85
@@ -107,18 +109,31 @@ def directional_accuracy(actual, prediction, baseline):
     return float(np.mean(actual_direction == predicted_direction))
 
 
-def add_d1_calendar(df):
-    """Añadimos el calendario del día objetivo sin consultar datos futuros."""
+def target_horizon(target):
+    """Obtenemos el horizonte numérico incluido al final del target."""
+    return int(target.rsplit("_d", 1)[1])
+
+
+def current_air_column(target):
+    """Convertimos NO2_zbe_d2 en la concentración conocida NO2_zbe."""
+    return target.rsplit("_d", 1)[0]
+
+
+def add_target_calendars(df):
+    """Añadimos el calendario conocido de cada día objetivo."""
     result = df.copy()
-    target_date = pd.to_datetime(result["date"], utc=True) + pd.Timedelta(days=1)
-    result["d1_day_of_week"] = target_date.dt.dayofweek
-    result["d1_month"] = target_date.dt.month
-    result["d1_day_of_year"] = target_date.dt.dayofyear
-    result["d1_is_weekend"] = (target_date.dt.dayofweek >= 5).astype(int)
-    result["d1_dow_sin"] = np.sin(2 * np.pi * target_date.dt.dayofweek / 7)
-    result["d1_dow_cos"] = np.cos(2 * np.pi * target_date.dt.dayofweek / 7)
-    result["d1_doy_sin"] = np.sin(2 * np.pi * target_date.dt.dayofyear / 365.25)
-    result["d1_doy_cos"] = np.cos(2 * np.pi * target_date.dt.dayofyear / 365.25)
+    source_date = pd.to_datetime(result["date"], utc=True)
+    for horizon in HORIZONS:
+        target_date = source_date + pd.Timedelta(days=horizon)
+        prefix = f"d{horizon}"
+        result[f"{prefix}_day_of_week"] = target_date.dt.dayofweek
+        result[f"{prefix}_month"] = target_date.dt.month
+        result[f"{prefix}_day_of_year"] = target_date.dt.dayofyear
+        result[f"{prefix}_is_weekend"] = (target_date.dt.dayofweek >= 5).astype(int)
+        result[f"{prefix}_dow_sin"] = np.sin(2 * np.pi * target_date.dt.dayofweek / 7)
+        result[f"{prefix}_dow_cos"] = np.cos(2 * np.pi * target_date.dt.dayofweek / 7)
+        result[f"{prefix}_doy_sin"] = np.sin(2 * np.pi * target_date.dt.dayofyear / 365.25)
+        result[f"{prefix}_doy_cos"] = np.cos(2 * np.pi * target_date.dt.dayofyear / 365.25)
     return result
 
 
@@ -135,7 +150,7 @@ def load_dataset():
 
     df = pd.read_parquet(DATASET_PATH)
     df["date"] = pd.to_datetime(df["date"], utc=True)
-    df = add_d1_calendar(df.sort_values("date").reset_index(drop=True))
+    df = add_target_calendars(df.sort_values("date").reset_index(drop=True))
     if df["date"].duplicated().any():
         raise ValueError("El dataset contiene fechas duplicadas")
     if len(df) < MIN_TRAIN_DAYS + MIN_TEST_DAYS:
@@ -143,9 +158,11 @@ def load_dataset():
     return df, contract
 
 
-def select_features(df, target, include_d1_calendar):
+def select_features(df, target, include_target_calendar):
     """Conservamos variables operativas compactas y relacionadas con el objetivo."""
     pollutant = target.split("_")[0]
+    horizon = target_horizon(target)
+    target_calendar = {column for column in TARGET_CALENDAR if column.startswith(f"d{horizon}_")}
     selected = []
     for column in df.columns:
         if column == "date" or column.startswith("target_"):
@@ -162,19 +179,22 @@ def select_features(df, target, include_d1_calendar):
                 for term in ["_lag_1d", "_lag_2d", "_lag_3d", "_lag_7d", "_roll_"]
             )
         )
-        traffic = (
-            column.startswith("traffic_")
-            or column in {"exp_traffic_volume_d1", "exp_traffic_occupancy_d1"}
+        traffic = column.startswith("traffic_") or column in {
+            f"exp_traffic_volume_d{horizon}", f"exp_traffic_occupancy_d{horizon}"
+        }
+        forecast_weather = column.startswith("fc_") and column.endswith(f"_d{horizon}")
+        observed_weather = not column.startswith("fc_") and any(
+            term in column for term in WEATHER_TERMS
         )
-        weather = column.startswith("fc_") or any(term in column for term in WEATHER_TERMS)
-        calendar = include_d1_calendar and column in D1_CALENDAR
+        weather = forecast_weather or observed_weather
+        calendar = include_target_calendar and column in target_calendar
         coverage = column.startswith("air_stations_valid_")
 
         if column in CURRENT_AIR or recent_air or traffic or weather or calendar or coverage:
             selected.append(column)
 
-    if not include_d1_calendar:
-        selected = [column for column in selected if column not in D1_CALENDAR]
+    if not include_target_calendar:
+        selected = [column for column in selected if column not in target_calendar]
     return selected
 
 
@@ -206,15 +226,15 @@ def make_models():
     return lightgbm, extra_trees, ridge
 
 
-def rolling_splits(n_rows):
+def rolling_splits(n_rows, gap_days):
     """Generamos cinco ventanas recientes con un día de separación."""
     splits = []
     train_end = MIN_TRAIN_DAYS
-    while train_end + CV_GAP_DAYS + BACKTEST_WINDOW_DAYS <= n_rows:
+    while train_end + gap_days + BACKTEST_WINDOW_DAYS <= n_rows:
         train_index = np.arange(train_end)
         validation_index = np.arange(
-            train_end + CV_GAP_DAYS,
-            train_end + CV_GAP_DAYS + BACKTEST_WINDOW_DAYS,
+            train_end + gap_days,
+            train_end + gap_days + BACKTEST_WINDOW_DAYS,
         )
         splits.append((train_index, validation_index))
         train_end += BACKTEST_WINDOW_DAYS
@@ -254,10 +274,13 @@ def conformal_quantile(errors, level=INTERVAL_CALIBRATION_QUANTILE):
 
 def run_backtest(development, target, features):
     target_column = f"target_{target}"
-    current_column = target.replace("_d1", "")
+    current_column = current_air_column(target)
+    horizon = target_horizon(target)
     fold_results = []
 
-    for fold_number, (train_index, validation_index) in enumerate(rolling_splits(len(development)), 1):
+    for fold_number, (train_index, validation_index) in enumerate(
+        rolling_splits(len(development), horizon), 1
+    ):
         train = development.iloc[train_index]
         validation = development.iloc[validation_index]
         medians = train[features].median().fillna(0)
@@ -366,7 +389,7 @@ def feature_importance(lightgbm, extra_trees, ridge, features, weights):
 
 def train_target(df, target):
     target_column = f"target_{target}"
-    current_column = target.replace("_d1", "")
+    current_column = current_air_column(target)
     valid = df[target_column].notna() & df[current_column].notna()
     data = df.loc[valid].reset_index(drop=True)
     test_size = max(MIN_TEST_DAYS, int(len(data) * FINAL_TEST_FRACTION))
@@ -380,7 +403,7 @@ def train_target(df, target):
         backtest_rmse = rmse(backtest["actual"], backtest["prediction"])
         persistence_rmse = rmse(backtest["actual"], backtest["baseline"])
         variants.append({
-            "include_d1_calendar": include_calendar,
+            "include_target_calendar": include_calendar,
             "features": features,
             "backtest": backtest,
             "cv_rmse": backtest_rmse,
@@ -465,7 +488,8 @@ def train_target(df, target):
         "production_method": production_method,
         "quality_gate": artifact["quality_gate"],
         "prediction_mode": "residual_ensemble",
-        "feature_variant": "with_d1_calendar" if selected["include_d1_calendar"] else "without_d1_calendar",
+        "forecast_horizon_days": target_horizon(target),
+        "feature_variant": "with_target_calendar" if selected["include_target_calendar"] else "without_target_calendar",
         "n_features": len(features),
         "weights": artifact["weights"],
         "cv_rmse": round(cv_rmse, 4),
@@ -514,7 +538,7 @@ def main():
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     df, contract = load_dataset()
     log("=" * 78)
-    log("FORECAST V10 - modelo operativo D+1")
+    log("FORECAST V10 - modelos operativos D+1 y D+2")
     log(f"Dataset: {len(df)} días | {df['date'].min().date()} -> {df['date'].max().date()}")
     log(f"Contrato: corte {contract['cutoff_hour_local']:02d}:00 {contract['timezone']}")
     log("Métrica entre paréntesis: skill RMSE frente a persistencia")
@@ -543,6 +567,7 @@ def main():
         "target_window": contract["target_window"],
         "targets_passed": passed,
         "targets_total": len(TARGETS),
+        "forecast_horizons_days": list(HORIZONS),
         "ready_for_production": passed == len(TARGETS),
         "readiness_scope": "technical_model_gate",
         "recommended_deployment": "controlled_institutional_pilot",

@@ -16,7 +16,7 @@ Proiektuak hainbat datu-iturri (trafikoa, meteorologia, airearen kalitatea) egun
 
 - **Datuen xurgapena eta eraldaketa:** Trafiko, eguraldi eta airearen kalitate-metriken deskarga eta prozesatze automatizatua.
 - **Ezaugarrien ingeniaritza:** Ikaskuntza automatikoko eredularitzarako denbora- eta espazio-ezaugarriak eraikitzea.
-- **Eredu iragarle operatiboa (ensemble):** LightGBM, Extra Trees eta Ridge konbinatzen ditu NO₂, PM10 eta PM2.5 mailen D+1 aurreikuspenerako.
+- **Eredu iragarle operatiboa (ensemble):** LightGBM, Extra Trees eta Ridge konbinatzen ditu NO₂, PM10 eta PM2.5 mailen D+1 eta D+2 aurreikuspenerako.
 - **Ziurgabetasuna eta kalitate-kontrola:** Denborazko backtesting-a, persistentziaren aurkako konparazioa, tarte konformal kontserbadoreak eta degradazioaren aurreko fallback automatikoa.
 - **Azterketa Kausala:** EBE-aren eraginkortasuna ebaluatzeko maila akademikoko kausalitate-probak.
 - **Aginte-taula interaktiboa:** Iragarpenak, ereduen auditoretzak eta mapa-ikuspegiak erakusten dituen irakurketa-taula operatibo automatikoa.
@@ -65,7 +65,7 @@ El proyecto integra múltiples fuentes de datos (tráfico, meteorología, calida
 
 - **Ingesta y Transformación de Datos:** Descarga y procesamiento automatizado de métricas de tráfico, meteorología y calidad del aire.
 - **Ingeniería de Características:** Construcción de variables temporales y espaciales para el modelado con aprendizaje automático.
-- **Modelo predictivo operativo (ensemble):** Combina LightGBM, Extra Trees y Ridge para predecir a D+1 los niveles diarios de NO₂, PM10 y PM2.5.
+- **Modelo predictivo operativo (ensemble):** Combina LightGBM, Extra Trees y Ridge para predecir a D+1 y D+2 los niveles diarios de NO₂, PM10 y PM2.5.
 - **Incertidumbre y control de calidad:** Backtesting temporal, comparación contra persistencia, intervalos conformales conservadores y fallback automático ante degradación.
 - **Análisis Causal:** Pruebas de causalidad de nivel académico para evaluar la efectividad de la política de la ZBE.
 - **Cuadro de Mando Interactivo:** Panel operativo autogenerado que muestra predicciones, auditorías de los modelos y vistas de mapa.
@@ -86,7 +86,7 @@ The project integrates multiple data sources (traffic, meteorology, air quality)
 
 - **Data Ingestion & Transformation:** Automated download and processing of traffic, weather, and air quality metrics.
 - **Feature Engineering:** Construction of temporal and spatial features for machine learning models.
-- **Operational Forecasting (ensemble):** Combines LightGBM, Extra Trees, and Ridge to forecast daily D+1 levels of NO₂, PM10, and PM2.5.
+- **Operational Forecasting (ensemble):** Combines LightGBM, Extra Trees, and Ridge to forecast daily D+1 and D+2 levels of NO₂, PM10, and PM2.5.
 - **Uncertainty and Quality Control:** Temporal backtesting, persistence benchmarking, conservative conformal intervals, and automatic fallback if performance degrades.
 - **Causal Analysis:** Academic-grade causality tests to evaluate the effectiveness of the ZBE policy.
 - **Interactive Dashboard:** Auto-generated operational dashboard displaying predictions, model audits, and map views.
