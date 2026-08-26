@@ -395,7 +395,7 @@
   <div class="charts-section">
     <div class="fig-block">
       <div class="fig-header">
-        <div class="fig-title" data-i18n="auditTitle"><strong>Auditoría del Modelo:</strong> Predicción vs Real (Últimos 7 días)</div>
+        <div class="fig-title" data-i18n="auditTitle"><strong>Histórico validado:</strong> predicción vs. medición (últimos 7 días)</div>
       </div>
       <div class="perf-chart-wrap">
         <canvas id="perfChart"></canvas>
@@ -403,16 +403,16 @@
     </div>
     
     <div class="did-section" style="padding: 0;">
-      <div class="did-title" data-i18n="backtestTitle"><strong>Validación de Ayer</strong> — Backtesting de precisión</div>
+      <div class="did-title" data-i18n="backtestTitle"><strong>Último día validado</strong> — control de precisión</div>
       <div class="table-scroll"><table>
-        <thead><tr><th data-i18n="colParam">Parámetro</th><th data-i18n="colPred">Predicción Ayer (v8)</th><th data-i18n="colReal">Medición Real</th><th data-i18n="colStatus">Estado</th></tr></thead>
+        <thead><tr><th data-i18n="colParam">Parámetro</th><th data-i18n="colPred">Predicción emitida</th><th data-i18n="colReal">Medición real</th><th data-i18n="colStatus">Estado</th></tr></thead>
         <tbody id="backtestTable"></tbody>
       </table></div>
     </div>
   </div>
 
   <div class="did-section" style="padding: 0 0 40px;">
-    <div class="did-title" style="padding: 0 0 16px;" data-i18n="perfTitle"><strong>Rendimiento del Modelo v8</strong> — Métricas Cross-Validation (5 Folds)</div>
+    <div class="did-title" style="padding: 0 0 16px;" data-i18n="perfTitle"><strong>Rendimiento forecast v10</strong> — validación temporal</div>
     <div class="table-scroll">
       <table id="metricsTable">
         <thead><tr><th data-i18n="colContZone">Contaminante + Zona</th><th data-i18n="colRMSE">RMSE (µg/m³)</th><th data-i18n="colMAE">MAE (µg/m³)</th><th data-i18n="colR2">R²</th><th data-i18n="colMAPE">MAPE %</th><th data-i18n="colNFeatures">N. Features</th></tr></thead>
@@ -420,7 +420,7 @@
       </table>
     </div>
     <p style="padding: 12px 0 0; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace;">
-      <span data-i18n="mapeNote">MAPE calculado solo sobre filas con valor observado > 1 µg/m³.</span>&nbsp;&nbsp;<span data-i18n="mapeThreshold">Umbral aceptación: MAPE < 35%, R² > 0.35.</span>
+      <span data-i18n="mapeNote">MAPE calculado solo sobre filas con valor observado > 5 µg/m³.</span>&nbsp;&nbsp;<span data-i18n="mapeThreshold">Criterio operativo: mejora frente a persistencia y cobertura suficiente del intervalo.</span>
     </p>
   </div>
 </div>
@@ -608,24 +608,24 @@ const translations = {
     v10Tag: "EEA Standards — Air Quality Risk",
     v10Title: "Calidad del aire prevista para",
     v10Calculating: "CALCULANDO...",
-    auditTitle: "<strong>Auditoría del Modelo:</strong> Predicción vs Real (Últimos 7 días)",
-    backtestTitle: "<strong>Validación de Ayer</strong> — Backtesting de Precisión",
+    auditTitle: "<strong>Histórico validado:</strong> predicción vs. medición (últimos 7 días)",
+    backtestTitle: "<strong>Último día validado</strong> — control de precisión",
     colParam: "Parametro",
-    colPred: "Predicción Ayer (v8)",
+    colPred: "Predicción emitida",
     trafficYoYTitle: "Estudio de Impacto: Evolución del Tráfico Perimetral (YoY)",
     trafficYoYSubtitle: "Comparativa entre el tráfico actual y el mismo periodo del año anterior (alineado por día de la semana).",
     trafficCurrent: "Tráfico Actual (ZBE)",
     trafficPrevious: "Año Anterior (Pre-ZBE)",
     trafficVolume: "Vehículos/Día (Media Perímetro)",
-    colReal: "Medición Real",
+    colReal: "Medición real",
     colDev: "Desviación",
     colStatus: "Estado",
-    perfTitle: "<strong>Rendimiento Modelo v8</strong> — Métricas de Validación Cruzada (5 Fold)",
+    perfTitle: "<strong>Rendimiento forecast v10</strong> — validación temporal",
     colContZone: "Contaminante + Zona",
     colR2: "R²",
     colNFeatures: "N. Features",
-    mapeNote: "MAPE calculado solo sobre filas con valor observado > 1 µg/m³.",
-    mapeThreshold: "Umbral de aceptación: MAPE < 35%, R² > 0.35.",
+    mapeNote: "MAPE calculado solo sobre filas con valor observado > 5 µg/m³.",
+    mapeThreshold: "Criterio operativo: mejora frente a persistencia y cobertura suficiente del intervalo.",
     mapTag: "Vitoria-Gasteiz — Red Sensores Municipales",
     mapTitle: "Mapa de <span>Estaciones</span>",
     mapSubtitle: "Medias parciales de hoy y predicción para mañana. Haga clic en un punto para ver detalles.",
@@ -723,24 +723,24 @@ const translations = {
     v10Tag: "EEA Arauak — Airearen Kalitatearen Arriskua",
     v10Title: "Biharko aurreikusitako aire-kalitatea",
     v10Calculating: "KALKULATZEN...",
-    auditTitle: "<strong>Ereduaren Ikuskapena:</strong> Aurreikusitakoa vs Erreala (Azken 7 egunak)",
-    backtestTitle: "<strong>Atzoko Baliozkotzea</strong> — Doitasunaren Backtestinga",
+    auditTitle: "<strong>Baliozkotutako historikoa:</strong> iragarpena vs. neurketa (azken 7 egunak)",
+    backtestTitle: "<strong>Baliozkotutako azken eguna</strong> — doitasun-kontrola",
     trafficYoYTitle: "Eraginaren Azterketa: Perimetroko Trafikoaren Bilakaera (YoY)",
     trafficYoYSubtitle: "Gaur egungo trafikoaren eta aurreko urteko epe beraren arteko alderaketa (asteko egunaren arabera lerrokatuta).",
     trafficCurrent: "Gaur egungo Trafikoa (ZBE)",
     trafficPrevious: "Aurreko Urtea (ZBE Aurretik)",
     trafficVolume: "Ibilgailuak/Eguna (Perimetroko batez bestekoa)",
     colParam: "Parametroa",
-    colPred: "Atzoko Aurreikuspena (v8)",
-    colReal: "Neurketa Erreala",
+    colPred: "Jaulkitako iragarpena",
+    colReal: "Benetako neurketa",
     colDev: "Desbideratzea",
     colStatus: "Egoera",
-    perfTitle: "<strong>v8 Ereduaren Errendimendua</strong> — Baliozkotze Gurutzatuko Metrikak (5 Fold)",
+    perfTitle: "<strong>forecast v10 errendimendua</strong> — denborazko baliozkotzea",
     colContZone: "Kutsatzailea + Eremua",
     colR2: "R²",
     colNFeatures: "Ezaugarri Kopurua",
-    mapeNote: "MAPE behatutako balioa > 1 µg/m³ duten errenkadetan soilik kalkulatua.",
-    mapeThreshold: "Onarpen-atalasea: MAPE < %35, R² > 0.35.",
+    mapeNote: "MAPE behatutako balioa > 5 µg/m³ duten errenkadetan soilik kalkulatua.",
+    mapeThreshold: "Irizpide operatiboa: persistentziarekiko hobekuntza eta tartearen estaldura nahikoa.",
     mapTag: "Vitoria-Gasteiz — Udaltzaingoaren sentsoreen sarea",
     mapTitle: "Estazioen <span>Mapa</span>",
     mapSubtitle: "Gaurko batez besteko partzialak eta biharko aurreikuspena. Egin klik puntu batean xehetasunak ikusteko.",
@@ -1126,23 +1126,7 @@ function renderDashboard3() {
   const historicalLabels = (perfStats[currentZoneV10].labels || []).map(
     l => l === 'Ayer' ? (currentLang === 'es' ? 'Ayer' : 'Atzo') : l
   );
-  const labels = [...historicalLabels, currentLang === 'es' ? 'Mañana' : 'Bihar'];
-  const activeTarget = targetsData[`${currentContV10}_${currentZoneV10}_d1`] || {};
-  const activePrediction = activeTarget.prediction;
-  const currentForecast = Array(labels.length).fill(null);
-  let lastObservedIndex = -1;
-
-  for (let i = d.real.length - 1; i >= 0; i--) {
-    if (d.real[i] !== null && d.real[i] !== undefined) {
-      lastObservedIndex = i;
-      break;
-    }
-  }
-
-  if (lastObservedIndex >= 0 && activePrediction !== undefined) {
-    currentForecast[lastObservedIndex] = d.real[lastObservedIndex];
-    currentForecast[labels.length - 1] = activePrediction;
-  }
+  const labels = historicalLabels;
   const text = getCssVar('--muted'); const grid = getCssVar('--border');
 
   perfChart = new Chart(ctx, {
@@ -1150,9 +1134,8 @@ function renderDashboard3() {
       data: {
           labels: labels,
           datasets: [
-              { label: t.backReal, data: [...d.real, null], borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
-              { label: t.backPred, data: [...d.pred, null], borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 },
-              { label: t.backCurrentPred, data: currentForecast, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [2,4], borderWidth: 3, pointRadius: 5, tension: 0.2 }
+              { label: t.backReal, data: d.real, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
+              { label: t.backPred, data: d.pred, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 }
           ]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: text, font: { family: 'IBM Plex Mono'} } }, }, scales: { x: { ticks: { color: text }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
