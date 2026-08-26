@@ -1263,9 +1263,7 @@ function renderDashboard3() {
   const historicalPred = [...d.pred, null, null];
   const d1Forecast = Array(labels.length).fill(null);
   const d2Forecast = Array(labels.length).fill(null);
-  const lastObserved = d.real[d.real.length - 1];
-  if (lastObserved !== null && lastObserved !== undefined && d1Current !== null) {
-    d1Forecast[historicalLabels.length - 1] = lastObserved;
+  if (d1Current !== null) {
     d1Forecast[historicalLabels.length] = d1Current;
   }
   if (d1Current !== null && d2Current !== null) {
@@ -1281,8 +1279,8 @@ function renderDashboard3() {
           datasets: [
               { label: t.backReal, data: historicalReal, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, tension: 0.4 },
               { label: t.backPred, data: historicalPred, borderColor: getCssVar('--accent'), backgroundColor: 'transparent', borderDash: [5,5], borderWidth: 2, pointRadius: 4, tension: 0.4 },
-              { label: t.forecastD1, data: d1Forecast, borderColor: getCssVar('--green'), backgroundColor: getCssVar('--green'), borderWidth: 3, pointRadius: 6, pointStyle: 'circle', tension: 0.2 },
-              { label: t.forecastD2, data: d2Forecast, borderColor: getCssVar('--yellow'), backgroundColor: getCssVar('--yellow'), borderDash: [3,3], borderWidth: 3, pointRadius: 7, pointStyle: 'triangle', tension: 0.2 }
+              { label: t.forecastD1, data: d1Forecast, borderColor: getCssVar('--green'), backgroundColor: getCssVar('--green'), showLine: false, pointRadius: 7, pointStyle: 'circle' },
+              { label: t.forecastD2, data: d2Forecast, borderColor: getCssVar('--yellow'), backgroundColor: getCssVar('--yellow'), borderDash: [3,3], borderWidth: 3, pointRadius: ctx => ctx.dataIndex === historicalLabels.length ? 0 : 8, pointStyle: 'triangle', tension: 0.2 }
           ]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: text, font: { family: 'IBM Plex Mono'} } }, }, scales: { x: { ticks: { color: text }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
