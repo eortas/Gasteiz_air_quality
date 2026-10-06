@@ -315,24 +315,35 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
 
     if target_date is None:
         now_local = pd.Timestamp.now(tz="Europe/Madrid")
-        if now_local.hour < PREDICTION_CUTOFF_HOUR:
-            raise RuntimeError(
-                f"La predicción para mañana se ejecuta después de las {PREDICTION_CUTOFF_HOUR:02d}:00 locales."
-            )
-        latest_allowed = now_local.normalize().tz_localize(None).tz_localize("UTC")
-        source = source[source["date"] == latest_allowed].copy()
+        # Si ejecutamos a partir de las 22:00, tomamos el corte del día en curso.
+        # Si ejecutamos antes de las 22:00 (por ejemplo, reintento o rescate matutino),
+        # tomamos como corte el día anterior cerrado completo.
+        if now_local.hour >= PREDICTION_CUTOFF_HOUR:
+            latest_allowed = now_local.normalize().tz_localize(None).tz_localize("UTC")
+        else:
+            latest_allowed = (now_local.normalize() - pd.Timedelta(days=1)).tz_localize(None).tz_localize("UTC")
+            log(f"  [INFO] Ejecutando antes de las {PREDICTION_CUTOFF_HOUR:02d}:00 locales. "
+                f"Tomamos como corte el último día cerrado completo: {latest_allowed.date()}")
 
         required = ["NO2_zbe", "NO2_out", "PM10_zbe", "PM10_out", "PM2.5_zbe", "PM2.5_out",
                     "traffic_volume", "temperature_2m"]
         available = [column for column in required if column in source.columns]
-        source = source.dropna(subset=available)
-        if source.empty:
-            raise RuntimeError(
-                f"El corte de las {PREDICTION_CUTOFF_HOUR:02d}:00 del día {latest_allowed.date()} no tiene aire, tráfico y meteorología. "
-                "Se cancela la predicción para evitar datos obsoletos."
-            )
 
-        row = source.iloc[[-1]]
+        source_target = source[source["date"] == latest_allowed].dropna(subset=available)
+        if source_target.empty:
+            # Si el día exacto de corte no tiene todas las variables requeridas,
+            # seleccionamos la fila más reciente con datos completos hasta esa fecha.
+            valid_source = source[source["date"] <= latest_allowed].dropna(subset=available)
+            if valid_source.empty:
+                raise RuntimeError(
+                    f"No hay registros con aire, tráfico y meteorología completos hasta {latest_allowed.date()}."
+                )
+            row = valid_source.iloc[[-1]]
+            log(f"  [WARN] El corte de {latest_allowed.date()} no tiene variables completas. "
+                f"Usamos la fila más reciente disponible: {row['date'].iloc[0].date()}")
+        else:
+            row = source_target.iloc[[-1]]
+
         pred_date = row["date"].iloc[0] + pd.Timedelta(days=1)
     else:
         # Predecir un d?a hist?rico: buscar la fila del d?a anterior
