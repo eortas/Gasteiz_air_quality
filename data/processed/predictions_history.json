@@ -2542,5 +2542,33 @@
       "ICA_zbe_d2": 10.85,
       "ICA_out_d2": 7.28
     }
+  },
+  {
+    "prediction_date": "2026-10-20",
+    "prediction_dates": {
+      "d1": "2026-10-20",
+      "d2": "2026-10-21"
+    },
+    "generated_at": "2026-10-19T20:06:02.616861+00:00",
+    "source_date": "2026-10-19",
+    "run_type": "production",
+    "predictions": {
+      "NO2_zbe_d1": 9.09,
+      "NO2_out_d1": 11.93,
+      "PM10_zbe_d1": 9.56,
+      "PM10_out_d1": 6.3,
+      "PM2.5_zbe_d1": 4.12,
+      "PM2.5_out_d1": 3.5,
+      "NO2_zbe_d2": 9.92,
+      "NO2_out_d2": 12.79,
+      "PM10_zbe_d2": 9.4,
+      "PM10_out_d2": 6.44,
+      "PM2.5_zbe_d2": 4.58,
+      "PM2.5_out_d2": 3.95,
+      "ICA_zbe_d1": 9.56,
+      "ICA_out_d1": 6.3,
+      "ICA_zbe_d2": 9.4,
+      "ICA_out_d2": 6.58
+    }
   }
 ]
