@@ -910,6 +910,11 @@ html_template = """<!DOCTYPE html>
   .map-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
   .map-wrap { padding: 24px 48px 40px; }
   
+  /* Filtro modo oscuro para tiles de OpenStreetMap libres sin API key */
+  [data-theme="dark"] .leaflet-tile-pane {
+    filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.75);
+  }
+  
   .leaflet-popup-content-wrapper { background: var(--surface2) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; }
   .leaflet-popup-tip { background: var(--surface2) !important; }
   .leaflet-popup-content { margin: 14px 18px !important; font-family: 'IBM Plex Sans', sans-serif !important; font-size: 13px !important; line-height: 1.6 !important; }
@@ -1725,10 +1730,6 @@ function toggleTheme() {
   if(document.getElementById('view-v10').classList.contains('active')) renderDashboard3();
   
   if (_mapInitialized && mapTileLayer) {
-      const url = currentTheme === 'dark' 
-          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
-          : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-      mapTileLayer.setUrl(url);
       if (mapInstance) mapInstance.closePopup();
   }
 }
@@ -2114,13 +2115,9 @@ function initMap() {
   _mapInitialized = true;
   mapInstance = L.map('stationMap', { zoomControl: true });
   
-  const tileUrl = currentTheme === 'dark' 
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-      
-  mapTileLayer = L.tileLayer(tileUrl, {
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-    subdomains: 'abcd', maxZoom: 19
+  mapTileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19
   }).addTo(mapInstance);
 
   const ZBE_COORDS = [ [42.845707, -2.6764994], [42.846058, -2.678793], [42.846058, -2.678777], [42.84426, -2.6781747], [42.84412, -2.6780825], [42.84361, -2.6756046], [42.843502, -2.6743975], [42.843246, -2.6726305], [42.84232, -2.6727068], [42.8423, -2.6724603], [42.84322, -2.6724162], [42.84342, -2.6700573], [42.8442, -2.6686096], [42.845608, -2.6682484], [42.846146, -2.6681008], [42.846935, -2.667851], [42.84823, -2.668305], [42.849224, -2.6686778], [42.850346, -2.6691453], [42.852093, -2.670227], [42.85308, -2.6731813], [42.85263, -2.6730998], [42.852352, -2.6731632], [42.852013, -2.6732967], [42.851536, -2.6737828], [42.849266, -2.6755311], [42.847466, -2.6762118], [42.84709, -2.676142], [42.845707, -2.6764994] ];

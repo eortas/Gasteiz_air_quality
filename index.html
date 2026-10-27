@@ -222,6 +222,7 @@
   .map-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
   .map-wrap { padding: 24px 48px 40px; }
   
+  [data-theme="dark"] .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.75); }
   .leaflet-popup-content-wrapper { background: var(--surface2) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; }
   .leaflet-popup-tip { background: var(--surface2) !important; }
   .leaflet-popup-content { margin: 14px 18px !important; font-family: 'IBM Plex Sans', sans-serif !important; font-size: 13px !important; line-height: 1.6 !important; }
@@ -1038,8 +1039,8 @@ function toggleTheme() {
   
   if (_mapInitialized && mapTileLayer) {
       const url = currentTheme === 'dark' 
-          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
-          : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+          ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' 
+          : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
       mapTileLayer.setUrl(url);
       if (mapInstance) mapInstance.closePopup();
   }
@@ -1427,11 +1428,11 @@ function initMap() {
   mapInstance = L.map('stationMap', { zoomControl: true });
   
   const tileUrl = currentTheme === 'dark' 
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+      ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' 
+      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
       
   mapTileLayer = L.tileLayer(tileUrl, {
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     subdomains: 'abcd', maxZoom: 19
   }).addTo(mapInstance);
 
