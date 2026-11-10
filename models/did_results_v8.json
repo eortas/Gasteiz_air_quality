@@ -18,7 +18,7 @@
     "pvalue": 0.0,
     "ci_low": 2.2115,
     "ci_high": 2.88,
-    "r2": 0.3276,
+    "r2": 0.3275,
     "n_obs": 1616,
     "significant": true,
     "fe_dummies": 28,
