@@ -1,7 +1,9 @@
 """Entrena los modelos operativos D+1 y D+2 con validación temporal."""
 
+import argparse
 import hashlib
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -60,6 +62,8 @@ MIN_TEST_SKILL = 0.00
 MIN_TEST_COVERAGE = 0.85
 INTERVAL_CALIBRATION_QUANTILE = 0.95
 RANDOM_STATE = 42
+FEATURE_LIMIT = 0
+USE_SHRINKAGE = False
 
 
 def log(message=""):
@@ -158,6 +162,39 @@ def load_dataset():
     return df, contract
 
 
+def _rank_features_by_importance(df, target, features, limit):
+    """Recorta la lista a las `limit` features más importantes en desarrollo.
+
+    Se ajusta solo con las filas recibidas (desarrollo), nunca con el test.
+    """
+    if not limit or len(features) <= limit:
+        return features
+    target_column = f"target_{target}"
+    current_column = current_air_column(target)
+    data = df.dropna(subset=[target_column, current_column]).copy()
+    if data.empty:
+        return features[:limit]
+    medians = data[features].median().fillna(0)
+    X = data[features].fillna(medians).fillna(0).astype(float)
+    y = data[target_column] - data[current_column]
+    model = LGBMRegressor(
+        n_estimators=200,
+        learning_rate=0.05,
+        num_leaves=15,
+        max_depth=5,
+        min_child_samples=25,
+        subsample=0.8,
+        colsample_bytree=0.75,
+        random_state=RANDOM_STATE,
+        n_jobs=1,
+        verbose=-1,
+    )
+    model.fit(X, y)
+    importance = np.asarray(model.feature_importances_, dtype=float)
+    order = np.argsort(importance)[::-1][:limit]
+    return [features[index] for index in order]
+
+
 def select_features(df, target, include_target_calendar):
     """Conservamos variables operativas compactas y relacionadas con el objetivo."""
     pollutant = target.split("_")[0]
@@ -183,9 +220,17 @@ def select_features(df, target, include_target_calendar):
                 for term in ["_lag_1d", "_lag_2d", "_lag_3d", "_lag_7d", "_roll_"]
             )
         )
-        traffic = column.startswith("traffic_") or column in {
-            f"exp_traffic_volume_d{horizon}", f"exp_traffic_occupancy_d{horizon}"
-        }
+        traffic = (
+            column.startswith("traffic_")
+            or column in {
+                f"exp_traffic_volume_d{horizon}",
+                f"exp_traffic_occupancy_d{horizon}",
+            }
+            or (
+                column.startswith("exp_traffic_recent_")
+                and column.endswith(f"_d{horizon}")
+            )
+        )
         forecast_weather = column.startswith("fc_") and column.endswith(f"_d{horizon}")
         observed_weather = not column.startswith("fc_") and any(
             term in column for term in WEATHER_TERMS
@@ -199,6 +244,8 @@ def select_features(df, target, include_target_calendar):
 
     if not include_target_calendar:
         selected = [column for column in selected if column not in target_calendar]
+    if FEATURE_LIMIT:
+        selected = _rank_features_by_importance(df, target, selected, FEATURE_LIMIT)
     return selected
 
 
@@ -269,6 +316,19 @@ def choose_weights(actual_change, lightgbm_delta, extra_delta, ridge_delta):
     return best_weights
 
 
+def choose_shrinkage(actual, baseline, prediction):
+    """Peso óptimo del delta del modelo frente a persistencia (0-1)."""
+    best_weight = 1.0
+    best_rmse = rmse(actual, prediction)
+    for weight in np.arange(0.0, 1.0001, 0.05):
+        candidate = baseline + weight * (prediction - baseline)
+        candidate_rmse = rmse(actual, candidate)
+        if candidate_rmse < best_rmse:
+            best_rmse = candidate_rmse
+            best_weight = float(weight)
+    return best_weight
+
+
 def conformal_quantile(errors, level=INTERVAL_CALIBRATION_QUANTILE):
     """Calculamos el cuantil finito conservador para el intervalo conformal."""
     errors = np.sort(np.asarray(errors))
@@ -325,6 +385,16 @@ def run_backtest(development, target, features):
         + evaluation_weights[1] * evaluation_extra
         + evaluation_weights[2] * evaluation_ridge
     )
+    # El peso de persistencia se calibra en las ventanas de evaluación
+    # (antes del test final): el test queda intacto para medir de verdad.
+    persistence_weight = (
+        choose_shrinkage(evaluation_actual, evaluation_baseline, evaluation_prediction)
+        if USE_SHRINKAGE else 1.0
+    )
+    evaluation_prediction_prod = (
+        evaluation_baseline
+        + persistence_weight * (evaluation_prediction - evaluation_baseline)
+    )
 
     all_actual = np.concatenate([fold["actual"] for fold in fold_results])
     all_baseline = np.concatenate([fold["baseline"] for fold in fold_results])
@@ -343,6 +413,8 @@ def run_backtest(development, target, features):
         + production_weights[1] * all_extra
         + production_weights[2] * all_ridge
     )
+    if USE_SHRINKAGE:
+        all_prediction = all_baseline + persistence_weight * (all_prediction - all_baseline)
     fold_rmse = []
     for fold in fold_results:
         fold_prediction = (
@@ -351,24 +423,30 @@ def run_backtest(development, target, features):
             + production_weights[1] * fold["extra_trees"]
             + production_weights[2] * fold["ridge"]
         )
+        if USE_SHRINKAGE:
+            fold_prediction = (
+                fold["baseline"]
+                + persistence_weight * (fold_prediction - fold["baseline"])
+            )
         fold_rmse.append(rmse(fold["actual"], fold_prediction))
 
     return {
         "weights": production_weights,
         "evaluation_weights": evaluation_weights,
+        "persistence_weight": persistence_weight,
         "actual": evaluation_actual,
         "baseline": evaluation_baseline,
         "prediction": evaluation_prediction,
         "all_actual": all_actual,
         "all_prediction": all_prediction,
         "interval_half_width_90": conformal_quantile(
-            np.abs(evaluation_actual - evaluation_prediction)
+            np.abs(evaluation_actual - evaluation_prediction_prod)
         ),
         # Conformal normalizado por nivel: el intervalo crece con la predicción
         # (la varianza de NO2 en invierno no es la de verano).
         "interval_relative_half_width_90": conformal_quantile(
-            np.abs(evaluation_actual - evaluation_prediction)
-            / np.maximum(np.abs(evaluation_prediction), 1.0)
+            np.abs(evaluation_actual - evaluation_prediction_prod)
+            / np.maximum(np.abs(evaluation_prediction_prod), 1.0)
         ),
         "interval_min_abs_90": 1.0,
         "fold_rmse": fold_rmse,
@@ -412,7 +490,8 @@ def train_target(df, target):
 
     variants = []
     for include_calendar in [False, True]:
-        features = select_features(data, target, include_calendar)
+        # Selección solo con desarrollo: el test final no participa.
+        features = select_features(development, target, include_calendar)
         backtest = run_backtest(development, target, features)
         backtest_rmse = rmse(backtest["actual"], backtest["prediction"])
         persistence_rmse = rmse(backtest["actual"], backtest["baseline"])
@@ -429,6 +508,7 @@ def train_target(df, target):
     features = selected["features"]
     backtest = selected["backtest"]
     weights = backtest["weights"]
+    shrinkage = backtest.get("persistence_weight", 1.0)
 
     development_medians = development[features].median().fillna(0)
     lightgbm_test, extra_test, ridge_test = make_models()
@@ -444,6 +524,8 @@ def train_target(df, target):
     )
     test_actual = test[target_column].to_numpy()
     test_baseline = test[current_column].to_numpy()
+    if USE_SHRINKAGE:
+        test_prediction = test_baseline + shrinkage * (test_prediction - test_baseline)
 
     cv_rmse = selected["cv_rmse"]
     cv_persistence_rmse = selected["cv_persistence_rmse"]
@@ -498,6 +580,7 @@ def train_target(df, target):
             "extra_trees": weights[1],
             "ridge": weights[2],
         },
+        "persistence_weight": shrinkage,
         "production_method": production_method,
         "prediction_mode": "residual_ensemble",
         "interval_method": "conservative_rolling_conformal_90",
@@ -524,6 +607,7 @@ def train_target(df, target):
         "feature_variant": "with_target_calendar" if selected["include_target_calendar"] else "without_target_calendar",
         "n_features": len(features),
         "weights": artifact["weights"],
+        "persistence_weight": round(shrinkage, 4),
         "cv_rmse": round(cv_rmse, 4),
         "cv_mae": round(mae(cv_actual, cv_prediction), 4),
         "cv_r2": round(r2(cv_actual, cv_prediction), 4),
@@ -567,7 +651,28 @@ def train_target(df, target):
 
 
 def main():
-    global REPORT_LINES
+    global REPORT_LINES, MODELS_DIR, METRICS_PATH, MANIFEST_PATH, REPORT_PATH
+    global FEATURE_LIMIT, USE_SHRINKAGE
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output-dir", default=None,
+                        help="Directorio alternativo para artefactos de experimento.")
+    parser.add_argument("--feature-limit", type=int, default=0,
+                        help="Recorta a las N features más importantes (0 = todas).")
+    parser.add_argument("--persistence-shrinkage", action="store_true",
+                        help="Encoge el delta del modelo hacia persistencia.")
+    parser.add_argument("--tag", default="production",
+                        help="Etiqueta del experimento en métricas/manifiesto.")
+    args = parser.parse_args()
+
+    if args.output_dir:
+        MODELS_DIR = Path(args.output_dir).resolve()
+        METRICS_PATH = MODELS_DIR / "forecast_v10_metrics.json"
+        MANIFEST_PATH = MODELS_DIR / "forecast_v10_manifest.json"
+        REPORT_PATH = MODELS_DIR / "training_report_forecast_v10.txt"
+    FEATURE_LIMIT = max(0, args.feature_limit)
+    USE_SHRINKAGE = bool(args.persistence_shrinkage)
+
     REPORT_LINES = []
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     df, contract = load_dataset()
@@ -575,6 +680,7 @@ def main():
     log("FORECAST V10 - modelos operativos D+1 y D+2")
     log(f"Dataset: {len(df)} días | {df['date'].min().date()} -> {df['date'].max().date()}")
     log(f"Contrato: corte {contract['cutoff_hour_local']:02d}:00 {contract['timezone']}")
+    log(f"Experimento: {args.tag} | feature_limit={FEATURE_LIMIT} | shrinkage={USE_SHRINKAGE}")
     log("Métrica entre paréntesis: skill RMSE frente a persistencia")
     log("=" * 78)
 
@@ -598,6 +704,9 @@ def main():
     manifest = {
         "model_version": "forecast_v10",
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "experiment_tag": args.tag,
+        "feature_limit": FEATURE_LIMIT,
+        "persistence_shrinkage": USE_SHRINKAGE,
         "data_start": df["date"].min().date().isoformat(),
         "data_end": df["date"].max().date().isoformat(),
         "cutoff_hour_local": contract["cutoff_hour_local"],

@@ -20,6 +20,10 @@ data/raw/**
 models/trained/*.pkl
 models/trained/*.joblib
 
+# Artefactos de experimentos (se regeneran; solo se versiona el resumen)
+models/experiments/**/*.joblib
+models/experiments/**/*.pkl
+
 # Outputs
 outputs/
 

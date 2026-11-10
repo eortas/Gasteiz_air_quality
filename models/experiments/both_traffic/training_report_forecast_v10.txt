@@ -1,0 +1,21 @@
+==============================================================================
+FORECAST V10 - modelos operativos D+1 y D+2
+Dataset: 812 días | 2024-08-09 -> 2026-11-09
+Contrato: corte 22:00 Europe/Madrid
+Experimento: both_traffic | feature_limit=0 | shrinkage=False
+Métrica entre paréntesis: skill RMSE frente a persistencia
+==============================================================================
+  NO2_zbe_d1           CV=1.743 (+22.7%)  TEST=1.520 (+10.3%)  IC90=98.3%  passed
+  NO2_out_d1           CV=1.992 (+24.5%)  TEST=2.161 (+19.2%)  IC90=98.3%  passed
+  PM10_zbe_d1          CV=4.648 (+12.8%)  TEST=2.831 (+15.0%)  IC90=100.0%  passed
+  PM10_out_d1          CV=3.979 (+11.7%)  TEST=3.131 (+13.9%)  IC90=100.0%  passed
+  PM2.5_zbe_d1         CV=2.602 (+14.3%)  TEST=2.240 (+15.4%)  IC90=100.0%  passed
+  PM2.5_out_d1         CV=2.757 (+14.4%)  TEST=2.592 (+14.9%)  IC90=100.0%  passed
+  NO2_zbe_d2           CV=1.859 (+23.1%)  TEST=2.029 (+2.3%)  IC90=93.4%  passed
+  NO2_out_d2           CV=2.129 (+26.9%)  TEST=2.614 (+21.4%)  IC90=94.2%  passed
+  PM10_zbe_d2          CV=6.253 (+12.4%)  TEST=3.565 (+22.1%)  IC90=100.0%  passed
+  PM10_out_d2          CV=5.235 (+16.9%)  TEST=3.865 (+21.9%)  IC90=100.0%  passed
+  PM2.5_zbe_d2         CV=3.432 (+20.8%)  TEST=2.750 (+24.1%)  IC90=100.0%  passed
+  PM2.5_out_d2         CV=3.683 (+21.4%)  TEST=3.201 (+22.7%)  IC90=100.0%  passed
+==============================================================================
+Control de calidad: 12/12 objetivos aprobados

@@ -161,6 +161,7 @@ def load_models() -> dict:
                 "medians": artifact["medians"],
                 "seasonal_medians": artifact.get("seasonal_medians", {}),
                 "weights": artifact["weights"],
+                "persistence_weight": artifact.get("persistence_weight", 1.0),
                 "production_method": artifact["production_method"],
                 "prediction_mode": artifact["prediction_mode"],
                 "interval_method": artifact["interval_method"],
@@ -781,6 +782,7 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
         weights = m.get(
             "weights", {"lightgbm": 1.0, "extra_trees": 0.0, "ridge": 0.0}
         )
+        persistence_weight = m.get("persistence_weight", 1.0)
         extra_output = 0.0
         ridge_output = 0.0
 
@@ -822,6 +824,9 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
                 + weights["extra_trees"] * extra_output
                 + weights.get("ridge", 0.0) * ridge_output
             )
+            if persistence_weight < 1.0:
+                base_pred = float(row.iloc[0][current_col])
+                pred = base_pred + persistence_weight * (pred - base_pred)
             foresight = None
         else:
             model_output = float(model.predict(X)[0])
@@ -862,6 +867,10 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
                         + weights["extra_trees"] * extra_contributions
                         + weights.get("ridge", 0.0) * ridge_contributions
                     )
+                    if persistence_weight < 1.0:
+                        base_pred = float(row.iloc[0][current_col])
+                        base_value = base_pred + persistence_weight * (base_value - base_pred)
+                        feature_contributions = persistence_weight * feature_contributions
                 elif prediction_mode == "residual":
                     base_value = (
                         float(row.iloc[0][current_col]) + residual_scale * base_value

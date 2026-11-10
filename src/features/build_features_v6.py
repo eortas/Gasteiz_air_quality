@@ -314,6 +314,43 @@ def load_traffic_daily(cutoff_hour: int | None = None) -> pd.DataFrame:
         daily[f"exp_traffic_volume_d{h}"] = future_dates.map(lambda d: expected_traffic_by_date.get(d, (np.nan, np.nan))[0])
         daily[f"exp_traffic_occupancy_d{h}"] = future_dates.map(lambda d: expected_traffic_by_date.get(d, (np.nan, np.nan))[1])
 
+    # Variante con ventana móvil de 365 días (sin fuga): feature adicional para
+    # que cada target elija entre el baseline pre-ZBE y el nivel reciente.
+    daily = daily.sort_values("date").reset_index(drop=True)
+    dates_v = daily["date"].reset_index(drop=True)
+    dow_v = daily["dow"].to_numpy()
+    doy_v = daily["day_of_year"].to_numpy()
+    volume_v = daily["traffic_volume"].to_numpy()
+    occupancy_v = daily["traffic_occupancy"].to_numpy()
+    n_rows = len(daily)
+
+    def recent_expected(idx: int, horizon: int):
+        target_date = dates_v.iloc[idx] + pd.Timedelta(days=horizon)
+        target_dow = target_date.dayofweek
+        target_doy = target_date.dayofyear
+        start = max(0, idx - 364)
+        window = slice(start, idx + 1)
+        w_dow = dow_v[window]
+        w_doy = doy_v[window]
+        w_volume = volume_v[window]
+        w_occupancy = occupancy_v[window]
+        doy_diff = np.abs(w_doy - target_doy)
+        doy_diff = np.minimum(doy_diff, 365 - doy_diff)
+        mask = (w_dow == target_dow) & (doy_diff <= 15)
+        if mask.sum() >= 3:
+            return (float(np.nanmedian(w_volume[mask])),
+                    float(np.nanmedian(w_occupancy[mask])))
+        mask = w_dow == target_dow
+        if mask.sum() >= 2:
+            return (float(np.nanmedian(w_volume[mask])),
+                    float(np.nanmedian(w_occupancy[mask])))
+        return float(np.nanmedian(w_volume)), float(np.nanmedian(w_occupancy))
+
+    for h in range(1, HORIZON_DAYS + 1):
+        recent = [recent_expected(i, h) for i in range(n_rows)]
+        daily[f"exp_traffic_recent_volume_d{h}"] = [value[0] for value in recent]
+        daily[f"exp_traffic_recent_occupancy_d{h}"] = [value[1] for value in recent]
+
     import json
     lookup_serial = {f"{k[0]}_{k[1]}": v for k, v in traffic_lookup.items()}
     (PROCESSED_DIR / "traffic_lookup.json").write_text(
