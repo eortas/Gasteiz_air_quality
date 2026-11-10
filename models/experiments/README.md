@@ -44,3 +44,8 @@ este resumen. Los `.joblib` se regeneran con:
 ```bash
 python src/ml/train_forecast_v10.py --output-dir models/experiments/<variante> --tag <variante>
 ```
+
+Nota de reproducibilidad: `all` y `prune*` usaron features derivadas
+(ratios, estancamiento, lluvia, viento) que se descartaron tras el experimento.
+El código actual reproduce `baseline` y `both_traffic`; las métricas de las
+variantes descartadas se conservan como registro de la comparación.
