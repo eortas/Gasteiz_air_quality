@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-10T17:45:34",
+  "generated_at": "2026-11-10T17:54:31",
   "window_days": 30,
   "status": "alert",
   "alert": true,
@@ -9,9 +9,9 @@
       "n": 30,
       "window_start": "2026-10-11",
       "window_end": "2026-11-10",
-      "mae_model": 6.437,
+      "mae_model": 6.448,
       "mae_persistence": 3.782,
-      "skill_vs_persistence": -0.7021,
+      "skill_vs_persistence": -0.705,
       "training_skill": null
     },
     "ICA_out_d2": {
@@ -29,9 +29,9 @@
       "n": 30,
       "window_start": "2026-10-11",
       "window_end": "2026-11-10",
-      "mae_model": 3.944,
+      "mae_model": 3.942,
       "mae_persistence": 2.868,
-      "skill_vs_persistence": -0.3752,
+      "skill_vs_persistence": -0.3743,
       "training_skill": null
     },
     "ICA_zbe_d2": {
@@ -49,9 +49,9 @@
       "n": 30,
       "window_start": "2026-10-11",
       "window_end": "2026-11-10",
-      "mae_model": 1.573,
+      "mae_model": 1.576,
       "mae_persistence": 1.642,
-      "skill_vs_persistence": 0.0417,
+      "skill_vs_persistence": 0.0398,
       "training_skill": 0.1944
     },
     "NO2_out_d2": {
@@ -69,9 +69,9 @@
       "n": 30,
       "window_start": "2026-10-11",
       "window_end": "2026-11-10",
-      "mae_model": 1.505,
+      "mae_model": 1.509,
       "mae_persistence": 1.705,
-      "skill_vs_persistence": 0.117,
+      "skill_vs_persistence": 0.1149,
       "training_skill": 0.0906
     },
     "NO2_zbe_d2": {
@@ -89,9 +89,9 @@
       "n": 30,
       "window_start": "2026-10-11",
       "window_end": "2026-11-10",
-      "mae_model": 1.971,
+      "mae_model": 1.983,
       "mae_persistence": 2.38,
-      "skill_vs_persistence": 0.1721,
+      "skill_vs_persistence": 0.1671,
       "training_skill": 0.142
     },
     "PM10_out_d2": {
@@ -109,9 +109,9 @@
       "n": 30,
       "window_start": "2026-10-11",
       "window_end": "2026-11-10",
-      "mae_model": 3.218,
+      "mae_model": 3.226,
       "mae_persistence": 2.181,
-      "skill_vs_persistence": -0.4756,
+      "skill_vs_persistence": -0.4794,
       "training_skill": 0.1359
     },
     "PM10_zbe_d2": {
