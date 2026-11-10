@@ -1,38 +1,44 @@
 {
   "NO2": {
-    "beta3": -0.5145,
+    "beta3": -0.5125,
     "pvalue": 0.0004,
-    "ci_low": -0.7967,
-    "ci_high": -0.2323,
-    "r2": 0.617,
+    "ci_low": -0.7944,
+    "ci_high": -0.2306,
+    "r2": 0.6172,
+    "n_obs": 1618,
+    "significant": true,
+    "fe_dummies": 28,
+    "se_type": "clustered_by_date",
+    "formula": "pollution ~ ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season",
+    "qc_flag": false,
+    "publishable": true
+  },
+  "PM10": {
+    "beta3": 2.5458,
+    "pvalue": 0.0,
+    "ci_low": 2.2115,
+    "ci_high": 2.88,
+    "r2": 0.3276,
     "n_obs": 1616,
     "significant": true,
     "fe_dummies": 28,
     "se_type": "clustered_by_date",
-    "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
-  },
-  "PM10": {
-    "beta3": 3.3951,
-    "pvalue": 0.0,
-    "ci_low": 2.9873,
-    "ci_high": 3.8029,
-    "r2": 0.3507,
-    "n_obs": 1614,
-    "significant": true,
-    "fe_dummies": 28,
-    "se_type": "clustered_by_date",
-    "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
+    "formula": "pollution ~ ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season",
+    "qc_flag": true,
+    "publishable": false
   },
   "PM2.5": {
-    "beta3": 1.0449,
+    "beta3": 0.8398,
     "pvalue": 0.0,
-    "ci_low": 0.8586,
-    "ci_high": 1.2312,
-    "r2": 0.3599,
-    "n_obs": 1614,
+    "ci_low": 0.6563,
+    "ci_high": 1.0234,
+    "r2": 0.3647,
+    "n_obs": 1616,
     "significant": true,
     "fe_dummies": 28,
     "se_type": "clustered_by_date",
-    "formula": "pollution ~ Post + ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season"
+    "formula": "pollution ~ ZBE + Post_x_ZBE + C(month_year) + HDD + HDD_acum_7d + temperature_2m + precipitation + wind_speed_10m + boundary_layer_height + cloud_cover + relative_humidity_2m + sunshine_duration + is_weekend + day_of_week + month + season",
+    "qc_flag": true,
+    "publishable": false
   }
 }

@@ -1,13 +1,17 @@
 {
   "model_version": "forecast_v10",
-  "generated_at": "2026-08-26T12:07:36.262488+00:00",
+  "generated_at": "2026-11-10T17:37:13.290703+00:00",
   "data_start": "2024-08-09",
-  "data_end": "2026-07-28",
+  "data_end": "2026-11-09",
   "cutoff_hour_local": 22,
   "timezone": "Europe/Madrid",
   "feature_window": "local_day_before_cutoff",
   "target_window": "full_local_day",
-  "targets_passed": 12,
+  "targets_passed": 11,
+  "targets_fallback": 1,
+  "fallback_targets": [
+    "NO2_zbe_d2"
+  ],
   "targets_total": 12,
   "forecast_horizons_days": [
     1,
@@ -18,55 +22,55 @@
   "recommended_deployment": "controlled_institutional_pilot",
   "external_validation_completed": false,
   "monitoring_required": true,
-  "dataset_sha256": "0d5ea05b625584816ce293f0e1157f2602d09c79f3349ed7ace41256cfcbeccc",
+  "dataset_sha256": "c6424989611381da47598ba637b75de4c86a725996c7b4d65041cfd227a47f3b",
   "artifacts": {
     "NO2_zbe_d1": {
       "file": "forecast_v10_NO2_zbe_d1.joblib",
-      "sha256": "5c1068ae40edf21a948107aa3a83c8a2c14c0b6c8492abd4f22fbfbb60933bb5"
+      "sha256": "feb392fb4839f30197a8ad69b34f039dfbda8b7a2c3fc3d1c21a0301027e689e"
     },
     "NO2_out_d1": {
       "file": "forecast_v10_NO2_out_d1.joblib",
-      "sha256": "ee229e0b7cb361eed73f07aba6307dbf7c340696ffc07cab1080aea8cea6b3f4"
+      "sha256": "89590995e6f72c040f9ed353f42dd01bfc8a179d691a09daa8975d0cb1d5f8d3"
     },
     "PM10_zbe_d1": {
       "file": "forecast_v10_PM10_zbe_d1.joblib",
-      "sha256": "7e548a8fd13d8533238808a4e6340780acfdd1c1d66c477fbea17e583d51b15b"
+      "sha256": "dcea69dc1282e300dbb23313733b486299eacc8e1c500599b67d6e85cbb4146c"
     },
     "PM10_out_d1": {
       "file": "forecast_v10_PM10_out_d1.joblib",
-      "sha256": "38c1d88b01ca13c2176f00960dce096be3652851dabef64f4cc0060133c373ed"
+      "sha256": "15b1e5745c3259a88bc93d2aa56250b91e8eeb93ea6d5f96323e36c8b2205aba"
     },
     "PM2.5_zbe_d1": {
       "file": "forecast_v10_PM2.5_zbe_d1.joblib",
-      "sha256": "3a35f13e201834982f4ef0026e441ad44c66982eeb7be3450c21dee309a4aad0"
+      "sha256": "8a8c8266d1c9bdefcbb6651b58b46547bfb28197644056eea6a27f0899b94c93"
     },
     "PM2.5_out_d1": {
       "file": "forecast_v10_PM2.5_out_d1.joblib",
-      "sha256": "2888848f9bbba3bf96ec56502cc2b292ff657e803e54735ef636b5319d7b713f"
+      "sha256": "ee5b9fe8d6d45f616ab0f847893e12ca501f531f37aad20a68b1b760d6ca3d1b"
     },
     "NO2_zbe_d2": {
       "file": "forecast_v10_NO2_zbe_d2.joblib",
-      "sha256": "3cf96b2d66f8485265e170971d734773a25378ceb332963d915dad3599e95466"
+      "sha256": "d59554148e7f04e86ce921f2babfc6a4072d3bbcc7e43b34df09742a88817acd"
     },
     "NO2_out_d2": {
       "file": "forecast_v10_NO2_out_d2.joblib",
-      "sha256": "c06c4cc076982db37a0fdde50f7d954cca0e80defdd79c956eacb06625f8c54a"
+      "sha256": "8668fa03727ae42c1bc3888c4a72221013287d0d93be3cced6825b3e87c0e6bc"
     },
     "PM10_zbe_d2": {
       "file": "forecast_v10_PM10_zbe_d2.joblib",
-      "sha256": "6b9be77d1176d9c95ef21af3f429dec73f0fc4a5a7d1509092914b8a03d98c37"
+      "sha256": "ca517cc364921f4d08ce736c5b9e79483d2713764c9829ba2484be49098e9b5e"
     },
     "PM10_out_d2": {
       "file": "forecast_v10_PM10_out_d2.joblib",
-      "sha256": "c43450cf7fb16a7ebeb5e53bbe1b2cc6b1005a1cd62db9ca7d445136c3503ee6"
+      "sha256": "b49c5c19a8e4e3dfb2c45df28d4dbaffc672d06b2f115a970f492b307513f23a"
     },
     "PM2.5_zbe_d2": {
       "file": "forecast_v10_PM2.5_zbe_d2.joblib",
-      "sha256": "83ece28336150437746de8955a78e740317a0e8f1b6af5fc2e4266abe0453a2e"
+      "sha256": "3aa46b3a6945417d6736b6c0f8112ddf988ac65089385e04a2426c23acff9223"
     },
     "PM2.5_out_d2": {
       "file": "forecast_v10_PM2.5_out_d2.joblib",
-      "sha256": "334058e9d79327029585635ef5e6093f4f013d44ff56062460cff5864984e6e4"
+      "sha256": "22eef6cbebb4c23db1d6f38be34b2d54d58b9657f09b0c5a75c32cc8b5a03afc"
     }
   },
   "acceptance_rules": {
