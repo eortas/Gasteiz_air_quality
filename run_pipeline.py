@@ -327,7 +327,8 @@ def main():
         logger.info("\n── FASE 6: Entrenamiento forecast v10 omitido")
 
     logger.info("\n── FASE 6a: Validación de artefactos forecast v10")
-    if not run_script("Validar forecast v10", "src/ml/validate_forecast_v10.py"):
+    validation_args = ["--allow-dataset-change"] if skip_training else []
+    if not run_script("Validar forecast v10", "src/ml/validate_forecast_v10.py", validation_args):
         logger.error("[ERROR] Los artefactos operativos no son publicables. Abortando.")
         sys.exit(1)
 

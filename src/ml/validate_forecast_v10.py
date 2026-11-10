@@ -4,6 +4,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+import argparse
 
 import joblib
 import numpy as np
@@ -31,7 +32,7 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
-def validate():
+def validate(allow_dataset_change: bool = False):
     errors = []
     contract = json.loads(
         (PROCESSED_DIR / "feature_contract.json").read_text(encoding="utf-8")
@@ -69,7 +70,7 @@ def validate():
     trained_data_end = pd.Timestamp(manifest["data_end"]).date()
     if current_data_end < trained_data_end:
         errors.append("El dataset disponible es anterior al usado para entrenar")
-    if current_data_end == trained_data_end and manifest.get(
+    if current_data_end == trained_data_end and not allow_dataset_change and manifest.get(
         "dataset_sha256"
     ) != file_sha256(PROCESSED_DIR / "features_daily.parquet"):
         errors.append("La huella del dataset de entrenamiento no coincide")
@@ -137,8 +138,16 @@ def validate():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--allow-dataset-change",
+        action="store_true",
+        help="Permite que el parquet reconstruido difiera del hash de entrenamiento "
+             "(reconstrucciones con datos tardíos en modo --skip-training).",
+    )
+    args = parser.parse_args()
     try:
-        sys.exit(validate())
+        sys.exit(validate(allow_dataset_change=args.allow_dataset_change))
     except Exception as error:
         print(f"FORECAST V10 NO VÁLIDO: {error}")
         sys.exit(1)
