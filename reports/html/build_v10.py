@@ -1723,26 +1723,8 @@ function renderPipelineBanner() {
     alert = true;
   }
 
-  if (st.drift_status === 'alert') {
-    const n = (st.drift_alerts || []).length;
-    issues.push(currentLang === 'es'
-      ? `Drift: ${n} targets peor que persistencia`
-      : `Drift: ${n} target persistencia baino okerrago`);
-    alert = true;
-  }
-  if (st.weather_source === 'fallback') {
-    issues.push(currentLang === 'es' ? 'Meteorología en fallback (sin Open-Meteo)' : 'Meteorologia fallbackean');
-  }
-  if ((st.qc_excluded || []).length) {
-    issues.push(currentLang === 'es'
-      ? `QC excluye: ${st.qc_excluded.join(', ')}`
-      : `QC kanpo: ${st.qc_excluded.join(', ')}`);
-  }
-  if ((st.spillover_risk || []).length) {
-    issues.push(currentLang === 'es'
-      ? `Spillover posible: ${st.spillover_risk.join(', ')}`
-      : `Spillover posiblea: ${st.spillover_risk.join(', ')}`);
-  }
+  // Los avisos internos de drift, QC, spillover y meteorología quedan en
+  // pipeline_status.json para operación, pero no se muestran al visitante.
 
   if (!issues.length) {
     el.className = 'pipeline-banner';
