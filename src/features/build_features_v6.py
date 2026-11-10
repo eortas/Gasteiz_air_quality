@@ -84,15 +84,16 @@ def section(title):
     log(); log("=" * 65); log(f"  {title}"); log("=" * 65)
 
 
-def load_qc_exclusions() -> set:
-    """Pares estación_contaminante que no deben entrar en las medias de zona."""
+def load_qc_config() -> tuple[set, dict]:
+    """Pares excluidos y flags con factor de corrección del QC."""
     if not QC_PATH.exists():
-        return set()
+        return set(), {}
     try:
-        return set(json.loads(QC_PATH.read_text(encoding="utf-8")).get("excluded", []))
+        payload = json.loads(QC_PATH.read_text(encoding="utf-8"))
+        return set(payload.get("excluded", [])), payload.get("flags", {})
     except Exception as exc:
         log(f"  [WARN] No se pudo leer station_qc.json: {exc}")
-        return set()
+        return set(), {}
 
 def subsection(title):
     log(); log(f"- {title} " + "-" * max(0, 58 - len(title)))
@@ -149,19 +150,32 @@ def load_air_daily(cutoff_hour: int | None = None) -> pd.DataFrame:
     )
     station_daily.loc[station_daily["valid_hours"] < MIN_AIR_HOURS, "valor"] = np.nan
 
-    # QC: excluimos pares estación-contaminante con cambio de régimen para que
-    # la media de zona no arrastre el artefacto (p. ej. PAUL PM10/PM25).
-    qc_excluded = load_qc_exclusions()
+    # QC: corregimos el sesgo multiplicativo de los pares con cambio de régimen
+    # (p. ej. PAUL PM10/PM25) y descartamos los que no tienen corrección (ICA).
+    # Así la media de zona no arrastra el artefacto pero mantiene dos estaciones
+    # cuando una tiene un hueco puntual.
+    qc_excluded, qc_flags = load_qc_config()
     if qc_excluded:
         station_daily["_qc_key"] = (
             station_daily["estacion"] + "_"
             + station_daily["contaminante"].str.replace("PM2.5", "PM25", regex=False)
         )
-        before = len(station_daily)
-        station_daily = station_daily[
-            ~station_daily["_qc_key"].isin(qc_excluded)
-        ].drop(columns="_qc_key")
-        log(f"  QC estaciones  : {before - len(station_daily)} filas excluidas")
+        drop_mask = pd.Series(False, index=station_daily.index)
+        corrected = 0
+        dropped = 0
+        for key in qc_excluded:
+            mask = station_daily["_qc_key"] == key
+            factor = qc_flags.get(key, {}).get("shift_factor")
+            if factor is not None and factor > 0:
+                station_daily.loc[mask, "valor"] = (
+                    station_daily.loc[mask, "valor"] / float(factor)
+                )
+                corrected += int(mask.sum())
+            else:
+                drop_mask |= mask
+                dropped += int(mask.sum())
+        station_daily = station_daily[~drop_mask].drop(columns="_qc_key")
+        log(f"  QC estaciones  : {corrected} filas corregidas, {dropped} descartadas")
         log(f"                   {', '.join(sorted(qc_excluded))}")
 
     frames = []
