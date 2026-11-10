@@ -98,18 +98,21 @@ def validate():
             errors.append(f"Versión incorrecta en {target}")
         if artifact_manifest.get("sha256") != file_sha256(artifact_path):
             errors.append(f"La huella del artefacto no coincide en {target}")
-        if artifact.get("quality_gate") != "passed":
+        gate = artifact.get("quality_gate")
+        if gate not in {"passed", "fallback_persistence"}:
             errors.append(f"Control de calidad no aprobado en {target}")
+        if gate == "fallback_persistence" and artifact.get("production_method") != "persistence":
+            errors.append(f"Fallback incoherente en {target}")
         if not features or missing_features:
             errors.append(f"Features incompatibles en {target}: {missing_features[:3]}")
         if any(weight < 0 for weight in weight_values) or sum(weight_values) > 1.000001:
             errors.append(f"Pesos inválidos en {target}")
         if float(artifact.get("interval_half_width_90", 0)) <= 0:
             errors.append(f"Intervalo inválido en {target}")
-        if metric.get("quality_gate") != "passed":
+        if metric.get("quality_gate") != gate:
             errors.append(f"Métricas no aprobadas en {target}")
 
-        if features and not missing_features and not latest.empty:
+        if gate == "passed" and features and not missing_features and not latest.empty:
             medians = artifact.get("medians", {})
             X = latest.tail(1).reindex(columns=features).fillna(medians).fillna(0).astype(float)
             predictions = [

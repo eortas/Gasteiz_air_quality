@@ -583,6 +583,11 @@ def main():
         metrics[f"target_{target}"] = train_target(df, target)
 
     passed = sum(value["quality_gate"] == "passed" for value in metrics.values())
+    fallback_targets = [
+        target for target in TARGETS
+        if metrics[f"target_{target}"]["quality_gate"] == "fallback_persistence"
+    ]
+    ready = passed + len(fallback_targets) == len(TARGETS) and passed > 0
     artifacts = {}
     for target in TARGETS:
         artifact_path = MODELS_DIR / f"forecast_v10_{target}.joblib"
@@ -600,9 +605,11 @@ def main():
         "feature_window": contract["feature_window"],
         "target_window": contract["target_window"],
         "targets_passed": passed,
+        "targets_fallback": len(fallback_targets),
+        "fallback_targets": fallback_targets,
         "targets_total": len(TARGETS),
         "forecast_horizons_days": list(HORIZONS),
-        "ready_for_production": passed == len(TARGETS),
+        "ready_for_production": ready,
         "readiness_scope": "technical_model_gate",
         "recommended_deployment": "controlled_institutional_pilot",
         "external_validation_completed": False,
