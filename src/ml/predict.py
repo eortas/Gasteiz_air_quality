@@ -60,30 +60,23 @@ TARGETS = [
 
 # Función para obtener métricas CV v8 dinámicas
 def get_cv_rmse() -> dict:
+    """Carga el RMSE de CV real. Sin métricas no se inventan intervalos."""
     metrics_path = MODELS_DIR / "forecast_v10_metrics.json"
     if not metrics_path.exists():
         metrics_path = MODELS_DIR / "metrics_v8.json"
-    defaults = {
-        "NO2_zbe_d1": 3.458, "NO2_out_d1": 4.557,
-        "PM10_zbe_d1": 4.758, "PM10_out_d1": 4.435,
-        "PM2.5_zbe_d1": 3.151, "PM2.5_out_d1": 3.359,
-        "ICA_zbe_d1": 4.758, "ICA_out_d1": 4.557,
-    }
-    if metrics_path.exists():
-        try:
-            data = json.loads(metrics_path.read_text(encoding="utf-8"))
-            res = {}
-            for k, v in data.items():
-                clean_k = k.replace("target_", "")
-                res[clean_k] = v.get("cv_rmse", defaults.get(clean_k, 4.0))
-            if not res:
-                return defaults
-            res["ICA_zbe_d1"] = res.get("PM10_zbe_d1", 4.758)
-            res["ICA_out_d1"] = res.get("NO2_out_d1", 4.557)
-            return res
-        except Exception:
-            pass
-    return defaults
+    if not metrics_path.exists():
+        return {}
+    try:
+        data = json.loads(metrics_path.read_text(encoding="utf-8"))
+        res = {}
+        for k, v in data.items():
+            clean_k = k.replace("target_", "")
+            rmse_value = v.get("cv_rmse")
+            if rmse_value is not None:
+                res[clean_k] = rmse_value
+        return res
+    except Exception:
+        return {}
 
 CV_RMSE = get_cv_rmse()
 
@@ -103,12 +96,16 @@ def get_model_metrics() -> dict:
 
 MODEL_METRICS = get_model_metrics()
 
-# Unidades y umbrales de alerta (WHO 2021 guidelines, medias diarias)
+# Unidades y umbrales de alerta (WHO 2021 guidelines, medias diarias).
+# Los umbrales se centralizan en config.py para que dashboard y modelo no divergan.
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config import ALERT_THRESHOLDS  # noqa: E402
+
 META = {
-    "NO2":   {"unit": "ug/m3", "alert": 25.0,  "label": "NO?"},
-    "PM10":  {"unit": "ug/m3", "alert": 45.0,  "label": "PM10"},
-    "PM2.5": {"unit": "ug/m3", "alert": 15.0,  "label": "PM2.5"},
-    "ICA":   {"unit": "idx",   "alert": 40.0,  "label": "ICA"},
+    "NO2":   {"unit": "ug/m3", "alert": ALERT_THRESHOLDS["NO2"],   "label": "NO?"},
+    "PM10":  {"unit": "ug/m3", "alert": ALERT_THRESHOLDS["PM10"],  "label": "PM10"},
+    "PM2.5": {"unit": "ug/m3", "alert": ALERT_THRESHOLDS["PM2.5"], "label": "PM2.5"},
+    "ICA":   {"unit": "idx",   "alert": ALERT_THRESHOLDS["ICA"],   "label": "ICA"},
 }
 
 LATITUDE  = 42.8467
@@ -162,7 +159,7 @@ def load_models() -> dict:
                 "ridge_model": artifact.get("ridge"),
                 "features": artifact["features"],
                 "medians": artifact["medians"],
-                "seasonal_medians": {},
+                "seasonal_medians": artifact.get("seasonal_medians", {}),
                 "weights": artifact["weights"],
                 "production_method": artifact["production_method"],
                 "prediction_mode": artifact["prediction_mode"],
@@ -344,6 +341,18 @@ def load_prediction_row(target_date: pd.Timestamp = None) -> tuple[pd.DataFrame,
         else:
             row = source_target.iloc[[-1]]
 
+        # Gate de frescura: nunca publicar como "actual" una fila antigua.
+        source_date = row["date"].iloc[0]
+        if source_date != latest_allowed:
+            message = (
+                f"El corte {latest_allowed.date()} no tiene datos completos y la fila "
+                f"más reciente es {source_date.date()}. Se aborta para no publicar una "
+                "predicción antigua como actual. Usa --allow-stale para forzar."
+            )
+            if "--allow-stale" not in sys.argv:
+                raise RuntimeError(message)
+            log(f"  [WARN] {message}")
+
         pred_date = row["date"].iloc[0] + pd.Timedelta(days=1)
     else:
         # Predecir un d?a hist?rico: buscar la fila del d?a anterior
@@ -513,149 +522,6 @@ def save_forecast_snapshots(first_target_date: pd.Timestamp, forecast: dict):
             file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
-def refine_with_meta_models(results: dict, row: pd.DataFrame, df_history: pd.DataFrame, pred_date: pd.Timestamp) -> dict:
-    """
-    Usa los meta-modelos Ridge para corregir las predicciones v1.
-    Calcula error_lag_1d y error_roll_mean_7d usando el histórico reciente.
-    
-    FIX v8.1: Clamp del meta-modelo para NO2 en períodos de valores bajos.
-    El meta-modelo Ridge tiene un intercepto alto (~7.6 para NO2_zbe) que
-    infla las predicciones cuando los valores reales son muy bajos (verano).
-    """
-    refined_results = {}
-    
-    # 1. Calcular errores recientes para las features del meta-modelo
-    cutoff_date = pred_date - pd.Timedelta(days=2)
-    df_history_clean = df_history[df_history["date"] <= cutoff_date].sort_values("date").reset_index(drop=True)
-    history_8d = df_history_clean.tail(8).copy()
-    
-    # Calcular medias históricas de clima para imputación robusta
-    # Usar medias del mes actual para coherencia estacional
-    pred_month = pred_date.month
-    month_mask = df_history["date"].dt.month == pred_month
-    df_month = df_history[month_mask] if month_mask.any() else df_history
-    
-    default_temp = df_month["temperature_2m"].mean() if "temperature_2m" in df_month.columns else 12.0
-    default_wind = df_month["wind_speed_10m"].mean() if "wind_speed_10m" in df_month.columns else 2.5
-    default_boundary = df_month["boundary_layer_height"].mean() if "boundary_layer_height" in df_month.columns else 500.0
-    default_humidity = df_month["relative_humidity_2m"].mean() if "relative_humidity_2m" in df_month.columns else 75.0
-    
-    # Asegurar que no son NaN
-    default_temp = default_temp if pd.notna(default_temp) else 12.0
-    default_wind = default_wind if pd.notna(default_wind) else 2.5
-    default_boundary = default_boundary if pd.notna(default_boundary) else 500.0
-    default_humidity = default_humidity if pd.notna(default_humidity) else 75.0
-    
-    for target, r in results.items():
-        model_meta_path = MODELS_DIR / f"meta_model_{target}.pkl"
-        if not model_meta_path.exists():
-            refined_results[target] = r
-            continue
-            
-        try:
-            meta_model = joblib.load(model_meta_path)
-            
-            # Cargar el modelo 1 original para calcular errores pasados
-            m1_path = MODELS_DIR / f"lgbm_v8_{target}.pkl"
-            f1_path = MODELS_DIR / f"lgbm_v8_{target}_features.json"
-            model_v1 = joblib.load(m1_path)
-            feats_v1 = json.loads(f1_path.read_text(encoding="utf-8"))
-            
-            # Cargar medianas de features para el modelo v1
-            med1_path = MODELS_DIR / f"lgbm_v8_{target}_medians.json"
-            medians_v1 = {}
-            if med1_path.exists():
-                try:
-                    medians_v1 = json.loads(med1_path.read_text(encoding="utf-8"))
-                except Exception:
-                    pass
-            fill_values = {f: medians_v1.get(f, 0.0) for f in feats_v1}
-            
-            # Calcular errores de los últimos 7 días (si hay datos)
-            errors = []
-            for _, h_row in history_8d.iterrows():
-                X_h = h_row.to_frame().T.reindex(columns=feats_v1).fillna(fill_values).astype(float)
-                p_h = float(model_v1.predict(X_h)[0])
-                
-                # target es "NO2_zbe_d1" -> la columna real en el parquet es "NO2_zbe"
-                contam_col = current_air_column(target)
-                actual = h_row.get(contam_col) 
-                if pd.notna(actual):
-                    errors.append(actual - p_h)
-            
-            error_lag_1d = errors[-1] if len(errors) >= 1 else 0
-            error_roll_7d = np.mean(errors) if len(errors) >= 1 else 0
-            
-            # Leer valores de clima del pronóstico o de la fila
-            temp_val = row["temperature_2m"].iloc[0]
-            if pd.isna(temp_val) and "fc_temperature_2m_d1" in row.columns:
-                temp_val = row["fc_temperature_2m_d1"].iloc[0]
-                
-            wind_val = row["wind_speed_10m"].iloc[0]
-            if pd.isna(wind_val) and "fc_wind_speed_10m_d1" in row.columns:
-                wind_val = row["fc_wind_speed_10m_d1"].iloc[0]
-                
-            boundary_val = row["boundary_layer_height"].iloc[0]
-            if pd.isna(boundary_val) and "fc_boundary_layer_height_d1" in row.columns:
-                boundary_val = row["fc_boundary_layer_height_d1"].iloc[0]
-                
-            humidity_val = row["relative_humidity_2m"].iloc[0]
-            if pd.isna(humidity_val) and "fc_relative_humidity_2m_d1" in row.columns:
-                humidity_val = row["fc_relative_humidity_2m_d1"].iloc[0]
-
-            meta_input = {
-                "pred_v1": float(r["prediction"]),
-                "error_lag_1d": float(error_lag_1d),
-                "error_roll_mean_7d": float(error_roll_7d),
-                "temperature_2m": float(pd.to_numeric(pd.Series([temp_val]), errors='coerce').fillna(default_temp).iloc[0]),
-                "wind_speed_10m": float(pd.to_numeric(pd.Series([wind_val]), errors='coerce').fillna(default_wind).iloc[0]),
-                "boundary_layer_height": float(pd.to_numeric(pd.Series([boundary_val]), errors='coerce').fillna(default_boundary).iloc[0]),
-                "relative_humidity_2m": float(pd.to_numeric(pd.Series([humidity_val]), errors='coerce').fillna(default_humidity).iloc[0]),
-                "is_weekend": float(pd.to_numeric(row["is_weekend"], errors='coerce').fillna(0).iloc[0]),
-                "es_domingo": float(pd.to_numeric(row["es_domingo"], errors='coerce').fillna(0).iloc[0]),
-                "es_invierno_estricto": float(pd.to_numeric(row["es_invierno_estricto"], errors='coerce').fillna(0).iloc[0]),
-            }
-            
-            X_meta = pd.DataFrame([meta_input]).astype(float)
-            pred_v2 = float(meta_model.predict(X_meta)[0])
-            pred_v2 = max(0.0, pred_v2)
-            
-            # Fix auditoría #4b: Clamp simple (±30%) sin bypass frágil
-            # El bypass con medianas hardcodeadas fue eliminado porque:
-            # - train_meta_model.py ahora NO guarda modelos que no mejoran
-            # - Si llegamos aquí, el meta-modelo fue validado con walk-forward
-            pred_v1 = float(r["prediction"])
-            max_correction_pct = 0.30
-            
-            if pred_v1 > 0:
-                lower_bound = pred_v1 * (1 - max_correction_pct)
-                upper_bound = pred_v1 * (1 + max_correction_pct)
-                pred_v2_clamped = max(0.0, min(pred_v2, upper_bound))
-                pred_v2_clamped = max(lower_bound, pred_v2_clamped)
-                
-                if abs(pred_v2 - pred_v2_clamped) > 0.01:
-                    log(f"  [CLAMP] {target}: meta={pred_v2:.2f} -> clamped={pred_v2_clamped:.2f} "
-                        f"(v1={pred_v1:.2f}, rango=[{lower_bound:.2f}, {upper_bound:.2f}])")
-                    pred_v2 = pred_v2_clamped
-            
-            refined_results[target] = {
-                "prediction_v1": r["prediction"],
-                "prediction":    round(pred_v2, 2),
-                "lower":         round(max(0, pred_v2 - 1.645 * r["rmse_cv"]), 2),
-                "upper":         round(pred_v2 + 1.645 * r["rmse_cv"], 2),
-                "rmse_cv":       r["rmse_cv"],
-                "correction":    round(pred_v2 - r["prediction"], 2)
-            }
-            if "foresight" in r:
-                refined_results[target]["foresight"] = r["foresight"]
-        except Exception as e:
-            log(f"  [WARN] Fallo en meta-modelo {target}: {e}")
-            refined_results[target] = r
-            
-    # Recalcular ICA determinista basándose en las predicciones refinadas
-    add_deterministic_ica(refined_results)
-    return refined_results
-
 
 def generate_llm_narrative(target: str, pred_val: float, base_val: float, positive_feats: list, negative_feats: list) -> dict:
     """Generate bilingual narratives using Groq LLM based on SHAP contributions."""
@@ -797,34 +663,41 @@ def add_deterministic_ica(results: dict, horizon: int = 1):
             sub_pm25_v1 = compute_ica_subindex("PM2.5", pred_pm25_v1)
             pred_ica_v1 = max(sub_no2_v1, sub_pm10_v1, sub_pm25_v1)
             
-            # RMSE aproximado del ICA (propagación de errores)
-            rmse_cv = max(
-                results[no2_key].get("rmse_cv", 5.0),
-                results[pm10_key].get("rmse_cv", 5.0),
-                results[pm25_key].get("rmse_cv", 5.0)
-            )
-            lower_ica = max(
-                compute_ica_subindex("NO2", results[no2_key]["lower"]),
-                compute_ica_subindex("PM10", results[pm10_key]["lower"]),
-                compute_ica_subindex("PM2.5", results[pm25_key]["lower"]),
-            )
-            upper_ica = max(
-                compute_ica_subindex("NO2", results[no2_key]["upper"]),
-                compute_ica_subindex("PM10", results[pm10_key]["upper"]),
-                compute_ica_subindex("PM2.5", results[pm25_key]["upper"]),
-            )
+            # El RMSE del ICA se deriva de sus intervalos (no de un factor 0.5
+            # inventado): la incertidumbre es la del subíndice dominante.
+            pollutant_results = [results[no2_key], results[pm10_key], results[pm25_key]]
+            if all(r.get("lower") is not None and r.get("upper") is not None for r in pollutant_results):
+                lower_ica = max(
+                    compute_ica_subindex("NO2", results[no2_key]["lower"]),
+                    compute_ica_subindex("PM10", results[pm10_key]["lower"]),
+                    compute_ica_subindex("PM2.5", results[pm25_key]["lower"]),
+                )
+                upper_ica = max(
+                    compute_ica_subindex("NO2", results[no2_key]["upper"]),
+                    compute_ica_subindex("PM10", results[pm10_key]["upper"]),
+                    compute_ica_subindex("PM2.5", results[pm25_key]["upper"]),
+                )
+                rmse_cv = max(upper_ica - pred_ica, pred_ica - lower_ica) / 1.645
+                ica_lower = round(max(0, lower_ica), 2)
+                ica_upper = round(upper_ica, 2)
+                ica_interval_method = "derived_from_pollutant_intervals"
+            else:
+                rmse_cv = None
+                ica_lower = None
+                ica_upper = None
+                ica_interval_method = "unavailable"
             
             results[f"ICA_{zone}_d{horizon}"] = {
                 "prediction_v1": round(pred_ica_v1, 2),
                 "prediction":    round(pred_ica, 2),
-                "lower":         round(max(0, lower_ica), 2),
-                "upper":         round(upper_ica, 2),
-                "rmse_cv":       round(rmse_cv * 0.5, 3),
+                "lower":         ica_lower,
+                "upper":         ica_upper,
+                "rmse_cv":       round(rmse_cv, 3) if rmse_cv is not None else None,
                 "correction":    round(pred_ica - pred_ica_v1, 2),
                 "method":        "deterministic_caqi",
                 "model_version": results[no2_key].get("model_version", "v8"),
                 "quality_gate":  results[no2_key].get("quality_gate", "legacy"),
-                "interval_method": "derived_from_pollutant_intervals",
+                "interval_method": ica_interval_method,
                 "foresight": {
                     "base_value": round(pred_ica, 2),
                     "positive_top": [],
@@ -1026,19 +899,31 @@ def predict(models: dict, row: pd.DataFrame, forecast_override: dict = None,
                 foresight = {"error": str(e)}
 
         rmse_cv = m.get("test_persistence_rmse") if production_method == "persistence" else m.get("cv_rmse")
-        rmse_cv = rmse_cv or CV_RMSE.get(target, 0)
-        interval_half_width = m.get("interval_half_width_90", 1.645 * rmse_cv)
+        if rmse_cv is None:
+            rmse_cv = CV_RMSE.get(target)
+        relative_half = m.get("interval_relative_half_width_90")
+        min_abs_half = m.get("interval_min_abs_90", 0.5)
+        if relative_half is not None:
+            interval_half_width = max(relative_half * max(abs(pred), 1.0), min_abs_half)
+            interval_method = "conformal_relative_90"
+        elif rmse_cv is not None and rmse_cv > 0:
+            interval_half_width = m.get("interval_half_width_90", 1.645 * rmse_cv)
+            interval_method = m.get("interval_method", "normal_rmse_approximation")
+        else:
+            # Sin métricas no publicamos una falsa incertidumbre.
+            interval_half_width = None
+            interval_method = "unavailable"
         results[target] = {
             "prediction": round(pred, 2),
-            "lower":      round(max(0, pred - interval_half_width), 2),
-            "upper":      round(pred + interval_half_width, 2),
+            "lower":      round(max(0, pred - interval_half_width), 2) if interval_half_width is not None else None,
+            "upper":      round(pred + interval_half_width, 2) if interval_half_width is not None else None,
             "rmse_cv":    rmse_cv,
             "method":     production_method,
             "prediction_mode": prediction_mode,
             "model_version": m.get("model_version", "v8"),
             "quality_gate": m.get("quality_gate", "legacy"),
             "skill_vs_persistence": m.get("cv_skill_vs_persistence"),
-            "interval_method": m.get("interval_method", "normal_rmse_approximation"),
+            "interval_method": interval_method,
             "foresight":  foresight
         }
 
@@ -1069,8 +954,9 @@ def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
             upper = r["upper"]
             alert = "[WARN]  ALERTA" if pred >= meta["alert"] else "[OK]  OK"
             zone_label = "ZBE" if zone == "zbe" else "OUT"
+            interval_txt = f"[{lower:.1f} - {upper:.1f}]" if lower is not None and upper is not None else "[N/D]"
             log(f"  {meta['label']:<12} {zone_label:<6} {pred:>7.2f} {meta['unit']}  "
-                f"[{lower:.1f} - {upper:.1f}]  {alert}")
+                f"{interval_txt}  {alert}")
 
     log(f"\n  D+2 · {pred_date.date() + pd.Timedelta(days=1)}")
     for cont in ["NO2", "PM10", "PM2.5", "ICA"]:
@@ -1082,9 +968,14 @@ def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
             result = results[key]
             alert = "[WARN] ALERTA" if result["prediction"] >= meta["alert"] else "[OK] OK"
             zone_label = "ZBE" if zone == "zbe" else "OUT"
+            interval_txt = (
+                f"[{result['lower']:.1f} - {result['upper']:.1f}]"
+                if result.get("lower") is not None and result.get("upper") is not None
+                else "[N/D]"
+            )
             log(
                 f"  {meta['label']:<12} {zone_label:<6} {result['prediction']:>7.2f} {meta['unit']}  "
-                f"[{result['lower']:.1f} - {result['upper']:.1f}]  {alert}"
+                f"{interval_txt}  {alert}"
             )
 
     log()
@@ -1100,7 +991,7 @@ def print_results(results: dict, pred_date: pd.Timestamp, with_forecast: bool):
 
 # ??? 6. GUARDAR JSON ??????????????????????????????????????????????????????????
 def save_json(results: dict, pred_date: pd.Timestamp, run_type: str = "production",
-              source_date: pd.Timestamp = None):
+              source_date: pd.Timestamp = None, weather_source: str = "proxy"):
     out = {
         "prediction_date": pred_date.date().isoformat(),
         "prediction_dates": {
@@ -1114,6 +1005,7 @@ def save_json(results: dict, pred_date: pd.Timestamp, run_type: str = "productio
         ) else "v8",
         "run_type":        run_type,
         "source_date":     source_date.date().isoformat() if source_date is not None else None,
+        "weather_source":  weather_source,
         "targets": results,
     }
 
@@ -1217,24 +1109,24 @@ def main():
     # 4. Predecir (con medianas estacionales)
     results = predict(models, row, None, pred_date=pred_date)
 
-    # Los meta-modelos antiguos se activan solo de forma explícita porque fueron
-    # entrenados con el modelo de nivel anterior y no son compatibles con residuos.
-    if "--with-meta" in sys.argv:
-        if not json_only:
-            section("4. Refinando con Meta-Modelos (v2) + Clamp v8.1")
-        df_history = pd.read_parquet(DATASET_PATH)
-        df_history["date"] = pd.to_datetime(df_history["date"], utc=True)
-        results = refine_with_meta_models(results, row, df_history, pred_date)
+    # El meta-modelo v2 se retiró: fue entrenado con otro modelo base y sus
+    # residuos no son compatibles con forecast v10.
 
     # 5. Mostrar o volcar JSON
     run_type = "production" if publish_date or not date_arg else "backtest"
     source_date = row["date"].iloc[0]
+    if not with_forecast:
+        weather_source = "proxy"
+    elif forecast_override:
+        weather_source = "open-meteo"
+    else:
+        weather_source = "fallback"
     if json_only:
-        out = save_json(results, pred_date, run_type, source_date)
+        out = save_json(results, pred_date, run_type, source_date, weather_source)
         print(json.dumps(out, indent=2, ensure_ascii=False))
     else:
         print_results(results, pred_date, with_forecast=bool(forecast_override))
-        save_json(results, pred_date, run_type, source_date)
+        save_json(results, pred_date, run_type, source_date, weather_source)
 
         log()
         log("=" * 65)

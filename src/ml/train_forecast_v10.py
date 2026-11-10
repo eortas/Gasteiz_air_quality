@@ -167,6 +167,10 @@ def select_features(df, target, include_target_calendar):
     for column in df.columns:
         if column == "date" or column.startswith("target_"):
             continue
+        # weather_code es nominal (no ordinal): tratarlo como numérico introduce
+        # una escala falsa. Se excluye hasta tener una codificación categórica.
+        if "weather_code" in column:
+            continue
         if not pd.api.types.is_numeric_dtype(df[column]):
             continue
         if df[column].notna().mean() <= 0.50:
@@ -327,6 +331,9 @@ def run_backtest(development, target, features):
     all_lightgbm = np.concatenate([fold["lightgbm"] for fold in fold_results])
     all_extra = np.concatenate([fold["extra_trees"] for fold in fold_results])
     all_ridge = np.concatenate([fold["ridge"] for fold in fold_results])
+    # Pesos de producción: se ajustan sobre todos los folds (modelo final).
+    # El test reportado usa evaluation_weights, elegidos solo en calibración,
+    # así que no hay fuga de información en las métricas publicadas.
     production_weights = choose_weights(
         all_actual - all_baseline, all_lightgbm, all_extra, all_ridge
     )
@@ -357,6 +364,13 @@ def run_backtest(development, target, features):
         "interval_half_width_90": conformal_quantile(
             np.abs(evaluation_actual - evaluation_prediction)
         ),
+        # Conformal normalizado por nivel: el intervalo crece con la predicción
+        # (la varianza de NO2 en invierno no es la de verano).
+        "interval_relative_half_width_90": conformal_quantile(
+            np.abs(evaluation_actual - evaluation_prediction)
+            / np.maximum(np.abs(evaluation_prediction), 1.0)
+        ),
+        "interval_min_abs_90": 1.0,
         "fold_rmse": fold_rmse,
         "fold_ranges": [
             {"fold": fold["fold"], "start": fold["start"], "end": fold["end"]}
@@ -438,7 +452,13 @@ def train_target(df, target):
     cv_skill = 1 - cv_rmse / cv_persistence_rmse
     test_skill = 1 - test_rmse / test_persistence_rmse
     interval_half_width = backtest["interval_half_width_90"]
-    test_coverage = float(np.mean(np.abs(test_actual - test_prediction) <= interval_half_width))
+    interval_relative = backtest["interval_relative_half_width_90"]
+    interval_min_abs = backtest["interval_min_abs_90"]
+    test_half_width = np.maximum(
+        interval_relative * np.maximum(np.abs(test_prediction), 1.0),
+        interval_min_abs,
+    )
+    test_coverage = float(np.mean(np.abs(test_actual - test_prediction) <= test_half_width))
     quality_passed = (
         cv_skill >= MIN_CV_SKILL
         and test_skill >= MIN_TEST_SKILL
@@ -453,6 +473,15 @@ def train_target(df, target):
     final_extra.fit(data[features].fillna(final_medians), full_delta)
     final_ridge.fit(data[features].fillna(final_medians), full_delta)
 
+    # Medianas por mes para imputar en producción sin arrastrar la
+    # estacionalidad anual (crítico en NO2: verano ~4 vs invierno ~10).
+    seasonal_medians = {}
+    for month, month_data in data.groupby(data["date"].dt.month):
+        month_medians = month_data[features].median().fillna(final_medians)
+        seasonal_medians[str(int(month))] = {
+            column: float(month_medians[column]) for column in features
+        }
+
     artifact = {
         "model_version": "forecast_v10",
         "target": target,
@@ -460,6 +489,7 @@ def train_target(df, target):
         "trained_until": data["date"].iloc[-1].date().isoformat(),
         "features": features,
         "medians": {column: float(final_medians[column]) for column in features},
+        "seasonal_medians": seasonal_medians,
         "lightgbm": final_lightgbm,
         "extra_trees": final_extra,
         "ridge": final_ridge,
@@ -472,6 +502,8 @@ def train_target(df, target):
         "prediction_mode": "residual_ensemble",
         "interval_method": "conservative_rolling_conformal_90",
         "interval_half_width_90": interval_half_width,
+        "interval_relative_half_width_90": interval_relative,
+        "interval_min_abs_90": interval_min_abs,
         "quality_gate": "passed" if quality_passed else "fallback_persistence",
     }
     artifact_path = MODELS_DIR / f"forecast_v10_{target}.joblib"
@@ -513,6 +545,8 @@ def train_target(df, target):
         ),
         "interval_method": "conservative_rolling_conformal_90",
         "interval_half_width_90": round(interval_half_width, 4),
+        "interval_relative_half_width_90": round(interval_relative, 4),
+        "interval_min_abs_90": round(interval_min_abs, 4),
         "interval_calibration_quantile": INTERVAL_CALIBRATION_QUANTILE,
         "cv_interval_coverage_90": round(cv_coverage, 4),
         "test_interval_coverage_90": round(test_coverage, 4),

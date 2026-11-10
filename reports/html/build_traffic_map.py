@@ -7,13 +7,26 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 TRAFFIC_DIR = ROOT_DIR / "data" / "raw" / "traffic"
 OUTPUT_HTML = ROOT_DIR / "reports" / "html" / "traffic_map.html"
 
+TIMEZONE = "Europe/Madrid"
+# El CSV transformado es horario (24 lecturas/día); por debajo de 20
+# consideramos el día incompleto y lo marcamos como parcial.
+MIN_READINGS_PER_DAY = 20
+
 def build_traffic_dashboard():
     print("Cargando sensores...")
     sensors_df = pd.read_csv(TRAFFIC_DIR / "sensors.csv", dtype={"code": str})
-    
-    print("Cargando datos de tráfico 2026...")
-    traffic_df = pd.read_csv(TRAFFIC_DIR / "trafico_2026.csv", dtype={"code": str})
+
+    # El CSV se genera por año; tomamos el más reciente en vez de fijar 2026.
+    traffic_files = sorted(TRAFFIC_DIR.glob("trafico_*.csv"))
+    if not traffic_files:
+        raise FileNotFoundError(f"No hay ficheros trafico_*.csv en {TRAFFIC_DIR}")
+    traffic_path = traffic_files[-1]
+    print(f"Cargando datos de tráfico ({traffic_path.name})...")
+    traffic_df = pd.read_csv(traffic_path, dtype={"code": str})
     traffic_df["start_date"] = pd.to_datetime(traffic_df["start_date"], utc=True)
+    # El día que percibe el ciudadano es el local: en UTC la hora punta de la
+    # mañana cae en el día anterior durante el horario de verano.
+    traffic_df["start_date"] = traffic_df["start_date"].dt.tz_convert(TIMEZONE)
     traffic_df["date"] = traffic_df["start_date"].dt.date
     
     # Obtener los dos últimos días con datos
@@ -33,11 +46,13 @@ def build_traffic_dashboard():
         if day_df.empty:
             return pd.DataFrame()
             
-        stats = day_df.groupby("code").agg({
-            "volume": "sum",
-            "occupancy": "mean",
-            "load": "mean"
-        }).reset_index()
+        stats = day_df.groupby("code").agg(
+            volume=("volume", "sum"),
+            occupancy=("occupancy", "mean"),
+            load=("load", "mean"),
+            readings=("volume", "size"),
+        ).reset_index()
+        stats["partial"] = stats["readings"] < MIN_READINGS_PER_DAY
         
         # Encontrar el tramo con carga máxima para cada sensor
         peak_info = []
@@ -72,8 +87,12 @@ def build_traffic_dashboard():
             continue
             
         def get_val(df, col):
-            val = df[col].iloc[0] if not df.empty else None
-            return round(float(val), 2) if val is not None else None
+            if df.empty:
+                return None
+            val = df[col].iloc[0]
+            if val is None or pd.isna(val):
+                return None
+            return round(float(val), 2)
 
         v_t, o_t, l_t = get_val(s_today, "volume"), get_val(s_today, "occupancy"), get_val(s_today, "load")
         v_y, o_y, l_y = get_val(s_yesterday, "volume"), get_val(s_yesterday, "occupancy"), get_val(s_yesterday, "load")
@@ -89,6 +108,9 @@ def build_traffic_dashboard():
             "v": int(s_yesterday["peak_v"].iloc[0]) if not s_yesterday.empty and not pd.isna(s_yesterday["peak_v"].iloc[0]) else None
         }
 
+        partial_t = bool(s_today["partial"].iloc[0]) if not s_today.empty else False
+        partial_y = bool(s_yesterday["partial"].iloc[0]) if not s_yesterday.empty else False
+
         # Filtrar si todos los valores son 0 en ambos días
         if (v_t == 0 or v_t is None) and (o_t == 0 or o_t is None) and (l_t == 0 or l_t is None) and \
            (v_y == 0 or v_y is None) and (o_y == 0 or o_y is None) and (l_y == 0 or l_y is None):
@@ -99,9 +121,19 @@ def build_traffic_dashboard():
             "name": sensor["name"],
             "lat": sensor["lat"],
             "lon": sensor["lon"],
-            "today": {"v": v_t, "o": o_t, "l": l_t, "peak": peak_t},
-            "yesterday": {"v": v_y, "o": o_y, "l": l_y, "peak": peak_y}
+            "today": {"v": v_t, "o": o_t, "l": l_t, "peak": peak_t, "partial": partial_t},
+            "yesterday": {"v": v_y, "o": o_y, "l": l_y, "peak": peak_y, "partial": partial_y}
         })
+
+    # Un día es parcial si la mediana de lecturas por sensor no llega al umbral.
+    def is_partial_day(date):
+        counts = traffic_df.loc[traffic_df["date"] == date].groupby("code")["volume"].size()
+        return bool(counts.empty or counts.median() < MIN_READINGS_PER_DAY)
+
+    today_partial = is_partial_day(today_date)
+    yesterday_partial = is_partial_day(yesterday_date)
+    if today_partial:
+        print("  Aviso: el día más reciente está incompleto (se marca como parcial).")
 
     # HTML Template
     html_template = """<!DOCTYPE html>
@@ -131,6 +163,8 @@ def build_traffic_dashboard():
         .controls { padding: 12px 24px; background: white; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center; }
         .btn-toggle { padding: 6px 16px; border-radius: 4px; border: 1px solid var(--border); background: white; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
         .btn-toggle.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .partial-tag { display: none; font-size: 10px; opacity: 0.8; }
+        .btn-toggle.is-partial .partial-tag { display: inline; }
         #map { height: calc(100vh - 110px); width: 100%; }
         .leaflet-popup-content-wrapper { border-radius: 8px; }
         .popup-title { font-weight: 700; font-size: 14px; margin-bottom: 8px; display: block; }
@@ -146,8 +180,8 @@ def build_traffic_dashboard():
     </div>
     <div class="controls">
         <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted);" data-i18n="viewLabel">Ver datos de:</span>
-        <button id="btn-yesterday" class="btn-toggle" onclick="setView('yesterday')"><span data-i18n="dayPrefix">Día </span>__YESTERDAY__</button>
-        <button id="btn-today" class="btn-toggle active" onclick="setView('today')"><span data-i18n="dayPrefix">Día </span>__TODAY__</button>
+        <button id="btn-yesterday" class="btn-toggle" onclick="setView('yesterday')"><span data-i18n="dayPrefix">Día </span>__YESTERDAY__<span class="partial-tag" data-i18n="partial"> (parcial)</span></button>
+        <button id="btn-today" class="btn-toggle active" onclick="setView('today')"><span data-i18n="dayPrefix">Día </span>__TODAY__<span class="partial-tag" data-i18n="partial"> (parcial)</span></button>
     </div>
     <div id="map"></div>
 
@@ -175,7 +209,9 @@ def build_traffic_dashboard():
             legendFluido: "< 15% (Fluido)",
             legendMod: "15-30% (Moderado)",
             legendDenso: "> 30% (Denso)",
-            legendNoData: "Sin datos"
+            legendNoData: "Sin datos",
+            partial: " (parcial)",
+            partialPopup: "Día incompleto: datos provisionales"
           },
           eu: {
             title: "Gasteiz — Trafiko Sentsoreen Mapa",
@@ -193,7 +229,9 @@ def build_traffic_dashboard():
             legendFluido: "< %15 (Arina)",
             legendMod: "%15-30 (Ertaina)",
             legendDenso: "> %30 (Densea)",
-            legendNoData: "Daturik gabe"
+            legendNoData: "Daturik gabe",
+            partial: " (partziala)",
+            partialPopup: "Eguna osatugabea: behin-behineko datuak"
           }
         };
 
@@ -220,10 +258,10 @@ def build_traffic_dashboard():
         let markers = L.layerGroup().addTo(map);
 
         function getColor(load) {
-            if (load === null) return '#999';
-            return load > 30 ? 'var(--red)' :
-                   load > 15 ? 'var(--yellow)' :
-                               'var(--green)';
+            if (load === null) return '#999999';
+            return load > 30 ? '#dc2626' :
+                   load > 15 ? '#d97706' :
+                               '#059669';
         }
 
         function updateMarkers() {
@@ -244,6 +282,7 @@ def build_traffic_dashboard():
 
                 const popupContent = `
                     <div class="popup-title">${s.name} (${s.code})</div>
+                    ${data.partial ? `<div class="popup-row" style="color: var(--yellow); font-size:10px;">${t.partialPopup}</div>` : ''}
                     <div class="popup-row"><span>${t.carga}</span> <b>${data.l !== null ? data.l + '%' : 'N/A'}</b></div>
                     <div class="popup-row"><span>${t.ocupacion}</span> <b>${data.o !== null ? data.o + '%' : 'N/A'}</b></div>
                     <div class="popup-row"><span>${t.volumen}</span> <b>${data.v !== null ? data.v : 'N/A'}</b></div>
@@ -283,6 +322,8 @@ def build_traffic_dashboard():
 
         // Inicialización
         updateI18n();
+        document.getElementById('btn-today').classList.toggle('is-partial', __TODAY_PARTIAL__);
+        document.getElementById('btn-yesterday').classList.toggle('is-partial', __YESTERDAY_PARTIAL__);
         updateMarkers();
     </script>
 </body>
@@ -292,6 +333,8 @@ def build_traffic_dashboard():
     final_html = html_template.replace("__SENSORS_DATA__", json.dumps(sensors_list))
     final_html = final_html.replace("__TODAY__", str(today_date))
     final_html = final_html.replace("__YESTERDAY__", str(yesterday_date))
+    final_html = final_html.replace("__TODAY_PARTIAL__", "true" if today_partial else "false")
+    final_html = final_html.replace("__YESTERDAY_PARTIAL__", "true" if yesterday_partial else "false")
     
     OUTPUT_HTML.write_text(final_html, encoding="utf-8")
     print(f"Dashboard generado con éxito en: {OUTPUT_HTML}")

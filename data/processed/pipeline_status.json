@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-11-10T18:04:35",
+  "prediction_date": "2026-11-10",
+  "source_date": "2026-11-09",
+  "station_daily_max": "2026-11-09",
+  "traffic_yoy_max": "2026-11-08",
+  "counterfactual_max": "2026-11-08",
+  "model_trained_until": "2026-07-28",
+  "drift_status": "alert",
+  "drift_alerts": [
+    "ICA_out_d1",
+    "ICA_out_d2",
+    "ICA_zbe_d1",
+    "PM10_zbe_d1",
+    "PM10_zbe_d2"
+  ],
+  "qc_excluded": [
+    "PAUL_ICA",
+    "PAUL_PM10",
+    "PAUL_PM25"
+  ],
+  "weather_source": null,
+  "spillover_risk": [
+    "LANDAZURI_NO2",
+    "LANDAZURI_PM10",
+    "BEATO_PM10",
+    "LANDAZURI_PM25",
+    "BEATO_PM25"
+  ]
+}

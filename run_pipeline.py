@@ -20,6 +20,7 @@ import subprocess
 import sys
 import os
 import gzip
+import json
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -108,6 +109,110 @@ def find_station_daily_csv() -> Path | None:
         ROOT_DIR / "station_daily.csv",
     ]
     return next((p for p in candidates if p.exists()), None)
+
+
+def write_pipeline_status():
+    """Guarda un artefacto ligero con la frescura real de cada fuente.
+
+    Evita publicar el dashboard sin saber si los datos de entrada son de hoy.
+    No incluye los parquets: basta con las fechas máximas.
+    """
+    import pandas as pd
+
+    processed = ROOT_DIR / "data" / "processed"
+    models = ROOT_DIR / "models"
+    status = {
+        "generated_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        "prediction_date": None,
+        "source_date": None,
+        "station_daily_max": None,
+        "traffic_yoy_max": None,
+        "counterfactual_max": None,
+        "model_trained_until": None,
+        "drift_status": None,
+        "drift_alerts": [],
+        "qc_excluded": [],
+    }
+
+    try:
+        pred = json.loads((processed / "predictions_latest.json").read_text(encoding="utf-8"))
+        status["prediction_date"] = pred.get("prediction_date")
+        status["source_date"] = pred.get("source_date")
+        status["weather_source"] = pred.get("weather_source")
+    except Exception as exc:
+        logger.warning(f"[WARN]  pipeline_status: sin predictions_latest.json ({exc})")
+
+    def _max_date_from_csv(path, column="date"):
+        try:
+            series = pd.read_csv(path, usecols=[column])[column]
+            return pd.to_datetime(series, errors="coerce").max().date().isoformat()
+        except Exception:
+            return None
+
+    station_csv = find_station_daily_csv()
+    if station_csv:
+        try:
+            df = pd.read_csv(station_csv, index_col=0, parse_dates=True)
+            status["station_daily_max"] = df.index.max().date().isoformat()
+        except Exception:
+            status["station_daily_max"] = _max_date_from_csv(station_csv)
+
+    status["counterfactual_max"] = _max_date_from_csv(models / "counterfactual_gap_v8.csv")
+
+    try:
+        yoy = json.loads((processed / "peripheral_traffic_yoy.json").read_text(encoding="utf-8"))
+        if yoy:
+            status["traffic_yoy_max"] = yoy[-1].get("date")
+    except Exception:
+        pass
+
+    try:
+        manifest = json.loads((models / "forecast_v10_manifest.json").read_text(encoding="utf-8"))
+        status["model_trained_until"] = manifest.get("data_end")
+    except Exception:
+        pass
+
+    try:
+        drift = json.loads((models / "drift_report.json").read_text(encoding="utf-8"))
+        status["drift_status"] = drift.get("status")
+        status["drift_alerts"] = [
+            key for key, value in drift.get("targets", {}).items()
+            if value.get("status") == "alert"
+        ]
+    except Exception:
+        pass
+
+    try:
+        qc = json.loads((models / "station_qc.json").read_text(encoding="utf-8"))
+        status["qc_excluded"] = qc.get("excluded", [])
+        status["spillover_risk"] = [
+            key for key, value in qc.get("spillover", {}).items()
+            if value.get("spillover_risk")
+        ]
+    except Exception:
+        pass
+
+    (processed / "pipeline_status.json").write_text(
+        json.dumps(status, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    logger.success(f"[OK] pipeline_status.json escrito (datos hasta {status['source_date']})")
+
+
+def sync_web_assets():
+    """Copia a la raíz los PNG y el mapa que sirve index.html.
+
+    build_v10 usa basePath="" y copia los plots junto al HTML generado
+    (reports/html), pero la web se publica desde la raíz del repo.
+    """
+    dashboard_dir = ROOT_DIR / "reports" / "html"
+    copied = 0
+    for png in dashboard_dir.glob("*.png"):
+        shutil.copy2(png, ROOT_DIR / png.name)
+        copied += 1
+    traffic_map = dashboard_dir / "traffic_map.html"
+    if traffic_map.exists():
+        shutil.copy2(traffic_map, ROOT_DIR / "traffic_map.html")
+    logger.success(f"  [OK] {copied} PNG y traffic_map.html sincronizados en la raíz")
 
 
 # ─── PIPELINE ─────────────────────────────────────────────────────────────────
@@ -207,6 +312,11 @@ def main():
     if not run_script("Build station daily CSV", "src/features/build_station_daily.py"):
         logger.warning("[WARN]  build_station_daily falló - el análisis v9 puede no ejecutarse.")
 
+    # ── 5c. CONTROL DE CALIDAD DE ESTACIONES ─────────────────────────────────
+    logger.info("\n── FASE 5c: QC de estaciones (cambios de régimen y spillover)")
+    if not run_script("Control de calidad de estaciones", "src/analysis/station_qc.py"):
+        logger.warning("[WARN]  El QC de estaciones falló - el análisis causal usará todas las series.")
+
     # ── 6. ENTRENAMIENTO OPERATIVO + ANÁLISIS CAUSAL ───────
     if not skip_training:
         logger.info("\n── FASE 6: Entrenamiento forecast v10 D+1/D+2 con backtesting")
@@ -252,6 +362,18 @@ def main():
     if not run_script("Generar datos tráfico YoY", "src/analysis/generate_traffic_yoy_data.py"):
         logger.warning("[WARN]  La generación de datos de tráfico YoY falló.")
 
+    # ── 8d. DRIFT DE LAS PREDICCIONES ────────────────────────────────────────
+    logger.info("\n── FASE 8d: Monitor de drift (skill rolling vs persistencia)")
+    if not run_script("Comprobar drift", "src/ml/check_drift.py"):
+        logger.warning("[WARN]  El monitor de drift falló - no se actualiza drift_report.json.")
+
+    # ── 8e. ESTADO DE FRESCURA PARA EL DASHBOARD ─────────────────────────────
+    logger.info("\n── FASE 8e: Estado del pipeline")
+    try:
+        write_pipeline_status()
+    except Exception as exc:
+        logger.warning(f"[WARN]  No se pudo escribir pipeline_status.json: {exc}")
+
     # ── 9. DASHBOARD HTML ─────────────────────────────────────────────────────
     logger.info("\n── FASE 9: Dashboard")
     dated_name    = f"dashboard_{datetime.now().strftime('%Y-%m-%d')}.html"
@@ -282,6 +404,12 @@ def main():
         logger.warning("[WARN]  La generación del mapa de tráfico falló.")
     else:
         logger.info("  -> reports/html/traffic_map.html")
+
+    # 9c. Sincronizar en la raíz los assets que sirve index.html
+    try:
+        sync_web_assets()
+    except Exception as exc:
+        logger.error(f"  [ERROR] No se pudieron sincronizar los assets web: {exc}")
 
     logger.info("\n" + "=" * 60)
     logger.success("  PIPELINE COMPLETADO")

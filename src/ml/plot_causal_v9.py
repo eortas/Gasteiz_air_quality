@@ -11,12 +11,17 @@ import numpy as np
 sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
 plt.rcParams['font.family'] = 'serif'
 
-# Rutas
-MODELS_DIR = Path("models")
+# Rutas absolutas: el script se invoca desde run_pipeline con cwd variable.
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+MODELS_DIR = ROOT_DIR / "models"
 ES_FILE = MODELS_DIR / "event_study_v9.json"
 SC_FILE = MODELS_DIR / "synthetic_control_v9.json"
-PLOTS_DIR = Path("reports/plots")
+PLOTS_DIR = ROOT_DIR / "reports" / "plots"
 PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import ZBE_DATE_STR  # noqa: E402
 
 def plot_event_study():
     if not ES_FILE.exists():
@@ -49,10 +54,11 @@ def plot_event_study():
         
         # Líneas de referencia
         ax.axhline(0, color='black', linestyle='-', linewidth=1)
-        ax.axvline(-1, color='#e74c3c', linestyle='--', linewidth=1.5, label='Implementación ZBE (Ref: -1)')
+        ax.axvline(0, color='#e74c3c', linestyle='--', linewidth=1.5, label='Implementación ZBE (mes 0)')
+        ax.axvline(-1, color='#7f8c8d', linestyle=':', linewidth=1.0, label='Referencia (mes -1)')
         
         # Sombreado para el periodo post-tratamiento
-        ax.axvspan(-1, max(months), color='#e74c3c', alpha=0.05)
+        ax.axvspan(0, max(months), color='#e74c3c', alpha=0.05)
 
         ax.set_title(f"Event Study DiD: Impacto Dinámico de la ZBE en {cont}", pad=15, fontweight='bold')
         ax.set_xlabel("Meses relativos a la implementación de la ZBE")
@@ -98,7 +104,7 @@ def plot_synthetic_control():
                     color='#e67e22', linewidth=2, linestyle='--')
             
             # Línea de implementación
-            zbe_date = pd.Timestamp("2025-09-01")
+            zbe_date = pd.Timestamp(ZBE_DATE_STR)
             ax.axvline(zbe_date, color='#c0392b', linestyle=':', linewidth=2, label='Implementación ZBE')
             
             # Sombreado de la brecha (Gap) post-ZBE

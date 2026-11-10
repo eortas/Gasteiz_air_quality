@@ -29,6 +29,25 @@ OUT_STATIONS = ["LANDAZURI", "HUETOS", "ZUMABIDE", "BEATO"]
 CONTAMINANTS       = ["NO2", "PM10", "PM2.5", "ICA"]
 TARGETS_CAUSALES   = ["NO2", "PM10", "PM2.5"]  # Para análisis causal (sin ICA)
 
+# ─── UMBRALES DE CALIDAD DEL AIRE (medias diarias, µg/m³) ────────────────────
+# Alerta operativa: guías WHO 2021. Se usa en predict.py y avisos internos.
+ALERT_THRESHOLDS = {
+    "NO2":   25.0,
+    "PM10":  45.0,
+    "PM2.5": 15.0,
+    "ICA":   40.0,
+}
+
+# Riesgo mostrado en el dashboard (criterio EEA para medias diarias).
+# "moderate" activa el badge amarillo; "bad" el rojo. Un único origen para
+# evitar que el semáforo del dashboard y las alertas del modelo divergan.
+RISK_THRESHOLDS = {
+    "NO2":   {"moderate": 40.0, "bad": 90.0},
+    "PM10":  {"moderate": 20.0, "bad": 40.0},
+    "PM2.5": {"moderate": 10.0, "bad": 20.0},
+    "ICA":   {"moderate": 50.0, "bad": 75.0},
+}
+
 # ─── GEOGRAFÍA ────────────────────────────────────────────────────────────────
 LATITUDE      = 42.8467
 LONGITUDE     = -2.6716

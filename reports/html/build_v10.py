@@ -1,16 +1,18 @@
 import sys
 import pandas as pd
 import json
-import joblib
-import numpy as np
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import shutil
 
 ROOT_DIR      = Path(__file__).parent.parent.parent
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 MODELS_DIR    = ROOT_DIR / "models"
 DATASET_PATH  = PROCESSED_DIR / "features_daily.parquet"
+
+sys.path.insert(0, str(ROOT_DIR))
+# Una única definición de ICA (CAQI europeo) en todo el proyecto.
+from src.config import compute_ica_subindex, RISK_THRESHOLDS  # noqa: E402
 
 # --- 1. CONFIGURACIÓN DE ARCHIVOS Y RUTAS ---
 csv_file = MODELS_DIR / "counterfactual_gap_v8.csv"
@@ -42,10 +44,6 @@ try:
         # Si ICA no está en df_cv, lo calculamos de forma determinista combinando NO2, PM10 y PM2.5 si están disponibles
         if 'ICA' not in df_cv['contaminant'].unique():
             print("  ICA no encontrado en counterfactual_gap_v8.csv. Generándolo dinámicamente a partir de NO2, PM10 y PM2.5...")
-            # Importar función ICA desde config central
-            import sys
-            sys.path.insert(0, str(ROOT_DIR))
-            from src.config import compute_ica_subindex
             
             ica_rows = []
             for zone in df_cv['zone'].unique():
@@ -119,6 +117,17 @@ cf_json_str = json.dumps(cf_data)
 # 3. DATOS PESTAÑAS 2 (Causal v8 Summary & DiD)
 # ==============================================================================
 summary_stats = {}
+
+def _ratio_gap_pct(frame):
+    """Gap como ratio de medias (criterio del informe), no media de ratios."""
+    if frame.empty:
+        return None
+    observed = frame['observed'].mean()
+    counterfactual = frame['counterfactual'].mean()
+    if counterfactual <= 0:
+        return None
+    return round((observed - counterfactual) / counterfactual * 100, 1)
+
 try:
     for cont in df_cv['contaminant'].unique():
         for zone in df_cv['zone'].unique():
@@ -136,9 +145,11 @@ try:
                 summary_stats[key] = {
                     "obs": round(sub_pure['observed'].mean(), 1),
                     "cf_pure": round(sub_pure['counterfactual'].mean(), 1),
-                    "pure": round(sub_pure['gap_pct'].mean(), 1),
+                    "pure": _ratio_gap_pct(sub_pure),
+                    "pure_daily": round(sub_pure['gap_pct'].mean(), 1),
                     "unit": "µg/m³" if cont != "ICA" else "",
-                    "lags": round(sub_lags['gap_pct'].mean(), 1) if not sub_lags.empty else 0
+                    "lags": _ratio_gap_pct(sub_lags) if not sub_lags.empty else None,
+                    "lags_daily": round(sub_lags['gap_pct'].mean(), 1) if not sub_lags.empty else None,
                 }
     print("  OK Summary Stats calculados.")
 except Exception as e:
@@ -153,13 +164,26 @@ try:
 except Exception:
     did_json_str = "{}"
 
+
+def _load_json_file(path, default):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except Exception:
+        return default
+
+
+station_qc = _load_json_file(MODELS_DIR / "station_qc.json", {})
+causal_validation = _load_json_file(MODELS_DIR / "causal_validation_v8.json", {})
+drift_report = _load_json_file(MODELS_DIR / "drift_report.json", {})
+pipeline_status_data = _load_json_file(PROCESSED_DIR / "pipeline_status.json", {})
+
 # ==============================================================================
 # 4. PREDICCIONES DE MAÑANA
 # ==============================================================================
 print("Leyendo predicciones de mañana desde predictions_latest.json...")
 pred_json_path = PROCESSED_DIR / "predictions_latest.json"
 manana_data = {'zbe': {}, 'out': {}}
-prediction_date_str = (datetime.now() + timedelta(days=1)).strftime("%d/%m/%Y")
+prediction_date_str = "N/D"
 
 try:
     with open(pred_json_path, encoding="utf-8") as f:
@@ -173,12 +197,9 @@ try:
     for cont in ["NO2", "PM10", "PM2.5", "ICA"]:
         for zone in ["zbe", "out"]:
             key = f"{cont}_{zone}_d1"
-            if key in targets:
-                # El script predict.py guarda la predicción final (v2 si existe) en 'prediction'
-                val = targets[key].get("prediction", 0)
-                manana_data[zone][cont] = val
-            else:
-                manana_data[zone][cont] = 0
+            # None (no 0) para que la UI muestre "sin datos" en vez de aire limpio.
+            val = targets.get(key, {}).get("prediction")
+            manana_data[zone][cont] = val
 
     targets_json_str = json.dumps(targets)
 
@@ -187,168 +208,10 @@ try:
 except Exception as e:
     print(f"  WARN No se pudo leer predictions_latest.json: {e}")
     targets_json_str = "{}"
+    prediction_date_str = "N/D"
     for z in ['zbe', 'out']:
         for c in ['NO2', 'PM10', 'PM2.5', 'ICA']:
-            manana_data[z][c] = 0
-
-# ==============================================================================
-# 4a. HELPER: Fallback para predicción cuando no hay historial
-# ==============================================================================
-def _fallback_predict(target_name, row_input, row_target, df_past, meta_models_fallback, cache):
-    """
-    Recalcula una predicción usando los modelos v8 + meta-modelo como fallback.
-    Solo se usa cuando predictions_history.json no tiene la entrada para ese día.
-    """
-    model_path = MODELS_DIR / f"lgbm_v8_{target_name}.pkl"
-    feat_path  = MODELS_DIR / f"lgbm_v8_{target_name}_features.json"
-    meta_model_path = MODELS_DIR / f"meta_model_{target_name}.pkl"
-
-    try:
-        # Cachear el modelo para no recargarlo en cada iteración
-        if target_name not in cache:
-            v10_path = MODELS_DIR / f"forecast_v10_{target_name}.joblib"
-            if v10_path.exists():
-                artifact = joblib.load(v10_path)
-                cache[target_name] = {
-                    "version": "forecast_v10",
-                    "model": artifact["lightgbm"],
-                    "extra_model": artifact["extra_trees"],
-                    "ridge_model": artifact.get("ridge"),
-                    "features": artifact["features"],
-                    "medians": artifact["medians"],
-                    "seasonal_medians": {},
-                    "weights": artifact["weights"],
-                    "production_method": artifact["production_method"],
-                }
-
-        if target_name not in cache:
-            model = joblib.load(model_path)
-            features = json.loads(feat_path.read_text(encoding="utf-8"))
-
-            med_path = MODELS_DIR / f"lgbm_v8_{target_name}_medians.json"
-            medians = {}
-            if med_path.exists():
-                try: medians = json.loads(med_path.read_text(encoding="utf-8"))
-                except: pass
-
-            seasonal_path = MODELS_DIR / f"lgbm_v8_{target_name}_medians_seasonal.json"
-            seasonal_medians = {}
-            if seasonal_path.exists():
-                try: seasonal_medians = json.loads(seasonal_path.read_text(encoding="utf-8"))
-                except: pass
-
-            cache[target_name] = {
-                "version": "v8",
-                "model": model, "features": features,
-                "medians": medians, "seasonal_medians": seasonal_medians
-            }
-
-        m = cache[target_name]
-        model = m["model"]
-        features = m["features"]
-        medians = m["medians"]
-        seasonal_medians = m["seasonal_medians"]
-
-        if m.get("version") == "forecast_v10":
-            row_input = row_input.copy()
-            target_date = pd.Timestamp(row_target["date"])
-            row_input["d1_day_of_week"] = target_date.dayofweek
-            row_input["d1_month"] = target_date.month
-            row_input["d1_day_of_year"] = target_date.dayofyear
-            row_input["d1_is_weekend"] = int(target_date.dayofweek >= 5)
-            row_input["d1_dow_sin"] = np.sin(2 * np.pi * target_date.dayofweek / 7)
-            row_input["d1_dow_cos"] = np.cos(2 * np.pi * target_date.dayofweek / 7)
-            row_input["d1_doy_sin"] = np.sin(2 * np.pi * target_date.dayofyear / 365.25)
-            row_input["d1_doy_cos"] = np.cos(2 * np.pi * target_date.dayofyear / 365.25)
-
-        pred_month = row_target["date"].month
-        month_key = str(pred_month)
-        month_medians = seasonal_medians.get(month_key, {})
-
-        fill_values = {}
-        for f in features:
-            if f in month_medians:
-                fill_values[f] = month_medians[f]
-            elif f in medians:
-                fill_values[f] = medians[f]
-            else:
-                fill_values[f] = 0.0
-
-        X = row_input.to_frame().T.reindex(columns=features).fillna(fill_values).astype(float)
-        if m.get("version") == "forecast_v10":
-            current_column = target_name.replace("_d1", "")
-            if m.get("production_method") == "persistence":
-                return max(0.0, float(row_input[current_column]))
-            weights = m["weights"]
-            predicted_delta = (
-                weights["lightgbm"] * float(model.predict(X)[0])
-                + weights["extra_trees"] * float(m["extra_model"].predict(X)[0])
-            )
-            if m.get("ridge_model") is not None:
-                predicted_delta += weights.get("ridge", 0.0) * float(
-                    m["ridge_model"].predict(X)[0]
-                )
-            return max(0.0, float(row_input[current_column]) + predicted_delta)
-
-        pred = max(0.0, float(model.predict(X)[0]))
-
-        # Aplicar meta-modelo si existe
-        if meta_model_path.exists():
-            meta_model = joblib.load(meta_model_path)
-            contam_col = target_name.replace("_d1", "")
-            date_i = row_input["date"]
-
-            # Calcular errores históricos
-            df_history_i = df_past[df_past["date"] < date_i].tail(8)
-            errors_i = []
-            for _, h_row in df_history_i.iterrows():
-                X_h = h_row.to_frame().T.reindex(columns=features).fillna(fill_values).astype(float)
-                p_h = float(model.predict(X_h)[0])
-                actual = h_row.get(contam_col)
-                if pd.notna(actual):
-                    errors_i.append(actual - p_h)
-
-            error_lag_1d = errors_i[-1] if errors_i else 0
-            error_roll_7d = np.mean(errors_i) if errors_i else 0
-
-            meta_input = {
-                "pred_v1": pred,
-                "error_lag_1d": float(error_lag_1d),
-                "error_roll_mean_7d": float(error_roll_7d),
-                "temperature_2m": float(pd.to_numeric(pd.Series([row_input.get("temperature_2m")]), errors='coerce').fillna(12.0).iloc[0]),
-                "wind_speed_10m": float(pd.to_numeric(pd.Series([row_input.get("wind_speed_10m")]), errors='coerce').fillna(2.5).iloc[0]),
-                "boundary_layer_height": float(pd.to_numeric(pd.Series([row_input.get("boundary_layer_height")]), errors='coerce').fillna(500.0).iloc[0]),
-                "relative_humidity_2m": float(pd.to_numeric(pd.Series([row_input.get("relative_humidity_2m")]), errors='coerce').fillna(75.0).iloc[0]),
-                "is_weekend": float(pd.to_numeric(pd.Series([row_input.get("is_weekend")]), errors='coerce').fillna(0).iloc[0]),
-                "es_domingo": float(pd.to_numeric(pd.Series([row_input.get("es_domingo")]), errors='coerce').fillna(0).iloc[0]),
-                "es_invierno_estricto": float(pd.to_numeric(pd.Series([row_input.get("es_invierno_estricto")]), errors='coerce').fillna(0).iloc[0]),
-            }
-            X_meta = pd.DataFrame([meta_input]).astype(float)
-            pred_v2 = max(0.0, float(meta_model.predict(X_meta)[0]))
-
-            # Smart bypass + clamp (misma lógica que predict.py)
-            is_no2 = "NO2" in target_name
-            if is_no2:
-                median_map = {"NO2_zbe_d1": 10.0, "NO2_out_d1": 11.5}
-                global_med = median_map.get(target_name, 10.0)
-                if pred < global_med:
-                    pred_v2 = pred  # bypass
-                else:
-                    lo = pred * 0.70
-                    hi = pred * 1.30
-                    pred_v2 = max(lo, min(pred_v2, hi))
-            else:
-                if pred > 0:
-                    lo = pred * 0.70
-                    hi = pred * 1.30
-                    pred_v2 = max(lo, min(pred_v2, hi))
-
-            return pred_v2
-        return pred
-
-    except Exception as e:
-        print(f"  WARN Fallback predict falló para {target_name}: {e}")
-        return 0.0
+            manana_data[z][c] = None
 
 
 # ==============================================================================
@@ -410,8 +273,19 @@ try:
         today_date = datetime.now().date()
         df_past = df_feat[df_feat['date'].dt.date < today_date].copy()
 
-        # Encontrar las últimas 7 fechas con datos reales
-        valid_indices = df_past.index[df_past['PM10_out'].notna()].tolist()
+        # Encontrar las últimas 7 fechas con datos reales en cualquier target
+        # (antes solo se miraba PM10_out, que podía faltar y desplazar la ventana).
+        target_cols_bt = [
+            f"{cont}_{zone}"
+            for cont in ["NO2", "PM10", "PM2.5", "ICA"]
+            for zone in ["zbe", "out"]
+            if f"{cont}_{zone}" in df_past.columns
+        ]
+        if target_cols_bt:
+            valid_mask = df_past[target_cols_bt].notna().any(axis=1)
+            valid_indices = df_past.index[valid_mask].tolist()
+        else:
+            valid_indices = []
         if not valid_indices:
             last_rows = df_past.tail(12).copy()
             targets_backtest = last_rows.iloc[-8:-1] if len(last_rows) >= 8 else last_rows
@@ -459,15 +333,6 @@ try:
             except Exception as e:
                 print(f"  WARN Error leyendo historial: {e}")
 
-        # --- Cargar modelos como FALLBACK para días sin historial ---
-        # Solo se usan si predictions_history.json no tiene la entrada para ese día
-        fallback_models = {}
-        meta_models_fallback = {}
-        meta_path = MODELS_DIR / "meta_metrics.json"
-        if meta_path.exists():
-            try:
-                meta_models_fallback = json.loads(meta_path.read_text(encoding="utf-8"))
-            except: pass
 
         for zone in ['zbe', 'out']:
             perf_data[zone]["labels"] = fechas
@@ -504,75 +369,69 @@ try:
                     "pred": pred_vals[-7:]
                 }
 
-            # Calcular ICA determinista en el backtest
-            try:
-                from sklearn.linear_model import Ridge
-                no2_col = f"NO2_{zone}"
-                pm10_col = f"PM10_{zone}"
-                pm25_col = f"PM2.5_{zone}"
-                ica_col = f"ICA_{zone}"
+            # ICA determinista: misma fórmula CAQI que el resto del dashboard.
+            # Si el parquet trae el ICA medido de la zona, ese valor manda para
+            # la serie real; el CAQI solo se usa como respaldo.
+            measured_ica = [None] * 7
+            ica_col = f"ICA_{zone}"
+            if ica_col in targets_backtest.columns:
+                offset = max(0, len(targets_backtest) - 7)
+                for i in range(len(targets_backtest)):
+                    arr_idx = i - offset
+                    if 0 <= arr_idx < 7:
+                        value = targets_backtest.iloc[i].get(ica_col)
+                        if pd.notna(value):
+                            measured_ica[arr_idx] = round(float(value), 1)
 
-                sub = df_past[[no2_col, pm10_col, pm25_col, ica_col]].dropna()
-                if len(sub) >= 30:
-                    X_ica = sub[[no2_col, pm10_col, pm25_col]]
-                    y_ica = sub[ica_col]
-
-                    model_ica = Ridge(alpha=1.0)
-                    model_ica.fit(X_ica, y_ica)
-
-                    ica_real = []
-                    ica_pred = []
-
-                    for i in range(7):
-                        r_no2 = perf_data[zone]['NO2']['real'][i]
-                        r_pm10 = perf_data[zone]['PM10']['real'][i]
-                        r_pm25 = perf_data[zone]['PM2.5']['real'][i]
-
-                        p_no2 = perf_data[zone]['NO2']['pred'][i]
-                        p_pm10 = perf_data[zone]['PM10']['pred'][i]
-                        p_pm25 = perf_data[zone]['PM2.5']['pred'][i]
-
-                        if r_no2 is None or r_pm10 is None or r_pm25 is None:
-                            ica_real.append(None)
-                        else:
-                            input_real = pd.DataFrame(
-                                [[r_no2, r_pm10, r_pm25]],
-                                columns=[no2_col, pm10_col, pm25_col],
-                            )
-                            val_r = float(model_ica.predict(input_real)[0])
-                            ica_real.append(round(max(0.0, val_r), 1))
-
-                        if p_no2 is None or p_pm10 is None or p_pm25 is None:
-                            ica_pred.append(None)
-                        else:
-                            input_pred = pd.DataFrame(
-                                [[p_no2, p_pm10, p_pm25]],
-                                columns=[no2_col, pm10_col, pm25_col],
-                            )
-                            val_p = float(model_ica.predict(input_pred)[0])
-                            ica_pred.append(round(max(0.0, val_p), 1))
-
-                    # Si hay predicciones históricas de ICA, usar esas para pred
-                    for i in range(len(targets_backtest)):
-                        target_date = targets_backtest.iloc[i]["date"].date().isoformat()
-                        ica_target = f"ICA_{zone}_d1"
-                        if target_date in pred_history and ica_target in pred_history[target_date]:
-                            # Ajustar el índice en el array de 7 elementos
-                            arr_idx = i - max(0, len(targets_backtest) - 7)
-                            if 0 <= arr_idx < 7:
-                                ica_pred[arr_idx] = round(pred_history[target_date][ica_target], 1)
-
-                    perf_data[zone]['ICA'] = {
-                        "real": ica_real,
-                        "pred": ica_pred
-                    }
+            ica_real = []
+            ica_pred = []
+            for i in range(7):
+                r_vals = [
+                    perf_data[zone]['NO2']['real'][i],
+                    perf_data[zone]['PM10']['real'][i],
+                    perf_data[zone]['PM2.5']['real'][i],
+                ]
+                if any(v is None for v in r_vals):
+                    ica_real.append(None)
                 else:
-                    perf_data[zone]['ICA'] = {"real": [None]*7, "pred": [0]*7}
-            except Exception as e:
-                import traceback
-                print(f"  WARN Error calculando ICA determinista para backtest en zona {zone}: {e}")
-                traceback.print_exc()
-                perf_data[zone]['ICA'] = {"real": [None]*7, "pred": [0]*7}
+                    ica_real.append(round(max(
+                        compute_ica_subindex("NO2", r_vals[0]),
+                        compute_ica_subindex("PM10", r_vals[1]),
+                        compute_ica_subindex("PM2.5", r_vals[2]),
+                    ), 1))
+
+                p_vals = [
+                    perf_data[zone]['NO2']['pred'][i],
+                    perf_data[zone]['PM10']['pred'][i],
+                    perf_data[zone]['PM2.5']['pred'][i],
+                ]
+                if any(v is None for v in p_vals):
+                    ica_pred.append(None)
+                else:
+                    ica_pred.append(round(max(
+                        compute_ica_subindex("NO2", p_vals[0]),
+                        compute_ica_subindex("PM10", p_vals[1]),
+                        compute_ica_subindex("PM2.5", p_vals[2]),
+                    ), 1))
+
+            # Las predicciones históricas de ICA (deterministas) mandan sobre
+            # la reconstrucción a partir de los contaminantes.
+            for i in range(len(targets_backtest)):
+                target_date = targets_backtest.iloc[i]["date"].date().isoformat()
+                ica_target = f"ICA_{zone}_d1"
+                if target_date in pred_history and ica_target in pred_history[target_date]:
+                    arr_idx = i - max(0, len(targets_backtest) - 7)
+                    if 0 <= arr_idx < 7:
+                        ica_pred[arr_idx] = round(pred_history[target_date][ica_target], 1)
+
+            # Prioridad: ICA medido > reconstrucción CAQI desde contaminantes.
+            ica_real = [
+                measured if measured is not None else computed
+                for measured, computed in zip(measured_ica, ica_real)
+            ]
+
+            perf_data[zone]['ICA'] = {"real": ica_real, "pred": ica_pred,
+                                      "real_source": "measured_ICA_when_available"}
 
         n_from_history = sum(1 for d in [t.date().isoformat() for _, t in targets_backtest['date'].items()] if d in pred_history)
         print(f"  OK Backtest listo: {n_from_history}/{len(targets_backtest)} días con predicciones históricas reales.")
@@ -585,8 +444,8 @@ except Exception as e:
     traceback.print_exc()
     for z in ['zbe', 'out']:
         perf_data[z] = {"labels": ["D-6", "D-5", "D-4", "D-3", "D-2", "D-1", "Ayer"]}
-        for c in ['NO2', 'PM10', 'PM2.5']:
-            perf_data[z][c] = {"real": [0]*7, "pred": [0]*7}
+        for c in ['NO2', 'PM10', 'PM2.5', 'ICA']:
+            perf_data[z][c] = {"real": [None]*7, "pred": [None]*7}
 
 perf_json_str = json.dumps(perf_data)
 manana_json_str = json.dumps(manana_data)
@@ -623,6 +482,33 @@ try:
 except Exception:
     meta_json_str = "{}"
 
+# Pre-tendencia real del event study: un pre-coeficiente significativo implica
+# que el supuesto de tendencias paralelas no se sostiene.
+try:
+    with open(MODELS_DIR / "event_study_v9.json", "r", encoding="utf-8") as f:
+        event_study_raw = json.load(f)
+    event_study_trend = {}
+    for cont, payload in event_study_raw.items():
+        coefs = (payload or {}).get("coefficients", {}) or {}
+        pre_coefs = {
+            int(month): values
+            for month, values in coefs.items()
+            if int(month) < 0 and int(month) != -1
+        }
+        n_sig = sum(
+            1 for values in pre_coefs.values()
+            if values.get("ci_low", 0) > 0 or values.get("ci_high", 0) < 0
+        )
+        event_study_trend[cont] = {
+            "pre_trend_ok": bool(pre_coefs) and n_sig == 0,
+            "n_sig": n_sig,
+            "n_pre": len(pre_coefs),
+        }
+    event_study_trend_json_str = json.dumps(event_study_trend)
+except Exception as e:
+    print(f"  WARN No se pudo evaluar la pre-tendencia del event study: {e}")
+    event_study_trend_json_str = "{}"
+
 # ==============================================================================
 # 5. DATOS MAPA DE ESTACIONES
 # ==============================================================================
@@ -647,6 +533,9 @@ try:
         latest = df_stn.iloc[-1]
         pred_zbe = manana_data.get("zbe", {})
         pred_out = manana_data.get("out", {})
+
+        def _round_or_none(value):
+            return round(float(value), 1) if value is not None else None
         
         for stn, meta in STATION_COORDS.items():
             pred_src = pred_zbe if meta["zone"] == "ZBE" else pred_out
@@ -656,9 +545,9 @@ try:
                 "PM10": _get_stn_val(latest, stn, "PM10"),
                 "PM25": _get_stn_val(latest, stn, "PM25"),
                 "ICA":  _get_stn_val(latest, stn, "ICA"),
-                "pred_NO2":  round(pred_src.get("NO2", 0), 1),
-                "pred_PM10": round(pred_src.get("PM10", 0), 1),
-                "pred_PM25": round(pred_src.get("PM2.5", 0), 1),
+                "pred_NO2":  _round_or_none(pred_src.get("NO2")),
+                "pred_PM10": _round_or_none(pred_src.get("PM10")),
+                "pred_PM25": _round_or_none(pred_src.get("PM2.5")),
             }
     else:
         raise ValueError("station_daily.csv está vacío.")
@@ -667,7 +556,7 @@ except Exception as e:
     print(f"  WARN Error cargando station_daily para el mapa: {e}")
     for stn, meta in STATION_COORDS.items():
         stations_data[stn] = {**meta, "NO2": None, "PM10": None, "PM25": None, "ICA": None,
-                              "pred_NO2": 0, "pred_PM10": 0, "pred_PM25": 0}
+                              "pred_NO2": None, "pred_PM10": None, "pred_PM25": None}
 
 stations_json_str = json.dumps(stations_data)
 
@@ -743,9 +632,13 @@ html_template = """<!DOCTYPE html>
   .main-header { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 16px 48px; background: #0055A4; color: #fff; border: none; }
   .main-header::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: linear-gradient(to bottom, #ffffff 50%, #EF4135 50%); }
 
-  .main-header-title { font-size: 18px; font-weight: 700; }
-  .header-right { display: flex; align-items: center; gap: 24px; }
+  .main-header-title { font-size: 18px; font-weight: 700; }  .header-right { display: flex; align-items: center; gap: 24px; }
   .main-header-author { font-size: 13px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.9; }
+  .pipeline-banner { display: none; padding: 9px 48px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; border-bottom: 1px solid var(--border); background: rgba(217, 119, 6, 0.12); color: #8a4b00; }
+  .pipeline-banner.warn { display: block; }
+  .pipeline-banner.alert { display: block; background: rgba(220, 38, 38, 0.12); color: #8b1a1a; }
+  [data-theme="dark"] .pipeline-banner { color: #f5c26b; }
+  [data-theme="dark"] .pipeline-banner.alert { color: #ff9b9b; }
   
   /* Botón del selector de tema / idioma */
   .theme-toggle { 
@@ -963,6 +856,8 @@ html_template = """<!DOCTYPE html>
     <button class="top-nav-btn" onclick="switchMainView('foresight', this)" data-i18n="nav6">6. Foresight AI</button>
   </div>
 </div>
+
+<div id="pipelineBanner" class="pipeline-banner"></div>
 
 <div id="view-v8" class="view-container">
   <div class="header">
@@ -1294,17 +1189,29 @@ const getCssVar = (name) => {
 
 const SUMMARY_STATS = __SUMMARY_DATA_PLACEHOLDER__;
 const DID_RESULTS = __DID_DATA_PLACEHOLDER__;
+const EVENT_STUDY_TREND = __EVENT_STUDY_TREND_PLACEHOLDER__;
+const RISK_THRESHOLDS = __RISK_THRESHOLDS_PLACEHOLDER__;
+const STATION_QC = __STATION_QC_PLACEHOLDER__;
+const CAUSAL_VALIDATION = __CAUSAL_VALIDATION_PLACEHOLDER__;
+const DRIFT_REPORT = __DRIFT_REPORT_PLACEHOLDER__;
+const PIPELINE_STATUS = __PIPELINE_STATUS_DATA_PLACEHOLDER__;
 
 function movingAvg(arr, windowSize) {
+  // Ventana centrada exacta también para tamaños pares (14 → 6 antes, 7 después).
+  const halfLow = Math.floor((windowSize - 1) / 2);
+  const halfHigh = Math.floor(windowSize / 2);
   return arr.map((_, i, a) => {
-    let start = Math.max(0, i - Math.floor(windowSize/2));
-    let end = Math.min(a.length, i + Math.floor(windowSize/2) + 1);
+    let start = Math.max(0, i - halfLow);
+    let end = Math.min(a.length, i + halfHigh + 1);
     let sub = a.slice(start, end).filter(v => v !== null && !isNaN(v));
     return sub.length ? sub.reduce((s, v) => s + v, 0) / sub.length : null;
   });
 }
 
 function fmt(v) { return (v === null || v === undefined) ? 'N/D' : v.toFixed(1); }
+function num(v, digits) {
+  return (v === null || v === undefined || Number.isNaN(Number(v))) ? 'N/D' : Number(v).toFixed(digits);
+}
 
 const translations = {
   es: {
@@ -1345,7 +1252,10 @@ const translations = {
     trafficYoYTitle: "Estudio de Impacto: Evolución del Tráfico Perimetral (YoY)",
     trafficYoYSubtitle: "Comparativa entre el tráfico actual y el mismo periodo del año anterior (alineado por día de la semana).",
     trafficCurrent: "Tráfico Actual (ZBE)",
-    trafficPrevious: "Año Anterior (Pre-ZBE)",
+    trafficPrevious: "Mismo periodo del año anterior",
+    trafficPreviousPre: "Año anterior (pre-ZBE)",
+    trafficPreviousYear1: "Año anterior (1er año ZBE)",
+    trafficPreviousMixed: "Año anterior (pre-ZBE y 1er año ZBE)",
     trafficVolume: "Vehículos/Día (Media Perímetro)",
     colReal: "Medición real",
     colDev: "Desviación",
@@ -1369,10 +1279,10 @@ const translations = {
     sumObs: "Observado (media)",
     sumCF: "Contrafactual (meteo-puro)",
     sumEffect: "Efecto ZBE (meteo-puro)",
-    sumRange: "Rango efecto ZBE",
+    sumRange: "Sensibilidad (exploratoria)",
     sumPeriod: "Sep 2025 → Mar 2026",
     sumBound: "Límite conservador",
-    sumMeteoLag: "Meteo-puro vs Con-Lags",
+    sumMeteoLag: "Con-Lags no es un bound causal",
     sumRobRed: "✓ Reducción robusta",
     sumUncertain: "⚠ Incierto",
     sumIncrease: "✕ Incremento neto",
@@ -1400,9 +1310,16 @@ const translations = {
     v9Diag: "Diagnóstico Causal",
     v9Trend: "Pre-Trend Test",
     v9ParallelOK: "✓ OK Parallel Trends",
+    v9ParallelBad: "⚠ Pre-tendencia significativa",
+    v9TrendNoData: "Sin datos",
+    causalBlocked: "Efecto causal no publicado",
+    causalQc: "El control de calidad ha detectado un cambio de régimen en una estación tratada (PAUL PM10/PM2.5). Se excluye para no atribuir a la ZBE un artefacto de sensor.",
+    causalNoSkill: "El contrafactual no supera el gate de skill (R² rolling ≥ 0,4 y mejor que persistencia). No se publica como efecto causal.",
+    causalMissing: "No hay validación causal disponible todavía. Se oculta el efecto hasta que el pipeline la genere.",
     v10Good: "🟢 BUENA",
     v10Mod: "🟡 MODERADA",
     v10Bad: "🔴 MALA",
+    v10NoData: "⚪ SIN DATOS",
     backReal: "Medición Real",
     backPred: "Predicción D+1 validada",
     forecastD1: "Continuidad prevista hasta D+1",
@@ -1420,6 +1337,7 @@ const translations = {
     colRMSE: "RMSE (µg/m³)",
     colMAE: "MAE (µg/m³)",
     colMAPE: "MAPE %",
+    metaImprovement: "mejora meta-model",
     fsTag: "Explicación de la predicción",
     fsTitle: "Foresight <span> con IA</span>",
     fsSubtitle: "Factores meteorológicos y de contexto asociados a la predicción vigente del modelo.",
@@ -1467,7 +1385,10 @@ const translations = {
     trafficYoYTitle: "Eraginaren Azterketa: Perimetroko Trafikoaren Bilakaera (YoY)",
     trafficYoYSubtitle: "Gaur egungo trafikoaren eta aurreko urteko epe beraren arteko alderaketa (asteko egunaren arabera lerrokatuta).",
     trafficCurrent: "Gaur egungo Trafikoa (ZBE)",
-    trafficPrevious: "Aurreko Urtea (ZBE Aurretik)",
+    trafficPrevious: "Aurreko urteko aldi bera",
+    trafficPreviousPre: "Aurreko urtea (EGE aurretik)",
+    trafficPreviousYear1: "Aurreko urtea (EGEko 1. urtea)",
+    trafficPreviousMixed: "Aurreko urtea (EGE aurretik eta 1. urtea)",
     trafficVolume: "Ibilgailuak/Eguna (Perimetroko batez bestekoa)",
     colParam: "Parametroa",
     colPred: "Jaulkitako iragarpena",
@@ -1493,10 +1414,10 @@ const translations = {
     sumObs: "Behatua (batez bestekoa)",
     sumCF: "Kontrafaktuala (meteo-purua)",
     sumEffect: "EGEaren efektua (meteo-purua)",
-    sumRange: "EGE efektuaren heina",
+    sumRange: "Sentikortasun (esploraziozkoa)",
     sumPeriod: "2025 Ira → 2026 Mar",
     sumBound: "Muga kontserbadorea",
-    sumMeteoLag: "Meteo-purua vs Lag-ekin",
+    sumMeteoLag: "Con-Lags ez da bound kausala",
     sumRobRed: "✓ Murrizketa sendoa",
     sumUncertain: "⚠ Ziurgabea",
     sumIncrease: "✕ Gehikuntza garbia",
@@ -1505,9 +1426,16 @@ const translations = {
     v9Diag: "Diagnostiko Kausala",
     v9Trend: "Pre-Trend Test-a",
     v9ParallelOK: "✓ OK Parallel Trends",
+    v9ParallelBad: "⚠ Aurre-tendentzia esanguratsua",
+    v9TrendNoData: "Daturik gabe",
+    causalBlocked: "Eragin kausala ez da argitaratu",
+    causalQc: "Kalitate-kontrolak tratatutako estazio batean erregimen-aldaketa detektatu du (PAUL PM10/PM2.5). Kanpoan uzten da ZBEari sentsore-artefaktua egotzi ez dadin.",
+    causalNoSkill: "Kontrafaktualak ez du skill gate-a gainditzen (R² rolling ≥ 0,4 eta persistencia baino hobea). Ez da eragin kausal gisa argitaratzen.",
+    causalMissing: "Oraindik ez dago baliozkotze kausalik. Eragina ezkutuan mantentzen da pipelineak sortu arte.",
     v10Good: "🟢 ONA",
     v10Mod: "🟡 ERTAINA",
     v10Bad: "🔴 TXARRA",
+    v10NoData: "⚪ DATURIK GABE",
     backReal: "Neurketa Erreala",
     backPred: "Baliozkotutako D+1 iragarpena",
     forecastD1: "D+1era arteko aurreikuspen-jarraipena",
@@ -1525,6 +1453,7 @@ const translations = {
     colRMSE: "RMSE (µg/m³)",
     colMAE: "MAE (µg/m³)",
     colMAPE: "MAPE %",
+    metaImprovement: "hobekuntza meta-eredua",
     v8Fig1: "<strong>1. Irudia</strong> — Behatua vs Kontrafaktuala",
     v8Fig2: "<strong>2. Irudia</strong> — EGE efektuaren ziurgabetasun-banda",
     v8Fig3: "<strong>3. Irudia</strong> — Gap-a batez beste, kutsatzaile eta eremuka",
@@ -1668,6 +1597,7 @@ function toggleLang() {
   localStorage.setItem('vitoria_lang', currentLang);
   updateI18n();
   updateRiskDate();
+  renderPipelineBanner();
   
   // Re-renderizar componentes que dependen de traducciones
   renderSummaryCards();
@@ -1740,21 +1670,112 @@ function toggleTheme() {
 let currentCont = 'NO2'; let currentZone = 'zbe'; let fig1Chart = null, fig2Chart = null, fig3Chart = null;
 
 const monthsEU = ['urt.', 'ots.', 'mar.', 'api.', 'mai.', 'eka.', 'uzt.', 'abu.', 'ira.', 'urr.', 'aza.', 'abe.'];
+// Las fechas del pipeline son días locales sin hora: interpretarlas como UTC
+// evita que el navegador las desplace un día según su zona horaria.
+function parseDateUTC(d) {
+  const s = String(d);
+  return new Date(s.includes('T') ? s : `${s}T00:00:00Z`);
+}
 function formatDate(d) {
-  const date = new Date(d);
+  const date = parseDateUTC(d);
   if (currentLang === 'eu') {
-    return `${date.getDate()} ${monthsEU[date.getMonth()]}`;
+    return `${date.getUTCDate()} ${monthsEU[date.getUTCMonth()]}`;
   }
-  return date.toLocaleDateString('es-ES', { day:'numeric', month:'short' });
+  return date.toLocaleDateString('es-ES', { day:'numeric', month:'short', timeZone:'UTC' });
 }
 function getClass(val) { if (val < -5)  return 'neg'; if (val > 5)   return 'pos'; return 'neutral'; }
 
+// Gate causal: sin validación temporal y QC favorable no se publican efectos.
+function causalGate(cont, zone) {
+  const v = CAUSAL_VALIDATION[`${cont}_${zone}_METEO-PURO`] || CAUSAL_VALIDATION[`${cont}_${zone}`];
+  if (!v) return { publishable: false, missing: true, qc_flag: false };
+  return v;
+}
+
+function setCausalChartsVisible(visible) {
+  ['fig1', 'fig2', 'fig3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = visible ? 'block' : 'none';
+  });
+}
+
+function renderPipelineBanner() {
+  const el = document.getElementById('pipelineBanner');
+  if (!el) return;
+  const issues = [];
+  let alert = false;
+  const st = PIPELINE_STATUS || {};
+
+  if (st.prediction_date) {
+    const pred = parseDateUTC(st.prediction_date);
+    const now = new Date();
+    const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const predUTC = Date.UTC(pred.getUTCFullYear(), pred.getUTCMonth(), pred.getUTCDate());
+    const days = Math.round((todayUTC - predUTC) / 86400000);
+    if (days > 1) {
+      issues.push(currentLang === 'es'
+        ? `Predicción de hace ${days} días (${st.prediction_date})`
+        : `${days} eguneko iragarpena (${st.prediction_date})`);
+      alert = days > 2;
+    }
+  } else {
+    issues.push(currentLang === 'es' ? 'Sin fecha de predicción publicada' : 'Iragarpen-datarik ez');
+    alert = true;
+  }
+
+  if (st.drift_status === 'alert') {
+    const n = (st.drift_alerts || []).length;
+    issues.push(currentLang === 'es'
+      ? `Drift: ${n} targets peor que persistencia`
+      : `Drift: ${n} target persistencia baino okerrago`);
+    alert = true;
+  }
+  if (st.weather_source === 'fallback') {
+    issues.push(currentLang === 'es' ? 'Meteorología en fallback (sin Open-Meteo)' : 'Meteorologia fallbackean');
+  }
+  if ((st.qc_excluded || []).length) {
+    issues.push(currentLang === 'es'
+      ? `QC excluye: ${st.qc_excluded.join(', ')}`
+      : `QC kanpo: ${st.qc_excluded.join(', ')}`);
+  }
+  if ((st.spillover_risk || []).length) {
+    issues.push(currentLang === 'es'
+      ? `Spillover posible: ${st.spillover_risk.join(', ')}`
+      : `Spillover posiblea: ${st.spillover_risk.join(', ')}`);
+  }
+
+  if (!issues.length) {
+    el.className = 'pipeline-banner';
+    el.textContent = '';
+    return;
+  }
+  el.className = `pipeline-banner ${alert ? 'alert' : 'warn'}`;
+  el.textContent = issues.join(' · ');
+}
+
 function renderSummaryCards() {
-  const s = SUMMARY_STATS[`${currentCont}_${currentZone}`]; if (!s) return;
+  const s = SUMMARY_STATS[`${currentCont}_${currentZone}`];
   const t = translations[currentLang];
-  const low = Math.min(s.pure, s.lags), high = Math.max(s.pure, s.lags), gap_abs = ((s.obs - s.cf_pure)).toFixed(2);
+
+  const gate = causalGate(currentCont, currentZone);
+  if (!gate.publishable) {
+    setCausalChartsVisible(false);
+    const reason = gate.missing ? t.causalMissing : (gate.qc_flag ? t.causalQc : t.causalNoSkill);
+    document.getElementById('summaryCards').innerHTML =
+      `<div class="summary-card" style="grid-column:1/-1"><div class="card-label">${t.causalBlocked}</div><div class="card-sub">${reason}</div></div>`;
+    return;
+  }
+  setCausalChartsVisible(true);
+  if (!s || s.pure === null) return;
+  const lagsVal = (s.lags === null || s.lags === undefined) ? s.pure : s.lags;
+  const low = Math.min(s.pure, lagsVal), high = Math.max(s.pure, lagsVal), gap_abs = ((s.obs - s.cf_pure)).toFixed(2);
+  // El rango se deriva de los datos servidos, no de una fecha fija en el HTML.
+  const cfSeries = cfData[`${currentCont}_${currentZone}`]?.['METEO-PURO'];
+  const periodRange = cfSeries && cfSeries.dates.length
+    ? `${formatDate(cfSeries.dates[0])} → ${formatDate(cfSeries.dates[cfSeries.dates.length - 1])}`
+    : t.v9TrendNoData;
   const cards = [ 
-      { label: t.sumObs, value: s.obs.toFixed(2), sub: s.unit, cls: 'neutral', range: t.sumPeriod }, 
+      { label: t.sumObs, value: s.obs.toFixed(2), sub: s.unit, cls: 'neutral', range: periodRange },
       { label: t.sumCF, value: s.cf_pure.toFixed(2), sub: `${s.unit} ${t.sumSinZBE}`, cls: 'neutral', range: t.sumBound }, 
       { label: t.sumEffect, value: `${s.pure > 0 ? '+' : ''}${s.pure.toFixed(1)}%`, sub: `${gap_abs} ${s.unit} ${t.sumAbsoluto}`, cls: getClass(s.pure), range: t.sumBound }, 
       { label: t.sumRange, value: `[${low.toFixed(1)}%, ${high.toFixed(1)}%]`, sub: t.sumMeteoLag, cls: low < 0 && high < 0 ? 'neg' : (low > 0 && high > 0 ? 'pos' : 'neutral'), range: low < 0 && high < 0 ? t.sumRobRed : (low < 0 ? t.sumUncertain : t.sumIncrease) } 
@@ -1764,45 +1785,68 @@ function renderSummaryCards() {
 
 function renderFig1() {
   const key = `${currentCont}_${currentZone}`; 
+  const gate = causalGate(currentCont, currentZone);
+  if (!gate.publishable) { if(fig1Chart) fig1Chart.destroy(); return; }
   if (!cfData || !cfData[key] || !cfData[key]['METEO-PURO']) {
     console.warn("No data for Fig1:", key);
     if(fig1Chart) fig1Chart.destroy();
     return;
   }
-  const pure = cfData[key]['METEO-PURO'], lags = cfData[key]['CON-LAGS'], dates = pure.dates.map(formatDate); const obsSmooth = movingAvg(pure.observed, 7);
+  const pure = cfData[key]['METEO-PURO'], lags = cfData[key]['CON-LAGS'] || null, dates = pure.dates.map(formatDate); const obsSmooth = movingAvg(pure.observed, 7);
+  const lagsSeries = lags ? movingAvg(lags.counterfactual, 7) : dates.map(() => null);
   const t = translations[currentLang];
   const ctx = document.getElementById('fig1').getContext('2d');
   if (fig1Chart) fig1Chart.destroy();
   
   const text = getCssVar('--muted'); const grid = getCssVar('--border'); const bg = getCssVar('--surface2'); const title = getCssVar('--text');
   
-  fig1Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_fillUpper', data: pure.counterfactual, borderColor: 'transparent', backgroundColor: getCssVar('--observed') + '20', fill: '+1', pointRadius: 0, tension: 0.3 }, { label: t.fig1Obs, data: obsSmooth, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, order: 1 }, { label: t.fig1CFPure, data: movingAvg(pure.counterfactual, 7), borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, tension: 0.3, fill: false, order: 2 }, { label: t.fig1CFLags, data: movingAvg(lags.counterfactual, 7), borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, tension: 0.3, fill: false, order: 3 } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; const unit = currentCont === 'ICA' ? '' : ' µg/m³'; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)}${unit}`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(1) + (currentCont === 'ICA' ? '' : ' µg/m³') }, grid: { color: grid }, title: { display: true, text: currentCont === 'ICA' ? 'Índice' : 'µg/m³', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
+  fig1Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_fillUpper', data: pure.counterfactual, borderColor: 'transparent', backgroundColor: getCssVar('--observed') + '20', fill: '+1', pointRadius: 0, tension: 0.3 }, { label: t.fig1Obs, data: obsSmooth, borderColor: getCssVar('--observed'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, order: 1 }, { label: t.fig1CFPure, data: movingAvg(pure.counterfactual, 7), borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, tension: 0.3, fill: false, order: 2 }, { label: t.fig1CFLags, data: lagsSeries, borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, tension: 0.3, fill: false, order: 3 } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; const unit = currentCont === 'ICA' ? '' : ' µg/m³'; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)}${unit}`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(1) + (currentCont === 'ICA' ? '' : ' µg/m³') }, grid: { color: grid }, title: { display: true, text: currentCont === 'ICA' ? 'Índice' : 'µg/m³', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
 }
 
 function renderFig2() {
   const key = `${currentCont}_${currentZone}`; 
+  const gate = causalGate(currentCont, currentZone);
+  if (!gate.publishable) { if(fig2Chart) fig2Chart.destroy(); return; }
   if (!cfData || !cfData[key] || !cfData[key]['METEO-PURO']) {
     console.warn("No data for Fig2:", key);
     if(fig2Chart) fig2Chart.destroy();
     return;
   }
-  const pure = cfData[key]['METEO-PURO'], lags = cfData[key]['CON-LAGS'], dates = pure.dates.map(formatDate); const gapPureSmooth = movingAvg(pure.gap_pct, 14), gapLagsSmooth = movingAvg(lags.gap_pct, 14), zero = dates.map(() => 0);
+  const pure = cfData[key]['METEO-PURO'], lags = cfData[key]['CON-LAGS'] || null, dates = pure.dates.map(formatDate);
+  const gapPureSmooth = movingAvg(pure.gap_pct, 14);
+  const gapLagsSmooth = lags ? movingAvg(lags.gap_pct, 14) : dates.map(() => null);
+  const zero = dates.map(() => 0);
+  // Con un solo bound no hay banda: se usan nulls, no ceros.
+  const bandUpper = gapPureSmooth.map((p, i) => (p === null || gapLagsSmooth[i] === null) ? null : Math.max(p, gapLagsSmooth[i]));
+  const bandLower = gapPureSmooth.map((p, i) => (p === null || gapLagsSmooth[i] === null) ? null : Math.min(p, gapLagsSmooth[i]));
   const t = translations[currentLang];
   const ctx = document.getElementById('fig2').getContext('2d');
   if (fig2Chart) fig2Chart.destroy();
   
   const text = getCssVar('--muted'); const grid = getCssVar('--border'); const bg = getCssVar('--surface2'); const title = getCssVar('--text');
 
-  fig2Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_bandUpper', data: gapPureSmooth.map((p, i) => Math.max(p, gapLagsSmooth[i])), borderColor: 'transparent', backgroundColor: getCssVar('--accent') + '26', fill: '+1', pointRadius: 0, tension: 0.4 }, { label: '_bandLower', data: gapPureSmooth.map((p, i) => Math.min(p, gapLagsSmooth[i])), borderColor: 'transparent', backgroundColor: 'transparent', fill: false, pointRadius: 0, tension: 0.4 }, { label: t.fig2NoEffect, data: zero, borderColor: text, borderWidth: 1, borderDash: [2,4], pointRadius: 0, fill: false, order: 10 }, { label: t.fig2GapPure, data: gapPureSmooth, borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false, order: 1 }, { label: t.fig2GapLags, data: gapLagsSmooth, borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 2, borderDash: [5,3], pointRadius: 0, tension: 0.4, fill: false, order: 2 } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1)}%`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(0) + '%' }, grid: { color: grid }, title: { display: true, text: 'Gap %', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
+  fig2Chart = new Chart(ctx, { type: 'line', data: { labels: dates, datasets: [ { label: '_bandUpper', data: bandUpper, borderColor: 'transparent', backgroundColor: getCssVar('--accent') + '26', fill: '+1', pointRadius: 0, tension: 0.4 }, { label: '_bandLower', data: bandLower, borderColor: 'transparent', backgroundColor: 'transparent', fill: false, pointRadius: 0, tension: 0.4 }, { label: t.fig2NoEffect, data: zero, borderColor: text, borderWidth: 1, borderDash: [2,4], pointRadius: 0, fill: false, order: 10 }, { label: t.fig2GapPure, data: gapPureSmooth, borderColor: getCssVar('--cf-pure'), backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false, order: 1 }, { label: t.fig2GapLags, data: gapLagsSmooth, borderColor: getCssVar('--cf-lags'), backgroundColor: 'transparent', borderWidth: 2, borderDash: [5,3], pointRadius: 0, tension: 0.4, fill: false, order: 2 } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { color: text, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 24, filter: item => !item.text.startsWith('_') } }, tooltip: { backgroundColor: bg, borderColor: grid, borderWidth: 1, titleColor: title, bodyColor: text, titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, callbacks: { label: ctx => { if (ctx.dataset.label.startsWith('_')) return null; return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1)}%`; } } } }, scales: { x: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 10, maxRotation: 0 }, grid: { color: grid } }, y: { ticks: { color: text, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v.toFixed(0) + '%' }, grid: { color: grid }, title: { display: true, text: 'Gap %', color: text, font: { family: 'IBM Plex Mono', size: 10 } } } } } });
 }
 
 function renderFig3() {
-  const keys = Object.keys(SUMMARY_STATS); const vals = keys.map(k => SUMMARY_STATS[k].pure);
+  const ctxEl = document.getElementById('fig3');
+  if (!ctxEl) return;
+  const keys = Object.keys(SUMMARY_STATS).filter(k => {
+    const [cont, zone] = k.split('_');
+    return SUMMARY_STATS[k].pure !== null && causalGate(cont, zone).publishable;
+  });
+  if (!keys.length) {
+    if (fig3Chart) fig3Chart.destroy();
+    ctxEl.style.display = 'none';
+    return;
+  }
+  ctxEl.style.display = 'block';
+  const vals = keys.map(k => SUMMARY_STATS[k].pure);
   const labels = keys.map(k => k.replace('PM2.5','PM₂.₅').replace('_',' '));
   const colors = vals.map(v => v < -5 ? getCssVar('--green')+'CC' : v > 5 ? getCssVar('--red')+'CC' : getCssVar('--yellow')+'CC');
   const borders = vals.map(v => v < -5 ? getCssVar('--green') : v > 5 ? getCssVar('--red') : getCssVar('--yellow'));
   const t = translations[currentLang];
-  const ctx = document.getElementById('fig3').getContext('2d');
+  const ctx = ctxEl.getContext('2d');
   if (fig3Chart) fig3Chart.destroy();
   
   const text = getCssVar('--muted'); const grid = getCssVar('--border'); const bg = getCssVar('--surface2'); const title = getCssVar('--text');
@@ -1813,18 +1857,32 @@ function renderFig3() {
 function renderDidTable() {
   const t = translations[currentLang];
   const rows = Object.entries(DID_RESULTS).map(([cont, d]) => {
-    const sig = d.significant;
-    const bCls = d.beta3 < -0.1 ? 'beta-neg' : d.beta3 > 0.1 ? 'beta-pos' : 'beta-neu';
-    const sign = d.beta3 > 0 ? '+' : '';
-    const pFmt = d.pvalue < 0.0001 ? '<0.0001' : d.pvalue.toFixed(4);
+    if (d.publishable === false) {
+      return `<tr>
+        <td><strong>${cont}</strong></td>
+        <td colspan="6">${t.causalBlocked} — ${d.qc_flag ? t.causalQc : t.causalNoSkill}</td>
+      </tr>`;
+    }
+    const hasBeta = d.beta3 !== null && d.beta3 !== undefined;
+    const sig = Boolean(d.significant);
+    const bCls = hasBeta ? (d.beta3 < -0.1 ? 'beta-neg' : d.beta3 > 0.1 ? 'beta-pos' : 'beta-neu') : 'beta-neu';
+    const sign = hasBeta && d.beta3 > 0 ? '+' : '';
+    const pFmt = d.pvalue === null || d.pvalue === undefined
+      ? 'N/D'
+      : (d.pvalue < 0.0001 ? '<0.0001' : d.pvalue.toFixed(4));
     const sigText = sig ? t.didYes : t.didNo;
+    const betaTxt = hasBeta ? `${sign}${d.beta3.toFixed(3)} µg/m³` : 'N/D';
+    const ciTxt = d.ci_low !== null && d.ci_low !== undefined && d.ci_high !== null && d.ci_high !== undefined
+      ? `[${d.ci_low.toFixed(3)}, ${d.ci_high.toFixed(3)}]`
+      : 'N/D';
+    const r2Txt = d.r2 !== null && d.r2 !== undefined ? d.r2.toFixed(3) : 'N/D';
     
     return `<tr>
       <td><strong>${cont}</strong></td>
-      <td class="${bCls}">${sign}${d.beta3.toFixed(3)} µg/m³</td>
+      <td class="${bCls}">${betaTxt}</td>
       <td class="${sig ? 'sig-yes' : 'sig-no'}">${pFmt} ${sig ? '✓' : ''}</td>
-      <td>[${d.ci_low.toFixed(3)}, ${d.ci_high.toFixed(3)}]</td>
-      <td>${d.r2.toFixed(3)}</td>
+      <td>${ciTxt}</td>
+      <td>${r2Txt}</td>
       <td>${(d.n_obs || d.n || 0).toLocaleString()}</td>
       <td class="${sig ? 'sig-yes' : 'sig-no'}">${sigText}</td>
     </tr>`;
@@ -1862,7 +1920,17 @@ function renderV9Cards() {
   const key = `${contKey}_${currentStationV9}`; const data = v9Stats[key] || { preR2: 'N/A', gap: 'N/A', desc: 'Sin datos' };
   const t = translations[currentLang];
   const colorClass = String(data.gap).includes('-') ? 'neg' : (String(data.gap).includes('+') ? 'pos' : 'neutral');
-  document.getElementById('summaryCardsV9').innerHTML = `<div class="summary-card"><div class="card-label">${t.v9Adj}</div><div class="card-value neutral">R² = ${data.preR2}</div></div><div class="summary-card"><div class="card-label">${t.v9Impact}</div><div class="card-value ${colorClass}">${data.gap}</div></div><div class="summary-card"><div class="card-label">${t.v9Diag}</div><div class="card-value neutral" style="font-size: 16px; margin-top:8px;">${data.desc}</div></div><div class="summary-card"><div class="card-label">${t.v9Trend}</div><div class="card-value neg" style="font-size: 16px; margin-top:8px;">${t.v9ParallelOK}</div></div>`;
+  // La tarjeta de tendencias refleja el event study real, no un texto fijo.
+  const trend = EVENT_STUDY_TREND[currentContV9];
+  let trendText = t.v9TrendNoData, trendClass = 'neutral';
+  if (trend) {
+    if (trend.pre_trend_ok) {
+      trendText = t.v9ParallelOK; trendClass = 'pos';
+    } else {
+      trendText = `${t.v9ParallelBad} (${trend.n_sig}/${trend.n_pre})`; trendClass = 'neg';
+    }
+  }
+  document.getElementById('summaryCardsV9').innerHTML = `<div class="summary-card"><div class="card-label">${t.v9Adj}</div><div class="card-value neutral">R² = ${data.preR2}</div></div><div class="summary-card"><div class="card-label">${t.v9Impact}</div><div class="card-value ${colorClass}">${data.gap}</div></div><div class="summary-card"><div class="card-label">${t.v9Diag}</div><div class="card-value neutral" style="font-size: 16px; margin-top:8px;">${data.desc}</div></div><div class="summary-card"><div class="card-label">${t.v9Trend}</div><div class="card-value ${trendClass}" style="font-size: 16px; margin-top:8px;">${trendText}</div></div>`;
 }
 
 function updateV9Images() {
@@ -1891,25 +1959,44 @@ let currentContV10 = 'NO2', currentZoneV10 = 'zbe', perfChart = null;
 
 function renderDashboard3() {
   const zoneData = manana[currentZoneV10] || {};
-  const no2 = zoneData['NO2'] || 0;
-  const pm25 = zoneData['PM2.5'] || 0;
-  const pm10 = zoneData['PM10'] || 0;
-  const ica = zoneData['ICA'] || 0;
+  const pick = (k) => (zoneData[k] === undefined ? null : zoneData[k]);
+  const no2 = pick('NO2');
+  const pm25 = pick('PM2.5');
+  const pm10 = pick('PM10');
+  const ica = pick('ICA');
   const t = translations[currentLang];
 
+  const fmtVal = (v) => (v === null || v === undefined || Number.isNaN(Number(v))) ? 'N/D' : Number(v).toFixed(1);
+  const hasData = [no2, pm10, pm25].some(v => v !== null && v !== undefined);
+
+  // Semáforo EEA único, con umbrales inyectados desde src/config.py.
+  const riskLevelFor = (n, p10, p25, ica) => {
+    const safeN = n ?? 0, safe10 = p10 ?? 0, safe25 = p25 ?? 0, safeIca = ica ?? 0;
+    const th = RISK_THRESHOLDS;
+    if (safeN >= th.NO2.bad || safe10 >= th.PM10.bad || safe25 >= th['PM2.5'].bad || safeIca >= th.ICA.bad) return 2;
+    if (safeN >= th.NO2.moderate || safe10 >= th.PM10.moderate || safe25 >= th['PM2.5'].moderate || safeIca >= th.ICA.moderate) return 1;
+    return 0;
+  };
+  const paintBadge = (badge, level, hasValues) => {
+    if (!hasValues) {
+      badge.innerText = t.v10NoData;
+      badge.style.color = "var(--muted)";
+      badge.style.borderColor = "var(--border)";
+      badge.style.backgroundColor = "transparent";
+      return;
+    }
+    if (level === 0) { badge.innerText = t.v10Good; badge.style.color = "var(--green)"; badge.style.borderColor = "var(--green)"; badge.style.backgroundColor = getCssVar('--green')+"1A"; }
+    else if (level === 1) { badge.innerText = t.v10Mod; badge.style.color = "var(--yellow)"; badge.style.borderColor = "var(--yellow)"; badge.style.backgroundColor = getCssVar('--yellow')+"1A"; }
+    else { badge.innerText = t.v10Bad; badge.style.color = "var(--red)"; badge.style.borderColor = "var(--red)"; badge.style.backgroundColor = getCssVar('--red')+"1A"; }
+  };
+
   let badge = document.getElementById('riskBadge');
-  let riskLevel = 0; 
-  if (no2 >= 40 || pm10 >= 20 || pm25 >= 10) riskLevel = 1;
-  if (no2 >= 90 || pm10 >= 40 || pm25 >= 20) riskLevel = 2;
+  paintBadge(badge, riskLevelFor(no2, pm10, pm25, ica), hasData);
 
-  if (riskLevel === 0) { badge.innerText = t.v10Good; badge.style.color = "var(--green)"; badge.style.borderColor = "var(--green)"; badge.style.backgroundColor = getCssVar('--green')+"1A"; }
-  else if (riskLevel === 1) { badge.innerText = t.v10Mod; badge.style.color = "var(--yellow)"; badge.style.borderColor = "var(--yellow)"; badge.style.backgroundColor = getCssVar('--yellow')+"1A"; }
-  else { badge.innerText = t.v10Bad; badge.style.color = "var(--red)"; badge.style.borderColor = "var(--red)"; badge.style.backgroundColor = getCssVar('--red')+"1A"; }
-
-  document.getElementById('val-no2').innerHTML = `${no2.toFixed(1)}`;
-  document.getElementById('val-pm25').innerHTML = `${pm25.toFixed(1)}`;
-  document.getElementById('val-pm10').innerHTML = `${pm10.toFixed(1)}`;
-  document.getElementById('val-ica').innerHTML = `${ica.toFixed(1)}`;
+  document.getElementById('val-no2').innerHTML = fmtVal(no2);
+  document.getElementById('val-pm25').innerHTML = fmtVal(pm25);
+  document.getElementById('val-pm10').innerHTML = fmtVal(pm10);
+  document.getElementById('val-ica').innerHTML = fmtVal(ica);
 
   const d2Results = {};
   for (const contaminant of ['NO2', 'PM10', 'PM2.5', 'ICA']) {
@@ -1917,23 +2004,22 @@ function renderDashboard3() {
   }
   const hasD2 = Object.values(d2Results).every(Boolean);
   document.getElementById('d2PlanningBlock').style.display = hasD2 ? 'block' : 'none';
-  const d2No2 = d2Results.NO2?.prediction || 0;
-  const d2Pm10 = d2Results.PM10?.prediction || 0;
-  const d2Pm25 = d2Results['PM2.5']?.prediction || 0;
-  const d2Ica = d2Results.ICA?.prediction || 0;
+  const d2No2 = d2Results.NO2?.prediction ?? null;
+  const d2Pm10 = d2Results.PM10?.prediction ?? null;
+  const d2Pm25 = d2Results['PM2.5']?.prediction ?? null;
+  const d2Ica = d2Results.ICA?.prediction ?? null;
   const d2Badge = document.getElementById('riskBadgeD2');
-  let d2RiskLevel = 0;
-  if (d2No2 >= 40 || d2Pm10 >= 20 || d2Pm25 >= 10) d2RiskLevel = 1;
-  if (d2No2 >= 90 || d2Pm10 >= 40 || d2Pm25 >= 20) d2RiskLevel = 2;
-  if (d2RiskLevel === 0) { d2Badge.innerText = t.v10Good; d2Badge.style.color = "var(--green)"; d2Badge.style.borderColor = "var(--green)"; d2Badge.style.backgroundColor = getCssVar('--green')+"1A"; }
-  else if (d2RiskLevel === 1) { d2Badge.innerText = t.v10Mod; d2Badge.style.color = "var(--yellow)"; d2Badge.style.borderColor = "var(--yellow)"; d2Badge.style.backgroundColor = getCssVar('--yellow')+"1A"; }
-  else { d2Badge.innerText = t.v10Bad; d2Badge.style.color = "var(--red)"; d2Badge.style.borderColor = "var(--red)"; d2Badge.style.backgroundColor = getCssVar('--red')+"1A"; }
+  const hasD2Values = hasD2 && [d2No2, d2Pm10, d2Pm25].some(v => v !== null && v !== undefined);
+  paintBadge(d2Badge, riskLevelFor(d2No2, d2Pm10, d2Pm25, d2Ica), hasD2Values);
 
   const setD2Value = (id, rangeId, result) => {
     document.getElementById(id).textContent = result ? Number(result.prediction).toFixed(1) : '--';
-    document.getElementById(rangeId).textContent = result
+    const hasInterval = result
+      && result.lower !== null && result.lower !== undefined
+      && result.upper !== null && result.upper !== undefined;
+    document.getElementById(rangeId).textContent = hasInterval
       ? `IC90 ${Number(result.lower).toFixed(1)}–${Number(result.upper).toFixed(1)}`
-      : 'IC90 --';
+      : 'IC90 N/D';
   };
   setD2Value('val-no2-d2', 'range-no2-d2', d2Results.NO2);
   setD2Value('val-pm25-d2', 'range-pm25-d2', d2Results['PM2.5']);
@@ -1983,45 +2069,50 @@ function renderDashboard3() {
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: text, font: { family: 'IBM Plex Mono'} } }, }, scales: { x: { ticks: { color: text }, grid: { color: grid } }, y: { ticks: { color: text }, grid: { color: grid } } } }
   });
 
-  const lastRealDraw = d.real[d.real.length - 1]; 
-  const lastPred = d.pred[d.pred.length - 1] || 0;
-  let realText, interpret;
-  
-  if (lastRealDraw === null || lastRealDraw === undefined) {
-      realText = currentLang === 'es' ? "N/D (Pendiente)" : "E/D (Zain)";
-      interpret = "⏳";
-  } else {
-      const lastReal = lastRealDraw;
-      const error = lastPred > 0 ? (((lastReal - lastPred) / lastPred) * 100).toFixed(1) : 0;
-      realText = currentContV10 === 'ICA' ? `${lastReal.toFixed(1)}` : `${lastReal.toFixed(1)} µg/m³`;
-      const absError = Math.abs(error);
-      const absValDiff = Math.abs(lastReal - lastPred);
-      
-      let isLowAbsError = false;
-      if (currentContV10 === 'ICA' && absValDiff <= 5.0) { isLowAbsError = true; }
-      else if (currentContV10 === 'NO2' && absValDiff <= 4.0) { isLowAbsError = true; }
-      else if (currentContV10 === 'PM10' && absValDiff <= 6.0) { isLowAbsError = true; }
-      else if (currentContV10 === 'PM2.5' && absValDiff <= 4.0) { isLowAbsError = true; }
-      
-      if (absError <= 35) {
-          interpret = "🟢"; // Verde para precision aceptable/buena/excelente normal
-      } else if (isLowAbsError) {
-          interpret = "🟡"; // Amarillo para la tolerancia especial de baja concentracion (mas honesto)
-      } else {
-          interpret = "🔴"; // Rojo para desviaciones mayores
+  const lastRealDraw = d.real[d.real.length - 1];
+  const lastPredDraw = d.pred[d.pred.length - 1];
+  const lastPred = (lastPredDraw === null || lastPredDraw === undefined) ? null : Number(lastPredDraw);
+  const unit = currentContV10 === 'ICA' ? '' : ' µg/m³';
+  const pendingText = currentLang === 'es' ? "N/D (Pendiente)" : "E/D (Zain)";
+  let realText = pendingText;
+  let predText = 'N/D';
+  let interpret = "⏳";
+
+  if (lastRealDraw !== null && lastRealDraw !== undefined) {
+      const lastReal = Number(lastRealDraw);
+      realText = `${lastReal.toFixed(1)}${unit}`;
+      if (lastPred !== null && lastPred > 0) {
+          predText = `${lastPred.toFixed(1)}${unit}`;
+          const error = ((lastReal - lastPred) / lastPred) * 100;
+          const absError = Math.abs(error);
+          const absValDiff = Math.abs(lastReal - lastPred);
+
+          let isLowAbsError = false;
+          if (currentContV10 === 'ICA' && absValDiff <= 5.0) { isLowAbsError = true; }
+          else if (currentContV10 === 'NO2' && absValDiff <= 4.0) { isLowAbsError = true; }
+          else if (currentContV10 === 'PM10' && absValDiff <= 6.0) { isLowAbsError = true; }
+          else if (currentContV10 === 'PM2.5' && absValDiff <= 4.0) { isLowAbsError = true; }
+
+          if (absError <= 35) {
+              interpret = "🟢"; // Precisión aceptable/buena/excelente
+          } else if (isLowAbsError) {
+              interpret = "🟡"; // Tolerancia extra en concentraciones bajas
+          } else {
+              interpret = "🔴"; // Desviación alta
+          }
       }
-
-      const predText = currentContV10 === 'ICA' ? `${lastPred.toFixed(1)}` : `${lastPred.toFixed(1)} µg/m³`;
-
-      document.getElementById('backtestTable').innerHTML = `
-        <tr>
-          <td><strong>${currentContV10} (${currentZoneV10.toUpperCase()})</strong></td>
-          <td>${predText}</td>
-          <td>${realText}</td>
-          <td style="font-size: 1.25rem; text-align: center; line-height: 1;">${interpret}</td>
-        </tr>
-      `;
   }
+
+  // Se escribe siempre: antes, cuando faltaba la medición real, la tabla
+  // quedaba con el contenido de la selección anterior.
+  document.getElementById('backtestTable').innerHTML = `
+    <tr>
+      <td><strong>${currentContV10} (${currentZoneV10.toUpperCase()})</strong></td>
+      <td>${predText}</td>
+      <td>${realText}</td>
+      <td style="font-size: 1.25rem; text-align: center; line-height: 1;">${interpret}</td>
+    </tr>
+  `;
 }
 
 function selectContV10(cont, btn) { currentContV10 = cont; document.querySelectorAll('#contTabsV10 .tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderDashboard3(); }
@@ -2053,15 +2144,20 @@ function renderMetricsTable() {
     // Buscar mejora del meta-modelo
     const metaKey = `${cont}_${zone}_d1`;
     const meta = metaData[metaKey];
-    const metaStr = meta ? `<div style="font-size:9px; color:var(--accent); margin-top:2px">+${meta.improvement_pct}% mejora meta-model</div>` : '';
+    let metaStr = '';
+    if (meta && Number.isFinite(Number(meta.improvement_pct))) {
+      const imp = Number(meta.improvement_pct);
+      const sign = imp > 0 ? '+' : '';
+      metaStr = `<div style="font-size:9px; color:var(--accent); margin-top:2px">${sign}${imp.toFixed(2)}% ${t.metaImprovement}</div>`;
+    }
 
     return `<tr>
       <td><strong>${cont}</strong> <span style="color:var(--muted)">${zone.toUpperCase()}</span>${metaStr}</td>
-      <td style="font-family:'IBM Plex Mono',monospace">${m.cv_rmse.toFixed(2)}</td>
-      <td style="font-family:'IBM Plex Mono',monospace">${m.cv_mae.toFixed(2)}</td>
-      <td style="color:${r2Color};font-family:'IBM Plex Mono',monospace">${m.cv_r2.toFixed(3)}</td>
-      <td style="color:${mapeColor};font-family:'IBM Plex Mono',monospace;font-weight:bold">${m.cv_mape.toFixed(1)}%</td>
-      <td style="color:var(--muted);font-family:'IBM Plex Mono',monospace">${m.n_features}</td>
+      <td style="font-family:'IBM Plex Mono',monospace">${num(m.cv_rmse, 2)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace">${num(m.cv_mae, 2)}</td>
+      <td style="color:${r2Color};font-family:'IBM Plex Mono',monospace">${num(m.cv_r2, 3)}</td>
+      <td style="color:${mapeColor};font-family:'IBM Plex Mono',monospace;font-weight:bold">${num(m.cv_mape, 1)}%</td>
+      <td style="color:var(--muted);font-family:'IBM Plex Mono',monospace">${num(m.n_features, 0)}</td>
     </tr>`;
   }).join('');
   renderMetricsTableD2();
@@ -2085,11 +2181,11 @@ function renderMetricsTableD2() {
     const r2Color = m.cv_r2 >= 0.35 ? 'var(--green)' : 'var(--yellow)';
     return `<tr>
       <td><strong>${cont}</strong> <span style="color:var(--muted)">${zone.toUpperCase()}</span></td>
-      <td style="font-family:'IBM Plex Mono',monospace">${m.cv_rmse.toFixed(2)}</td>
-      <td style="font-family:'IBM Plex Mono',monospace">${m.cv_mae.toFixed(2)}</td>
-      <td style="color:${r2Color};font-family:'IBM Plex Mono',monospace">${m.cv_r2.toFixed(3)}</td>
-      <td style="color:${mapeColor};font-family:'IBM Plex Mono',monospace;font-weight:bold">${m.cv_mape.toFixed(1)}%</td>
-      <td style="color:var(--muted);font-family:'IBM Plex Mono',monospace">${m.n_features}</td>
+      <td style="font-family:'IBM Plex Mono',monospace">${num(m.cv_rmse, 2)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace">${num(m.cv_mae, 2)}</td>
+      <td style="color:${r2Color};font-family:'IBM Plex Mono',monospace">${num(m.cv_r2, 3)}</td>
+      <td style="color:${mapeColor};font-family:'IBM Plex Mono',monospace;font-weight:bold">${num(m.cv_mape, 1)}%</td>
+      <td style="color:var(--muted);font-family:'IBM Plex Mono',monospace">${num(m.n_features, 0)}</td>
     </tr>`;
   }).join('');
 }
@@ -2374,12 +2470,22 @@ function renderTrafficYoY() {
   if (!ctx || trafficYoyData.length === 0) return;
 
   const labels = trafficYoyData.map(d => {
-    const date = new Date(d.date);
-    return date.toLocaleDateString(currentLang === 'es' ? 'es-ES' : 'eu-ES', { day: 'numeric', month: 'short' });
+    const date = parseDateUTC(d.date);
+    return date.toLocaleDateString(currentLang === 'es' ? 'es-ES' : 'eu-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' });
   });
   
   const currentSeries = trafficYoyData.map(d => d.current);
   const previousSeries = trafficYoyData.map(d => d.previous);
+
+  // Etiqueta honesta según la fase real del año anterior comparado.
+  const phases = new Set(trafficYoyData.map(d => d.previous_phase).filter(Boolean));
+  const tYoy = translations[currentLang];
+  let previousLabel = tYoy.trafficPrevious;
+  if (phases.size === 1) {
+    previousLabel = phases.has('pre_zbe') ? tYoy.trafficPreviousPre : tYoy.trafficPreviousYear1;
+  } else if (phases.size > 1) {
+    previousLabel = tYoy.trafficPreviousMixed;
+  }
 
   // Aplicar media móvil para suavizar (7 días)
   const currentSmooth = movingAvg(currentSeries, 7);
@@ -2404,7 +2510,7 @@ function renderTrafficYoY() {
           tension: 0.3
         },
         {
-          label: translations[currentLang].trafficPrevious,
+          label: previousLabel,
           data: previousSmooth,
           borderColor: getCssVar('--muted'),
           backgroundColor: 'transparent',
@@ -2449,6 +2555,7 @@ function renderTrafficYoY() {
 window.onload = function() {
   updateI18n();
   updateRiskDate();
+  renderPipelineBanner();
   
   if (localStorage.getItem('vitoria_theme') === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -2476,6 +2583,9 @@ window.onload = function() {
   console.log("DASHBOARD INITIALIZED SUCCESSFULLY");
 };
 </script>
+<footer class="footer">
+  <span id="pipelineStatus">__PIPELINE_STATUS__</span>
+</footer>
 </body>
 </html>"""
 
@@ -2491,8 +2601,25 @@ content = content.replace('__META_DATA_PLACEHOLDER__', meta_json_str)
 content = content.replace('__SUMMARY_DATA_PLACEHOLDER__', sum_json_str)
 content = content.replace('__DID_DATA_PLACEHOLDER__', did_json_str)
 content = content.replace('__TRAFFIC_YOY_DATA_PLACEHOLDER__', traffic_yoy_json_str)
+content = content.replace('__EVENT_STUDY_TREND_PLACEHOLDER__', event_study_trend_json_str)
+content = content.replace('__RISK_THRESHOLDS_PLACEHOLDER__', json.dumps(RISK_THRESHOLDS))
 content = content.replace('__IMG_BASE_PATH__', img_base_path)
 content = content.replace('__PRED_DATE_PLACEHOLDER__', prediction_date_str)
+
+# Pie con la frescura real del pipeline (se escribe en run_pipeline.py).
+pipeline_status_text = "Estado del pipeline: no disponible"
+status = pipeline_status_data
+if status:
+    pipeline_status_text = (
+        f"Datos hasta {status.get('source_date', 'N/D')} · "
+        f"Predicción {status.get('prediction_date', 'N/D')} · "
+        f"Generado {status.get('generated_at', 'N/D')}"
+    )
+content = content.replace('__PIPELINE_STATUS__', pipeline_status_text)
+content = content.replace('__STATION_QC_PLACEHOLDER__', json.dumps(station_qc))
+content = content.replace('__CAUSAL_VALIDATION_PLACEHOLDER__', json.dumps(causal_validation))
+content = content.replace('__DRIFT_REPORT_PLACEHOLDER__', json.dumps(drift_report))
+content = content.replace('__PIPELINE_STATUS_DATA_PLACEHOLDER__', json.dumps(pipeline_status_data))
 
 with open(output_html, 'w', encoding='utf-8') as f:
     f.write(content)

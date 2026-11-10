@@ -68,6 +68,7 @@ from config import ZBE_DATE, TARGETS_CAUSALES as TARGETS, HDD_FEATURES_REQUIRED
 N_SPLITS       = 5
 HORIZON        = "d1"
 TOP_N_FEATURES = 80
+TREATED_STATIONS = ["PAUL", "FUEROS"]
 EARLY_STOPPING_ROUNDS = 100
 CV_GAP         = 1
 FINAL_TEST_FRACTION = 0.15
@@ -94,7 +95,6 @@ METEO_PURE_FEATURES = [
     "month_sin", "month_cos", "doy_sin", "doy_cos",
     "es_invierno_estricto", "es_verano", "es_domingo", "domingo_invierno",
     "exp_traffic_volume_d1", "exp_traffic_occupancy_d1",
-    "traffic_volume_lag_7d", "traffic_volume_lag_14d",
 ]
 
 LGBM_PARAMS = {
@@ -552,6 +552,44 @@ def train_all(df, feature_cols, target_cols, tune=False):
 
 
 # ??? (9) COUNTERFACTUAL DUAL ???????????????????????????????????????????????????
+def rolling_origin_metrics(X, y, params, n_splits=3):
+    """Validación temporal expansiva dentro del pre-ZBE.
+
+    Devuelve R², MAE y skill frente a persistencia (valor del día anterior).
+    No usa el post: sirve como gate de publicabilidad antes de estimar el efecto.
+    """
+    n = len(X)
+    if n < 120:
+        return None
+    from lightgbm import LGBMRegressor
+    fold_size = max(20, n // (n_splits + 1))
+    preds, actuals, persistence = [], [], []
+    for k in range(1, n_splits + 1):
+        train_end = n - (n_splits - k + 1) * fold_size
+        val_end = min(n, train_end + fold_size)
+        if train_end < 60 or val_end <= train_end:
+            continue
+        model = LGBMRegressor(**{**params, "n_estimators": 300})
+        model.fit(X.iloc[:train_end], y.iloc[:train_end])
+        preds.append(model.predict(X.iloc[train_end:val_end]))
+        actuals.append(y.iloc[train_end:val_end].to_numpy())
+        persistence.append(y.iloc[train_end - 1:val_end - 1].to_numpy())
+    if not preds:
+        return None
+    y_true = np.concatenate(actuals)
+    y_pred = np.concatenate(preds)
+    y_persist = np.concatenate(persistence)
+    mae_model = mae(y_true, y_pred)
+    mae_persist = mae(y_true, y_persist)
+    return {
+        "n": int(len(y_true)),
+        "r2": float(r2(y_true, y_pred)),
+        "mae": float(mae_model),
+        "persistence_mae": float(mae_persist),
+        "skill_vs_persistence": float(1 - mae_model / mae_persist) if mae_persist > 0 else None,
+    }
+
+
 def train_counterfactual_dual(df, feature_cols):
     """
     Counterfactual dual - bound inferior y superior del efecto ZBE.
@@ -560,15 +598,15 @@ def train_counterfactual_dual(df, feature_cols):
         Solo meteorolog?a + calendario + tr?fico hist?rico esperado.
         Sin lags del propio contaminante. Efecto m?nimo garantizado.
 
-    CON-LAGS (bound superior):
-        Meteo + calendario + lags del contaminante en per?odo pre-ZBE.
-        Puede absorber memoria del contaminante. Efecto m?ximo posible.
-
-    El efecto real de la ZBE est? entre ambos bounds.
+    CON-LAGS (escenario exploratorio, NO bound causal):
+        Meteo + calendario + lags del contaminante en período pre-ZBE.
+        En el post usa lags observados (mediadores del tratamiento), por lo que
+        no se publica como cota: se mantiene solo como análisis de sensibilidad.
+        El efecto publicable es METEO-PURO, sujeto al gate de skill.
     """
     section("(9) Counterfactual Dual (Bound Inferior / Bound Superior)")
 
-    from lightgbm import LGBMRegressor, early_stopping, log_evaluation
+    from lightgbm import LGBMRegressor
 
     df = df.copy()
     df["date"] = pd.to_datetime(df["date"], utc=True)
@@ -589,10 +627,19 @@ def train_counterfactual_dual(df, feature_cols):
                      and c in df.columns]
     pure_features = [c for c in METEO_PURE_FEATURES if c in df.columns]
 
-    fit_callbacks = [early_stopping(50, verbose=False), log_evaluation(-1)]
     cf_params     = {**LGBM_PARAMS, "n_estimators": 500}
 
     results = []
+    validation_records = {}
+
+    # Pares excluidos por el QC de estaciones (PAUL PM10/PM25/ICA afectan a ZBE).
+    qc_excluded = set()
+    qc_path = MODELS_DIR / "station_qc.json"
+    if qc_path.exists():
+        try:
+            qc_excluded = set(json.loads(qc_path.read_text(encoding="utf-8")).get("excluded", []))
+        except Exception:
+            pass
 
     for cont in TARGETS:
         for zone in ["zbe", "out"]:
@@ -628,36 +675,55 @@ def train_counterfactual_dual(df, feature_cols):
                 y_pre  = df_pre[y_col]
                 X_post = df_post[feat_ok].fillna(pre_medians)  # imputar post con medianas de pre
 
-                split  = int(len(X_pre) * 0.8)
-                X_tr   = X_pre.iloc[:split]
-                y_tr   = y_pre.iloc[:split]
-                
-                # Asegurar conjunto de validación disjunto si hay suficientes datos
-                if len(X_pre) - split >= 5:
-                    X_va = X_pre.iloc[split:]
-                    y_va = y_pre.iloc[split:]
-                else:
-                    # Si no hay datos suficientes para validación disjunta, no usamos early stopping (va_set = tr_set)
-                    X_va = X_tr
-                    y_va = y_tr
+                validation = rolling_origin_metrics(X_pre, y_pre, cf_params)
+                if validation is None:
+                    log(f"  [{version_name}]  [WARN] pre insuficiente para validación temporal")
+                    continue
+                val_r2_v = validation["r2"]
 
+                # Modelo final entrenado con todo el pre-ZBE. Antes se ajustaba
+                # solo al 80 % y se desaprovechaba el tramo más reciente.
                 model_cf = LGBMRegressor(**cf_params)
-                model_cf.fit(X_tr, y_tr,
-                             eval_set=[(X_va, y_va)],
-                             callbacks=fit_callbacks)
+                model_cf.fit(X_pre, y_pre)
 
-                val_r2_v  = r2(y_va.values, model_cf.predict(X_va))
                 pred_post = model_cf.predict(X_post)
                 gap       = observed - pred_post
                 gap_mean  = np.mean(gap)
                 gap_pct   = gap_mean / np.mean(pred_post) * 100 if np.mean(pred_post) > 0 else 0
 
-                log(f"  [{version_name}]  n_features={len(feat_ok)}  R?_val={val_r2_v:.3f}")
+                log(f"  [{version_name}]  n_features={len(feat_ok)}  "
+                    f"R2_roll={val_r2_v:.3f}  skill={validation['skill_vs_persistence']:+.3f}")
                 log(f"    Observado     : {np.mean(observed):.2f} ?g/m?")
                 log(f"    Predicho (CF) : {np.mean(pred_post):.2f} ?g/m?")
                 log(f"    Gap medio     : {gap_mean:+.2f} ?g/m?  ({gap_pct:+.1f}%)")
 
                 version_results[version_name] = {"gap_mean": gap_mean, "gap_pct": gap_pct}
+
+                qc_cont = "PM25" if cont == "PM2.5" else cont
+                qc_affected = any(
+                    key.endswith(f"_{qc_cont}") and key.split("_")[0] in TREATED_STATIONS
+                    for key in qc_excluded
+                )
+                validation_records[f"{target_raw}_{version_name}"] = {
+                    "contaminant": cont,
+                    "zone": zone,
+                    "version": version_name,
+                    "n_validation": validation["n"],
+                    "val_r2": round(validation["r2"], 4),
+                    "val_mae": round(validation["mae"], 4),
+                    "persistence_mae": round(validation["persistence_mae"], 4),
+                    "skill_vs_persistence": (
+                        round(validation["skill_vs_persistence"], 4)
+                        if validation["skill_vs_persistence"] is not None else None
+                    ),
+                    "qc_flag": bool(zone == "zbe" and qc_affected),
+                    # Gate: sin skill mínimo no se publica como efecto causal.
+                    "publishable": bool(
+                        validation["r2"] >= 0.4
+                        and (validation["skill_vs_persistence"] or -1) >= 0
+                        and not (zone == "zbe" and qc_affected)
+                    ),
+                }
 
                 joblib.dump(model_cf,
                     MODELS_DIR / f"lgbm_v8_cf_{target_raw}_{version_name.replace('-','_').lower()}.pkl")
@@ -702,6 +768,17 @@ def train_counterfactual_dual(df, feature_cols):
         log(f"\n  [OK] counterfactual_gap_v8.csv guardado")
         log(f"     Filtra version='METEO-PURO' o 'CON-LAGS' para comparar bounds")
 
+    validation_path = MODELS_DIR / "causal_validation_v8.json"
+    validation_path.write_text(
+        json.dumps(validation_records, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    log(f"  [OK] causal_validation_v8.json guardado")
+    blocked = [
+        key for key, value in validation_records.items() if not value["publishable"]
+    ]
+    if blocked:
+        log(f"  [WARN] Sin skill/QC suficiente, no publicables: {', '.join(blocked)}")
+
     return results
 
 
@@ -732,6 +809,14 @@ def did_analysis_v8(df):
 
     df = df.copy()
     df["date"] = pd.to_datetime(df["date"], utc=True)
+
+    qc_excluded = set()
+    qc_path = MODELS_DIR / "station_qc.json"
+    if qc_path.exists():
+        try:
+            qc_excluded = set(json.loads(qc_path.read_text(encoding="utf-8")).get("excluded", []))
+        except Exception:
+            pass
 
     # (7) Variable mes-año para efectos fijos
     df["month_year"] = (df["date"].dt.year.astype(str) + "_"
@@ -796,9 +881,11 @@ def did_analysis_v8(df):
 
         if use_sm:
             cov_str = " + ".join(cov_available) if cov_available else "1"
+            # Post es colineal con C(month_year): incluirlo produce una matriz
+            # singular y β1/β2 no interpretables. El efecto causal es β3.
             formula = (
-                f"pollution ~ Post + ZBE + Post_x_ZBE"
-                f" + C(month_year)"        # (7) efectos fijos mes?a?o
+                f"pollution ~ ZBE + Post_x_ZBE"
+                f" + C(month_year)"        # (7) efectos fijos mes-año
                 f" + {cov_str}"
             )
 
@@ -815,8 +902,8 @@ def did_analysis_v8(df):
                 ci_high = ci.loc["Post_x_ZBE", 1] if "Post_x_ZBE" in ci.index else np.nan
                 r2_val  = model.rsquared
 
-                log(f"  ?1 (Post)           : {model.params.get('Post', 0):+.3f}")
-                log(f"  ?2 (ZBE)            : {model.params.get('ZBE', 0):+.3f}")
+                log(f"  β1 (Post)           : absorbido por C(month_year)")
+                log(f"  β2 (ZBE)            : {model.params.get('ZBE', 0):+.3f}")
                 log(f"  ?3 (Post ? ZBE)     : {beta3:+.3f}  ? EFECTO CAUSAL ZBE")
                 log(f"  p-valor ?3          : {pval:.4f}  "
                     f"{'[OK] p<0.05' if pval < 0.05 else '[WARN]  no significativo'}")
@@ -874,6 +961,15 @@ def did_analysis_v8(df):
             log(f"  {'OUT (control)':15} {out_pre:>12.2f} {out_post:>12.2f} {out_post-out_pre:>+10.2f}")
             log(f"  {'DiD (?3)':15} {'':>12} {'':>12} {did_m:>+10.2f}  ({did_pct:+.1f}%)")
             did_results[cont] = {"beta3": round(did_m, 4), "pvalue": None, "n_obs": len(sub)}
+
+        if cont in did_results:
+            qc_cont = "PM25" if cont == "PM2.5" else cont
+            qc_affected = any(
+                key.endswith(f"_{qc_cont}") and key.split("_")[0] in TREATED_STATIONS
+                for key in qc_excluded
+            )
+            did_results[cont]["qc_flag"] = bool(qc_affected)
+            did_results[cont]["publishable"] = not qc_affected
 
     did_path = MODELS_DIR / "did_results_v8.json"
     with open(did_path, "w", encoding="utf-8") as f:

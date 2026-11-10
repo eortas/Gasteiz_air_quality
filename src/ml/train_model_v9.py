@@ -39,6 +39,23 @@ CONTAMINANTS = ["NO2", "PM10", "PM2.5", "ICA"]
 TREATED     = ["PAUL", "FUEROS"]
 DONORS      = ["LANDAZURI", "HUETOS", "ZUMABIDE", "BEATO"]
 
+QC_FILE = MODELS_DIR / "station_qc.json"
+
+
+def load_qc_exclusions() -> set:
+    """Pares estación_contaminante descartados por el control de calidad."""
+    if not QC_FILE.exists():
+        return set()
+    try:
+        qc = json.loads(QC_FILE.read_text(encoding="utf-8"))
+        excluded = set(qc.get("excluded", []))
+        if excluded:
+            print(f"  [QC] Pares excluidos del análisis causal: {', '.join(sorted(excluded))}")
+        return excluded
+    except Exception as exc:
+        print(f"  [WARN] No se pudo leer station_qc.json: {exc}")
+        return set()
+
 
 def load_data(path: Path) -> pd.DataFrame:
     print(f"  Cargando {path}...")
@@ -62,10 +79,14 @@ def run_synthetic_control(df: pd.DataFrame):
 
     zbe_date = pd.Timestamp(ZBE_DATE_STR)
     
-    # Rellenar Nas muy cortos e ignorar fechas vacías en el pre
-    df = df.set_index("date").interpolate(method="time").dropna(how="all").reset_index()
+    # Rellenamos solo huecos cortos (máx. 3 días) y nunca extrapolamos el post:
+    # interpolar el periodo tratado inventaría la serie observada y los donors.
+    df = df.set_index("date").interpolate(
+        method="time", limit=3, limit_area="inside"
+    ).reset_index()
 
-    pre_df = df[df["date"] < zbe_date].dropna()
+    # No usamos dropna global: cada modelo descarta después solo sus columnas.
+    pre_df = df[df["date"] < zbe_date].copy()
     post_df = df[df["date"] >= zbe_date]
 
     if len(pre_df) < 30:
@@ -73,12 +94,16 @@ def run_synthetic_control(df: pd.DataFrame):
         return {}
 
     sc_results = {cont: {} for cont in CONTAMINANTS}
+    qc_excluded = load_qc_exclusions()
 
     for cont in CONTAMINANTS:
         cont_col = cont.replace("PM2.5", "PM25")
         
         for tr_station in TREATED:
             y_col = f"{tr_station}_{cont_col}"
+            if y_col in qc_excluded:
+                print(f"    [QC] {y_col}: excluido por cambio de régimen")
+                continue
             X_cols = [f"{d}_{cont_col}" for d in DONORS]
             
             # Verificar si las columnas existen y tienen suficientes datos
@@ -88,15 +113,19 @@ def run_synthetic_control(df: pd.DataFrame):
 
             available_donors = [c for c in X_cols if c in valid_cols]
 
-            # Entrenar modelo con periodo Pre-ZBE
-            X_pre = pre_df[available_donors]
-            y_pre = pre_df[y_col]
+            # Entrenamos solo con días pre-ZBE completos para este modelo.
+            # Así una estación sin datos en 2024 no recorta el pre de las demás.
+            train_df = pre_df[[y_col] + available_donors].dropna()
+            if len(train_df) < 30:
+                print(f"  [WARN] {y_col}: pre-ZBE insuficiente ({len(train_df)} días)")
+                continue
+            X_pre = train_df[available_donors]
+            y_pre = train_df[y_col]
             
             model = Ridge(alpha=1.0, positive=True, fit_intercept=True)
             model.fit(X_pre, y_pre)
             
-            y_pred_pre = model.predict(X_pre)
-            pre_r2 = r2_score(y_pre, y_pred_pre)
+            pre_r2 = r2_score(y_pre, model.predict(X_pre))
             
             # Aplicar modelo al periodo Post-ZBE
             # Rellenar NAs en post_df para los donors con la media de la fila
@@ -105,9 +134,10 @@ def run_synthetic_control(df: pd.DataFrame):
             
             # Las fechas completas (Pre + Post)
             full_dates = pd.concat([pre_df["date"], post_df["date"]])
-            full_y = pd.concat([y_pre, y_post])
+            full_y = pd.concat([pre_df[y_col], y_post])
             
             # La predicción para todo el periodo (el Sintético)
+            y_pred_pre = model.predict(pre_df[available_donors].ffill().bfill())
             y_pred_post = model.predict(X_post)
             full_synthetic = np.concatenate([y_pred_pre, y_pred_post])
 
@@ -182,14 +212,32 @@ def run_event_study(df: pd.DataFrame):
 
     rng = np.random.default_rng(42)
 
+    # Ventana dinámica: mantenemos 12 meses pre como máximo, pero incluimos
+    # todos los meses post disponibles para que la serie no se congele al
+    # superar el mes +12.
+    available_months = sorted(int(m) for m in df["month_idx"].dropna().unique())
+    if not available_months:
+        print("  WARN No hay meses válidos para el Event Study.")
+        return
+    first_month = max(-12, min(available_months))
+    last_month = max(available_months)
+    qc_excluded = load_qc_exclusions()
+
     for cont in CONTAMINANTS:
         cont_col = cont.replace("PM2.5", "PM25")
         
-        # Agrupar estaciones Treated
-        treated_cols = [f"{st}_{cont_col}" for st in TREATED if f"{st}_{cont_col}" in df.columns]
-        donor_cols = [f"{st}_{cont_col}" for st in DONORS if f"{st}_{cont_col}" in df.columns]
+        # Agrupar estaciones Treated y control, descartando pares con QC adverso.
+        treated_cols = [
+            f"{st}_{cont_col}" for st in TREATED
+            if f"{st}_{cont_col}" in df.columns and f"{st}_{cont_col}" not in qc_excluded
+        ]
+        donor_cols = [
+            f"{st}_{cont_col}" for st in DONORS
+            if f"{st}_{cont_col}" in df.columns and f"{st}_{cont_col}" not in qc_excluded
+        ]
 
         if not treated_cols or not donor_cols:
+            print(f"  [QC] {cont}: sin estaciones válidas tras el control de calidad")
             continue
             
         df["treated_mean"] = df[treated_cols].mean(axis=1)
@@ -209,7 +257,7 @@ def run_event_study(df: pd.DataFrame):
         # Para cada mes, calcular beta y bootstrap CI
         for m_idx in sorted(df["month_idx"].unique()):
             m = int(m_idx)
-            if m < -12 or m > 12:
+            if m < first_month or m > last_month:
                 continue
             
             month_days = df[df["month_idx"] == m]["daily_diff"].dropna()
@@ -247,7 +295,17 @@ def run_event_study(df: pd.DataFrame):
             }
             
         es_results[cont] = {
-            "coefficients": coefficients
+            "coefficients": coefficients,
+            "reference_month": -1,
+            "first_month": first_month,
+            "last_month": last_month,
+            "stations_used": {
+                "treated": [c.split("_")[0] for c in treated_cols],
+                "control": [c.split("_")[0] for c in donor_cols],
+            },
+            "qc_excluded": sorted(
+                c for c in qc_excluded if c.endswith(f"_{cont_col}")
+            ),
         }
 
     with open(OUT_ES_FILE, "w", encoding="utf-8") as f:

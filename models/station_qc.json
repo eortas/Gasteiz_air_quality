@@ -1,0 +1,122 @@
+{
+  "generated_at": "2026-11-10T17:49:42",
+  "date_range": {
+    "start": "2024-07-30",
+    "end": "2026-11-09"
+  },
+  "shift_threshold": 0.3,
+  "flags": {
+    "PAUL_PM10": {
+      "station": "PAUL",
+      "contaminant": "PM10",
+      "status": "flagged",
+      "action": "excluded_from_causal",
+      "baseline_ratio": 1.033,
+      "current_ratio": 1.444,
+      "shift_factor": 1.397,
+      "since": "2025-12-01",
+      "method": "rolling_28d_median_vs_pre_zbe"
+    },
+    "PAUL_PM25": {
+      "station": "PAUL",
+      "contaminant": "PM25",
+      "status": "flagged",
+      "action": "excluded_from_causal",
+      "baseline_ratio": 0.892,
+      "current_ratio": 1.291,
+      "shift_factor": 1.446,
+      "since": "2025-12-01",
+      "method": "rolling_28d_median_vs_pre_zbe"
+    },
+    "PAUL_ICA": {
+      "station": "PAUL",
+      "contaminant": "ICA",
+      "status": "flagged",
+      "action": "excluded_from_causal",
+      "since": "2025-12-01",
+      "method": "derived_from_flagged_pm",
+      "derived_from": [
+        "PAUL_PM25"
+      ]
+    }
+  },
+  "excluded": [
+    "PAUL_ICA",
+    "PAUL_PM10",
+    "PAUL_PM25"
+  ],
+  "spillover": {
+    "LANDAZURI_NO2": {
+      "nearest_treated": "PAUL",
+      "distance_m": 641.0,
+      "pre_correlation": 0.892,
+      "spillover_risk": true
+    },
+    "HUETOS_NO2": {
+      "nearest_treated": "PAUL",
+      "distance_m": 2390.0,
+      "pre_correlation": 0.429,
+      "spillover_risk": false
+    },
+    "ZUMABIDE_NO2": {
+      "nearest_treated": "FUEROS",
+      "distance_m": 1253.0,
+      "pre_correlation": 0.86,
+      "spillover_risk": false
+    },
+    "BEATO_NO2": {
+      "nearest_treated": "PAUL",
+      "distance_m": 457.0,
+      "pre_correlation": 0.545,
+      "spillover_risk": false
+    },
+    "LANDAZURI_PM10": {
+      "nearest_treated": "PAUL",
+      "distance_m": 641.0,
+      "pre_correlation": 0.949,
+      "spillover_risk": true
+    },
+    "HUETOS_PM10": {
+      "nearest_treated": "PAUL",
+      "distance_m": 2390.0,
+      "pre_correlation": 0.968,
+      "spillover_risk": false
+    },
+    "ZUMABIDE_PM10": {
+      "nearest_treated": "FUEROS",
+      "distance_m": 1253.0,
+      "pre_correlation": 0.894,
+      "spillover_risk": false
+    },
+    "BEATO_PM10": {
+      "nearest_treated": "PAUL",
+      "distance_m": 457.0,
+      "pre_correlation": 0.854,
+      "spillover_risk": true
+    },
+    "LANDAZURI_PM25": {
+      "nearest_treated": "PAUL",
+      "distance_m": 641.0,
+      "pre_correlation": 0.956,
+      "spillover_risk": true
+    },
+    "HUETOS_PM25": {
+      "nearest_treated": "PAUL",
+      "distance_m": 2390.0,
+      "pre_correlation": 0.984,
+      "spillover_risk": false
+    },
+    "ZUMABIDE_PM25": {
+      "nearest_treated": "FUEROS",
+      "distance_m": 1253.0,
+      "pre_correlation": 0.916,
+      "spillover_risk": false
+    },
+    "BEATO_PM25": {
+      "nearest_treated": "PAUL",
+      "distance_m": 457.0,
+      "pre_correlation": 0.89,
+      "spillover_risk": true
+    }
+  }
+}
