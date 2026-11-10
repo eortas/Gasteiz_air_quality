@@ -57,6 +57,7 @@ PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 AIR_CLEAN_PATH = PROCESSED_DIR / "air_clean_hourly.parquet"
 FORECAST_HISTORY_PATH = PROCESSED_DIR / "weather_forecast_history.jsonl"
+QC_PATH = ROOT_DIR / "models" / "station_qc.json"
 MIN_AIR_HOURS = 18
 CUTOFF_TIMEZONE = "Europe/Madrid"
 
@@ -81,6 +82,17 @@ def log(msg=""):
 
 def section(title):
     log(); log("=" * 65); log(f"  {title}"); log("=" * 65)
+
+
+def load_qc_exclusions() -> set:
+    """Pares estación_contaminante que no deben entrar en las medias de zona."""
+    if not QC_PATH.exists():
+        return set()
+    try:
+        return set(json.loads(QC_PATH.read_text(encoding="utf-8")).get("excluded", []))
+    except Exception as exc:
+        log(f"  [WARN] No se pudo leer station_qc.json: {exc}")
+        return set()
 
 def subsection(title):
     log(); log(f"- {title} " + "-" * max(0, 58 - len(title)))
@@ -136,6 +148,21 @@ def load_air_daily(cutoff_hour: int | None = None) -> pd.DataFrame:
         .reset_index()
     )
     station_daily.loc[station_daily["valid_hours"] < MIN_AIR_HOURS, "valor"] = np.nan
+
+    # QC: excluimos pares estación-contaminante con cambio de régimen para que
+    # la media de zona no arrastre el artefacto (p. ej. PAUL PM10/PM25).
+    qc_excluded = load_qc_exclusions()
+    if qc_excluded:
+        station_daily["_qc_key"] = (
+            station_daily["estacion"] + "_"
+            + station_daily["contaminante"].str.replace("PM2.5", "PM25", regex=False)
+        )
+        before = len(station_daily)
+        station_daily = station_daily[
+            ~station_daily["_qc_key"].isin(qc_excluded)
+        ].drop(columns="_qc_key")
+        log(f"  QC estaciones  : {before - len(station_daily)} filas excluidas")
+        log(f"                   {', '.join(sorted(qc_excluded))}")
 
     frames = []
 

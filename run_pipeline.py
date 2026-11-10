@@ -301,21 +301,21 @@ def main():
     else:
         logger.info("\n── FASE 4: Carga a Supabase - OMITIDA (--local-only)")
 
-    # ── 5. FEATURES ───────────────────────────────────────────────────────────
-    logger.info("\n── FASE 5: Feature engineering (corte 22:00 local)")
-    if not run_script("Build features v6", "src/features/build_features_v6.py", ["--cutoff-hour", "22"]):
-        logger.error("[ERROR] La construcción de features falló. Abortando.")
-        sys.exit(1)
-
-    # ── 5b. STATION DAILY CSV (input para análisis causal v9) ────────────────
-    logger.info("\n── FASE 5b: Build station daily")
+    # ── 5a. STATION DAILY CSV (input del QC y del análisis causal v9) ────────
+    logger.info("\n── FASE 5a: Build station daily")
     if not run_script("Build station daily CSV", "src/features/build_station_daily.py"):
         logger.warning("[WARN]  build_station_daily falló - el análisis v9 puede no ejecutarse.")
 
-    # ── 5c. CONTROL DE CALIDAD DE ESTACIONES ─────────────────────────────────
-    logger.info("\n── FASE 5c: QC de estaciones (cambios de régimen y spillover)")
+    # ── 5b. CONTROL DE CALIDAD DE ESTACIONES ─────────────────────────────────
+    logger.info("\n── FASE 5b: QC de estaciones (cambios de régimen y spillover)")
     if not run_script("Control de calidad de estaciones", "src/analysis/station_qc.py"):
         logger.warning("[WARN]  El QC de estaciones falló - el análisis causal usará todas las series.")
+
+    # ── 5c. FEATURES (usa el QC para no contaminar las medias de zona) ───────
+    logger.info("\n── FASE 5c: Feature engineering (corte 22:00 local)")
+    if not run_script("Build features v6", "src/features/build_features_v6.py", ["--cutoff-hour", "22"]):
+        logger.error("[ERROR] La construcción de features falló. Abortando.")
+        sys.exit(1)
 
     # ── 6. ENTRENAMIENTO OPERATIVO + ANÁLISIS CAUSAL ───────
     if not skip_training:
