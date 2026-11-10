@@ -17,6 +17,13 @@ FILES_TO_DOWNLOAD = {
 
 AIR_MANIFEST = "air_source_manifest.json"
 
+MODEL_TARGETS = [
+    f"{pollutant}_{zone}_d{horizon}"
+    for horizon in (1, 2)
+    for pollutant in ("NO2", "PM10", "PM2.5")
+    for zone in ("zbe", "out")
+]
+
 def download_file(url: str, path: Path) -> bool:
     try:
         resp = requests.get(url, stream=True, timeout=60)
@@ -55,6 +62,22 @@ def main():
             logger.success(f"OK - fuente Kunak {filename}")
         else:
             logger.warning(f"Omitido - fuente Kunak {filename}")
+
+    # Artefactos del modelo: se guardan en Releases para no versionar ~75 MB
+    # de joblib en el repositorio. Si no existen, se reentrena.
+    models_dir = ROOT_DIR / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
+    downloaded_models = 0
+    for target in MODEL_TARGETS:
+        filename = f"forecast_v10_{target}.joblib"
+        if download_file(f"{BASE_URL}/{filename}", models_dir / filename):
+            downloaded_models += 1
+    if downloaded_models == len(MODEL_TARGETS):
+        logger.success(f"OK - {downloaded_models} artefactos forecast v10")
+    elif downloaded_models:
+        logger.warning(f"Artefactos incompletos: {downloaded_models}/{len(MODEL_TARGETS)}")
+    else:
+        logger.warning("La release no contiene artefactos v10; se usará el modelo local o se reentrenará.")
 
 if __name__ == "__main__":
     main()

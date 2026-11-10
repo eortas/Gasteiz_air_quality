@@ -47,21 +47,33 @@ def load_observed() -> pd.DataFrame:
     df = df.set_index("date").sort_index()
 
     excluded = set()
+    flags = {}
     if QC_PATH.exists():
         try:
-            excluded = set(json.loads(QC_PATH.read_text(encoding="utf-8")).get("excluded", []))
+            qc = json.loads(QC_PATH.read_text(encoding="utf-8"))
+            excluded = set(qc.get("excluded", []))
+            flags = qc.get("flags", {})
         except Exception:
             pass
 
     observed = pd.DataFrame(index=df.index)
     for cont in ["NO2", "PM10", "PM25", "ICA"]:
         for zone, stations in (("zbe", ZBE_STATIONS), ("out", OUT_STATIONS)):
-            cols = [
-                f"{station}_{cont}" for station in stations
-                if f"{station}_{cont}" in df.columns and f"{station}_{cont}" not in excluded
-            ]
-            if cols:
-                observed[f"{cont}_{zone}"] = df[cols].mean(axis=1, skipna=True)
+            series = []
+            for station in stations:
+                col = f"{station}_{cont}"
+                if col not in df.columns:
+                    continue
+                if col in excluded:
+                    factor = flags.get(col, {}).get("shift_factor")
+                    if factor is not None and factor > 0:
+                        # Misma corrección que build_features_v6: el sensor
+                        # sigue aportando nivel, sin el sesgo de régimen.
+                        series.append(df[col] / float(factor))
+                    continue
+                series.append(df[col])
+            if series:
+                observed[f"{cont}_{zone}"] = pd.concat(series, axis=1).mean(axis=1, skipna=True)
     return observed
 
 
