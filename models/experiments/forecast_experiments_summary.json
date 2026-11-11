@@ -1,16 +1,23 @@
 {
+  "all": {
+    "mean_test_skill": 0.1584,
+    "mean_d1": 0.1356,
+    "mean_d2": 0.1812,
+    "targets_passed": 12,
+    "mean_n_features": 113.3
+  },
+  "all_shrink": {
+    "mean_test_skill": 0.1584,
+    "mean_d1": 0.1356,
+    "mean_d2": 0.1812,
+    "targets_passed": 12,
+    "mean_n_features": 113.3
+  },
   "baseline": {
     "mean_test_skill": 0.1661,
     "mean_d1": 0.1446,
     "mean_d2": 0.1876,
     "targets_passed": 11,
-    "mean_n_features": 101.0
-  },
-  "traffic_fix": {
-    "mean_test_skill": 0.1638,
-    "mean_d1": 0.1428,
-    "mean_d2": 0.1848,
-    "targets_passed": 12,
     "mean_n_features": 101.0
   },
   "both_traffic": {
@@ -20,19 +27,33 @@
     "targets_passed": 12,
     "mean_n_features": 101.7
   },
-  "all": {
-    "mean_test_skill": 0.1584,
-    "mean_d1": 0.1356,
-    "mean_d2": 0.1812,
-    "targets_passed": 12,
-    "mean_n_features": 113.3
+  "gv": {
+    "mean_test_skill": 0.16,
+    "mean_d1": 0.1472,
+    "mean_d2": 0.1728,
+    "targets_passed": 11,
+    "mean_n_features": 166.0
   },
-  "prune80": {
-    "mean_test_skill": 0.1475,
-    "mean_d1": 0.1343,
-    "mean_d2": 0.1607,
-    "targets_passed": 12,
-    "mean_n_features": 80.0
+  "gv_baseline": {
+    "mean_test_skill": 0.1742,
+    "mean_d1": 0.1573,
+    "mean_d2": 0.1911,
+    "targets_passed": 11,
+    "mean_n_features": 101.7
+  },
+  "gv_lag1": {
+    "mean_test_skill": 0.1723,
+    "mean_d1": 0.16,
+    "mean_d2": 0.1845,
+    "targets_passed": 11,
+    "mean_n_features": 111.3
+  },
+  "gv_pm": {
+    "mean_test_skill": 0.1704,
+    "mean_d1": 0.1575,
+    "mean_d2": 0.1834,
+    "targets_passed": 11,
+    "mean_n_features": 114.3
   },
   "prune60": {
     "mean_test_skill": 0.1477,
@@ -41,12 +62,19 @@
     "targets_passed": 12,
     "mean_n_features": 60.0
   },
-  "all_shrink": {
-    "mean_test_skill": 0.1584,
-    "mean_d1": 0.1356,
-    "mean_d2": 0.1812,
+  "prune80": {
+    "mean_test_skill": 0.1475,
+    "mean_d1": 0.1343,
+    "mean_d2": 0.1607,
     "targets_passed": 12,
-    "mean_n_features": 113.3
+    "mean_n_features": 80.0
   },
-  "_decision": "both_traffic es la mejor media global (0.1692 vs 0.1661) y pasa 12/12. Se despliega solo la doble feature de tráfico; ratios/estancamiento, poda y shrinkage no aportan."
+  "traffic_fix": {
+    "mean_test_skill": 0.1638,
+    "mean_d1": 0.1428,
+    "mean_d2": 0.1848,
+    "targets_passed": 12,
+    "mean_n_features": 101.0
+  },
+  "_decision": "both_traffic se desplegó (mejor media y 12/12). Las features del Gobierno Vasco no mejoran la media: gv_lag1 gana en D+1 pero pierde en D+2; gv completo y gv_pm empeoran. Se mantiene la ingesta y el modo experimental, desactivado por defecto."
 }

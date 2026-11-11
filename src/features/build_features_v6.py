@@ -58,6 +58,7 @@ PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 AIR_CLEAN_PATH = PROCESSED_DIR / "air_clean_hourly.parquet"
 FORECAST_HISTORY_PATH = PROCESSED_DIR / "weather_forecast_history.jsonl"
 QC_PATH = ROOT_DIR / "models" / "station_qc.json"
+GV_PATH = PROCESSED_DIR / "gv_daily.csv"
 MIN_AIR_HOURS = 18
 CUTOFF_TIMEZONE = "Europe/Madrid"
 
@@ -680,6 +681,56 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# -- 6b. FEATURES DE LA RED DEL GOBIERNO VASCO -------------------------------
+def add_gv_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Añade lags/medias móviles de las estaciones del GV (sin usar el día D).
+
+    Solo se usan lags >= 1 día para que la feature esté disponible en el corte
+    de las 22:00 y no haya fuga de información.
+    """
+    if not GV_PATH.exists():
+        log("  [WARN] gv_daily.csv no encontrado; se omiten features del GV.")
+        return df
+
+    gv = pd.read_csv(GV_PATH, parse_dates=["date"])
+    gv["date"] = pd.to_datetime(gv["date"], utc=True)
+    gv = gv.dropna(subset=["date"])
+
+    series = []
+    for station, group in gv.groupby("station"):
+        group = group.set_index("date").sort_index()
+        for pollutant in ["no2", "pm10", "pm25"]:
+            if pollutant in group.columns:
+                series.append(
+                    group[pollutant].rename(f"gv_{station.lower()}_{pollutant}")
+                )
+    if not series:
+        log("  [WARN] gv_daily.csv sin columnas NO2/PM; se omiten features del GV.")
+        return df
+
+    wide = pd.concat(series, axis=1).sort_index()
+    features = pd.DataFrame(index=wide.index)
+    for column in wide.columns:
+        values = wide[column]
+        for lag in [1, 2, 3, 7]:
+            features[f"{column}_lag_{lag}d"] = values.shift(lag)
+        features[f"{column}_roll_mean_3d"] = (
+            values.shift(1).rolling(3, min_periods=2).mean()
+        )
+        features[f"{column}_roll_mean_7d"] = (
+            values.shift(1).rolling(7, min_periods=2).mean()
+        )
+        features[f"{column}_diff_1d"] = values.shift(1) - values.shift(2)
+
+    features = features.reset_index().rename(columns={"index": "date"})
+    df = df.merge(features, on="date", how="left")
+    log(
+        f"  GV features    : {len(features.columns) - 1} columnas "
+        f"({wide.columns.size} series × lags/rolling)"
+    )
+    return df
+
+
 # -- 7. LAGS Y ROLLING ----------------------------
 def add_lags_and_rolling(df: pd.DataFrame) -> pd.DataFrame:
     section("7. Lags y rolling stats diarios")
@@ -957,6 +1008,8 @@ def main():
         log(f"\n  ⚡ Modo rápido: últimos {n_days} días")
 
     df = merge_daily(air, traffic, weather)
+    if "--gv-features" in sys.argv:
+        df = add_gv_features(df)
     df = add_temporal_features(df)
     df = add_lags_and_rolling(df)
     df = add_targets(df, full_day_air=full_day_air)

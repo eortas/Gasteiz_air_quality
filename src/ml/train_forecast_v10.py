@@ -64,6 +64,8 @@ INTERVAL_CALIBRATION_QUANTILE = 0.95
 RANDOM_STATE = 42
 FEATURE_LIMIT = 0
 USE_SHRINKAGE = False
+USE_GV = False
+GV_MODE = "off"
 
 
 def log(message=""):
@@ -238,8 +240,21 @@ def select_features(df, target, include_target_calendar):
         weather = forecast_weather or observed_weather
         calendar = include_target_calendar and column in target_calendar
         coverage = column.startswith("air_stations_valid_")
+        gv = False
+        if USE_GV and column.startswith("gv_"):
+            if GV_MODE == "lag1":
+                gv = column.endswith("_lag_1d")
+            elif GV_MODE == "pm":
+                gv = (
+                    ("_pm10_" in column or "_pm25_" in column)
+                    and (column.endswith("_lag_1d") or column.endswith("_roll_mean_3d"))
+                )
+            elif GV_MODE == "one":
+                gv = column.startswith("gv_3marzo_")
+            else:
+                gv = True
 
-        if column in CURRENT_AIR or recent_air or traffic or weather or calendar or coverage:
+        if column in CURRENT_AIR or recent_air or traffic or weather or calendar or coverage or gv:
             selected.append(column)
 
     if not include_target_calendar:
@@ -652,7 +667,7 @@ def train_target(df, target):
 
 def main():
     global REPORT_LINES, MODELS_DIR, METRICS_PATH, MANIFEST_PATH, REPORT_PATH
-    global FEATURE_LIMIT, USE_SHRINKAGE
+    global FEATURE_LIMIT, USE_SHRINKAGE, USE_GV, GV_MODE
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", default=None,
@@ -661,6 +676,11 @@ def main():
                         help="Recorta a las N features más importantes (0 = todas).")
     parser.add_argument("--persistence-shrinkage", action="store_true",
                         help="Encoge el delta del modelo hacia persistencia.")
+    parser.add_argument("--no-gv", action="store_true",
+                        help="Excluye las features de las estaciones del Gobierno Vasco.")
+    parser.add_argument("--gv-mode", default="off",
+                        choices=["all", "lag1", "pm", "one", "off"],
+                        help="Subconjunto de features GV a usar (off por defecto).")
     parser.add_argument("--tag", default="production",
                         help="Etiqueta del experimento en métricas/manifiesto.")
     args = parser.parse_args()
@@ -672,6 +692,8 @@ def main():
         REPORT_PATH = MODELS_DIR / "training_report_forecast_v10.txt"
     FEATURE_LIMIT = max(0, args.feature_limit)
     USE_SHRINKAGE = bool(args.persistence_shrinkage)
+    GV_MODE = args.gv_mode
+    USE_GV = not args.no_gv and GV_MODE != "off"
 
     REPORT_LINES = []
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
@@ -680,7 +702,7 @@ def main():
     log("FORECAST V10 - modelos operativos D+1 y D+2")
     log(f"Dataset: {len(df)} días | {df['date'].min().date()} -> {df['date'].max().date()}")
     log(f"Contrato: corte {contract['cutoff_hour_local']:02d}:00 {contract['timezone']}")
-    log(f"Experimento: {args.tag} | feature_limit={FEATURE_LIMIT} | shrinkage={USE_SHRINKAGE}")
+    log(f"Experimento: {args.tag} | feature_limit={FEATURE_LIMIT} | shrinkage={USE_SHRINKAGE} | gv={GV_MODE}")
     log("Métrica entre paréntesis: skill RMSE frente a persistencia")
     log("=" * 78)
 

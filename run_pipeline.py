@@ -254,6 +254,7 @@ def main():
         ("Ingesta - Tráfico",         "src/ingestion/download_traffic.py",     ingestion_args),
         ("Ingesta - Calidad del aire", "src/ingestion/download_air_quality.py", []), 
         ("Ingesta - Meteorología",     "src/ingestion/download_weather.py",     ingestion_args),
+        ("Ingesta - GV aire",         "src/ingestion/download_gv_air.py",       []),
     ])
     if not ok:
         logger.warning("[WARN]  Una o más fuentes de ingesta fallaron - el pipeline continúa con lo disponible.")

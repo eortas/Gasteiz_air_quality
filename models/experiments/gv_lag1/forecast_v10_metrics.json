@@ -1,0 +1,1862 @@
+{
+  "target_NO2_zbe_d1": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 1,
+    "feature_variant": "without_target_calendar",
+    "n_features": 106,
+    "weights": {
+      "lightgbm": 0.35000000000000003,
+      "extra_trees": 0.0,
+      "ridge": 0.65
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 1.7977,
+    "cv_mae": 1.3519,
+    "cv_r2": 0.3943,
+    "cv_mape": 16.09,
+    "cv_persistence_rmse": 2.2938,
+    "cv_skill_vs_persistence": 0.2163,
+    "cv_directional_accuracy": 0.6222,
+    "cv_fold_rmse": [
+      1.8375,
+      2.5191,
+      1.9655,
+      1.753,
+      1.6443
+    ],
+    "cv_fold_rmse_std": 0.3062,
+    "test_rmse": 1.5548,
+    "test_mae": 1.1719,
+    "test_r2": 0.6209,
+    "test_persistence_rmse": 1.6898,
+    "test_skill_vs_persistence": 0.0799,
+    "test_directional_accuracy": 0.55,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 4.0375,
+    "interval_relative_half_width_90": 0.6476,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9556,
+    "test_interval_coverage_90": 0.9833,
+    "n_test": 120,
+    "test_start": "2026-07-12",
+    "test_end": "2026-11-09",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-15",
+        "end": "2025-11-28"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-29",
+        "end": "2026-01-12"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-13",
+        "end": "2026-02-26"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-27",
+        "end": "2026-04-14"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-15",
+        "end": "2026-05-31"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "NO2_zbe",
+        "importance": 0.099136
+      },
+      {
+        "feature": "exp_traffic_volume_d1",
+        "importance": 0.039077
+      },
+      {
+        "feature": "NO2_out",
+        "importance": 0.037665
+      },
+      {
+        "feature": "exp_traffic_recent_volume_d1",
+        "importance": 0.029379
+      },
+      {
+        "feature": "fc_HDD_d1",
+        "importance": 0.025886
+      },
+      {
+        "feature": "fc_dew_point_d1",
+        "importance": 0.021932
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d1",
+        "importance": 0.021517
+      },
+      {
+        "feature": "fc_wind_direction_10m_d1",
+        "importance": 0.020578
+      },
+      {
+        "feature": "traffic_volume",
+        "importance": 0.019219
+      },
+      {
+        "feature": "exp_traffic_recent_occupancy_d1",
+        "importance": 0.017506
+      },
+      {
+        "feature": "fc_cloud_cover_d1",
+        "importance": 0.017056
+      },
+      {
+        "feature": "fc_sunshine_duration_d1",
+        "importance": 0.016265
+      },
+      {
+        "feature": "sunshine_duration",
+        "importance": 0.01618
+      },
+      {
+        "feature": "fc_wind_speed_10m_d1",
+        "importance": 0.015681
+      },
+      {
+        "feature": "fc_wind_v_d1",
+        "importance": 0.015343
+      },
+      {
+        "feature": "boundary_layer_height",
+        "importance": 0.014987
+      },
+      {
+        "feature": "air_stations_valid_zbe",
+        "importance": 0.014464
+      },
+      {
+        "feature": "fc_temperature_2m_d1",
+        "importance": 0.014189
+      },
+      {
+        "feature": "NO2_zbe_lag_3d",
+        "importance": 0.013881
+      },
+      {
+        "feature": "traffic_volume_lag_1d",
+        "importance": 0.013746
+      }
+    ]
+  },
+  "target_NO2_out_d1": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 1,
+    "feature_variant": "with_target_calendar",
+    "n_features": 114,
+    "weights": {
+      "lightgbm": 0.25,
+      "extra_trees": 0.05,
+      "ridge": 0.7000000000000001
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 1.9836,
+    "cv_mae": 1.4727,
+    "cv_r2": 0.504,
+    "cv_mape": 17.57,
+    "cv_persistence_rmse": 2.6221,
+    "cv_skill_vs_persistence": 0.2435,
+    "cv_directional_accuracy": 0.6889,
+    "cv_fold_rmse": [
+      1.7866,
+      2.3626,
+      2.2924,
+      1.4013,
+      2.1308
+    ],
+    "cv_fold_rmse_std": 0.3572,
+    "test_rmse": 2.1192,
+    "test_mae": 1.624,
+    "test_r2": 0.468,
+    "test_persistence_rmse": 2.6705,
+    "test_skill_vs_persistence": 0.2065,
+    "test_directional_accuracy": 0.6,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 3.9938,
+    "interval_relative_half_width_90": 0.6193,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9556,
+    "test_interval_coverage_90": 0.9833,
+    "n_test": 120,
+    "test_start": "2026-07-12",
+    "test_end": "2026-11-09",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-21",
+        "end": "2025-12-04"
+      },
+      {
+        "fold": 2,
+        "start": "2025-12-05",
+        "end": "2026-01-18"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-19",
+        "end": "2026-03-04"
+      },
+      {
+        "fold": 4,
+        "start": "2026-03-05",
+        "end": "2026-04-21"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-22",
+        "end": "2026-06-07"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "NO2_out",
+        "importance": 0.078411
+      },
+      {
+        "feature": "fc_HDD_d1",
+        "importance": 0.03862
+      },
+      {
+        "feature": "NO2_zbe",
+        "importance": 0.036509
+      },
+      {
+        "feature": "fc_relative_humidity_2m_d1",
+        "importance": 0.030302
+      },
+      {
+        "feature": "fc_cloud_cover_d1",
+        "importance": 0.029729
+      },
+      {
+        "feature": "exp_traffic_volume_d1",
+        "importance": 0.029455
+      },
+      {
+        "feature": "fc_wind_speed_10m_d1",
+        "importance": 0.029093
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d1",
+        "importance": 0.028888
+      },
+      {
+        "feature": "fc_sunshine_duration_d1",
+        "importance": 0.021797
+      },
+      {
+        "feature": "fc_dew_point_d1",
+        "importance": 0.017929
+      },
+      {
+        "feature": "temp_range",
+        "importance": 0.016629
+      },
+      {
+        "feature": "traffic_volume",
+        "importance": 0.016092
+      },
+      {
+        "feature": "traffic_volume_lag_14d",
+        "importance": 0.015995
+      },
+      {
+        "feature": "exp_traffic_recent_volume_d1",
+        "importance": 0.015402
+      },
+      {
+        "feature": "ventilation_index",
+        "importance": 0.014807
+      },
+      {
+        "feature": "d1_doy_cos",
+        "importance": 0.014353
+      },
+      {
+        "feature": "d1_is_weekend",
+        "importance": 0.014053
+      },
+      {
+        "feature": "fc_wind_direction_10m_d1",
+        "importance": 0.013934
+      },
+      {
+        "feature": "traffic_volume_lag_1d",
+        "importance": 0.013379
+      },
+      {
+        "feature": "d1_day_of_week",
+        "importance": 0.013221
+      }
+    ]
+  },
+  "target_PM10_zbe_d1": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 1,
+    "feature_variant": "without_target_calendar",
+    "n_features": 106,
+    "weights": {
+      "lightgbm": 0.05,
+      "extra_trees": 0.8500000000000001,
+      "ridge": 0.1
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 4.7907,
+    "cv_mae": 3.5095,
+    "cv_r2": 0.5013,
+    "cv_mape": 26.18,
+    "cv_persistence_rmse": 5.3774,
+    "cv_skill_vs_persistence": 0.1091,
+    "cv_directional_accuracy": 0.5926,
+    "cv_fold_rmse": [
+      3.6679,
+      3.552,
+      3.3244,
+      6.0169,
+      4.1409
+    ],
+    "cv_fold_rmse_std": 0.9753,
+    "test_rmse": 2.7954,
+    "test_mae": 2.1601,
+    "test_r2": 0.512,
+    "test_persistence_rmse": 3.3609,
+    "test_skill_vs_persistence": 0.1682,
+    "test_directional_accuracy": 0.6777,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 10.7383,
+    "interval_relative_half_width_90": 0.9103,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9733,
+    "test_interval_coverage_90": 1.0,
+    "n_test": 121,
+    "test_start": "2026-07-11",
+    "test_end": "2026-11-09",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-12",
+        "end": "2025-11-25"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-26",
+        "end": "2026-01-12"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-13",
+        "end": "2026-02-26"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-27",
+        "end": "2026-04-14"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-15",
+        "end": "2026-05-31"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "PM10_zbe",
+        "importance": 0.061768
+      },
+      {
+        "feature": "PM10_out",
+        "importance": 0.037777
+      },
+      {
+        "feature": "wind_speed_10m",
+        "importance": 0.024918
+      },
+      {
+        "feature": "cloud_cover",
+        "importance": 0.024148
+      },
+      {
+        "feature": "PM2.5_zbe",
+        "importance": 0.024083
+      },
+      {
+        "feature": "PM2.5_out",
+        "importance": 0.022729
+      },
+      {
+        "feature": "wind_gusts_10m",
+        "importance": 0.022496
+      },
+      {
+        "feature": "PM10_zbe_lag_1d",
+        "importance": 0.021404
+      },
+      {
+        "feature": "gv_3marzo_pm25_lag_1d",
+        "importance": 0.021081
+      },
+      {
+        "feature": "PM10_out_lag_1d",
+        "importance": 0.019283
+      },
+      {
+        "feature": "gv_avgasteiz_pm10_lag_1d",
+        "importance": 0.019153
+      },
+      {
+        "feature": "fc_cloud_cover_d1",
+        "importance": 0.018447
+      },
+      {
+        "feature": "ICA_zbe",
+        "importance": 0.018364
+      },
+      {
+        "feature": "fc_sunshine_duration_d1",
+        "importance": 0.018218
+      },
+      {
+        "feature": "rain",
+        "importance": 0.017333
+      },
+      {
+        "feature": "gv_herran_pm25_lag_1d",
+        "importance": 0.017159
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d1",
+        "importance": 0.014755
+      },
+      {
+        "feature": "exp_traffic_occupancy_d1",
+        "importance": 0.014598
+      },
+      {
+        "feature": "ventilation_index",
+        "importance": 0.014576
+      },
+      {
+        "feature": "gv_3marzo_pm10_lag_1d",
+        "importance": 0.014389
+      }
+    ]
+  },
+  "target_PM10_out_d1": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 1,
+    "feature_variant": "with_target_calendar",
+    "n_features": 114,
+    "weights": {
+      "lightgbm": 0.4,
+      "extra_trees": 0.6000000000000001,
+      "ridge": 0.0
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 3.9575,
+    "cv_mae": 2.8074,
+    "cv_r2": 0.5309,
+    "cv_mape": 26.39,
+    "cv_persistence_rmse": 4.5667,
+    "cv_skill_vs_persistence": 0.1334,
+    "cv_directional_accuracy": 0.6222,
+    "cv_fold_rmse": [
+      3.2656,
+      3.517,
+      2.9961,
+      5.1834,
+      2.8251
+    ],
+    "cv_fold_rmse_std": 0.8464,
+    "test_rmse": 3.028,
+    "test_mae": 2.3534,
+    "test_r2": 0.4919,
+    "test_persistence_rmse": 3.6805,
+    "test_skill_vs_persistence": 0.1773,
+    "test_directional_accuracy": 0.6116,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 8.972,
+    "interval_relative_half_width_90": 1.0381,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9778,
+    "test_interval_coverage_90": 1.0,
+    "n_test": 121,
+    "test_start": "2026-07-11",
+    "test_end": "2026-11-09",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-12",
+        "end": "2025-11-25"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-26",
+        "end": "2026-01-12"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-13",
+        "end": "2026-02-26"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-27",
+        "end": "2026-04-14"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-15",
+        "end": "2026-05-31"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "PM10_out",
+        "importance": 0.04401
+      },
+      {
+        "feature": "PM2.5_out",
+        "importance": 0.031754
+      },
+      {
+        "feature": "ICA_out",
+        "importance": 0.027004
+      },
+      {
+        "feature": "wind_speed_10m",
+        "importance": 0.023227
+      },
+      {
+        "feature": "PM10_out_lag_1d",
+        "importance": 0.021744
+      },
+      {
+        "feature": "wind_gusts_10m",
+        "importance": 0.020607
+      },
+      {
+        "feature": "gv_herran_pm25_lag_1d",
+        "importance": 0.018003
+      },
+      {
+        "feature": "PM2.5_zbe",
+        "importance": 0.017902
+      },
+      {
+        "feature": "cloud_cover",
+        "importance": 0.017621
+      },
+      {
+        "feature": "gv_avgasteiz_pm10_lag_1d",
+        "importance": 0.016882
+      },
+      {
+        "feature": "temp_range",
+        "importance": 0.016513
+      },
+      {
+        "feature": "wind_v",
+        "importance": 0.016495
+      },
+      {
+        "feature": "ventilation_index",
+        "importance": 0.015658
+      },
+      {
+        "feature": "fc_wind_u_d1",
+        "importance": 0.015205
+      },
+      {
+        "feature": "ICA_zbe",
+        "importance": 0.015124
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d1",
+        "importance": 0.014954
+      },
+      {
+        "feature": "wind_u",
+        "importance": 0.014531
+      },
+      {
+        "feature": "gv_3marzo_pm25_lag_1d",
+        "importance": 0.014393
+      },
+      {
+        "feature": "PM10_zbe",
+        "importance": 0.014172
+      },
+      {
+        "feature": "fc_sunshine_duration_d1",
+        "importance": 0.014056
+      }
+    ]
+  },
+  "target_PM2.5_zbe_d1": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 1,
+    "feature_variant": "with_target_calendar",
+    "n_features": 114,
+    "weights": {
+      "lightgbm": 0.4,
+      "extra_trees": 0.35000000000000003,
+      "ridge": 0.25
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 2.6761,
+    "cv_mae": 1.8297,
+    "cv_r2": 0.5542,
+    "cv_mape": 23.06,
+    "cv_persistence_rmse": 3.1141,
+    "cv_skill_vs_persistence": 0.1406,
+    "cv_directional_accuracy": 0.637,
+    "cv_fold_rmse": [
+      1.8577,
+      2.8552,
+      1.9634,
+      3.3815,
+      2.3368
+    ],
+    "cv_fold_rmse_std": 0.5706,
+    "test_rmse": 2.2316,
+    "test_mae": 1.7224,
+    "test_r2": 0.4699,
+    "test_persistence_rmse": 2.6989,
+    "test_skill_vs_persistence": 0.1732,
+    "test_directional_accuracy": 0.6033,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 5.1917,
+    "interval_relative_half_width_90": 0.9874,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9511,
+    "test_interval_coverage_90": 1.0,
+    "n_test": 121,
+    "test_start": "2026-07-11",
+    "test_end": "2026-11-09",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-12",
+        "end": "2025-11-25"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-26",
+        "end": "2026-01-12"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-13",
+        "end": "2026-02-26"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-27",
+        "end": "2026-04-14"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-15",
+        "end": "2026-05-31"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "PM2.5_zbe",
+        "importance": 0.029279
+      },
+      {
+        "feature": "PM2.5_out_lag_1d",
+        "importance": 0.02786
+      },
+      {
+        "feature": "PM2.5_out",
+        "importance": 0.026231
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d1",
+        "importance": 0.02589
+      },
+      {
+        "feature": "PM2.5_zbe_lag_1d",
+        "importance": 0.021889
+      },
+      {
+        "feature": "wind_speed_10m",
+        "importance": 0.019536
+      },
+      {
+        "feature": "cloud_cover",
+        "importance": 0.019048
+      },
+      {
+        "feature": "ICA_out",
+        "importance": 0.018624
+      },
+      {
+        "feature": "temp_range",
+        "importance": 0.018481
+      },
+      {
+        "feature": "PM10_out",
+        "importance": 0.017022
+      },
+      {
+        "feature": "fc_relative_humidity_2m_d1",
+        "importance": 0.01651
+      },
+      {
+        "feature": "ICA_zbe",
+        "importance": 0.016471
+      },
+      {
+        "feature": "exp_traffic_occupancy_d1",
+        "importance": 0.016077
+      },
+      {
+        "feature": "fc_wind_speed_10m_d1",
+        "importance": 0.015918
+      },
+      {
+        "feature": "fc_cloud_cover_d1",
+        "importance": 0.015887
+      },
+      {
+        "feature": "fc_wind_u_d1",
+        "importance": 0.015325
+      },
+      {
+        "feature": "wind_v",
+        "importance": 0.014714
+      },
+      {
+        "feature": "traffic_volume_lag_14d",
+        "importance": 0.01385
+      },
+      {
+        "feature": "sunshine_duration",
+        "importance": 0.01375
+      },
+      {
+        "feature": "NO2_out",
+        "importance": 0.013454
+      }
+    ]
+  },
+  "target_PM2.5_out_d1": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 1,
+    "feature_variant": "without_target_calendar",
+    "n_features": 106,
+    "weights": {
+      "lightgbm": 0.5,
+      "extra_trees": 0.35000000000000003,
+      "ridge": 0.15000000000000002
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 2.7767,
+    "cv_mae": 1.9119,
+    "cv_r2": 0.5616,
+    "cv_mape": 25.18,
+    "cv_persistence_rmse": 3.2902,
+    "cv_skill_vs_persistence": 0.1561,
+    "cv_directional_accuracy": 0.5926,
+    "cv_fold_rmse": [
+      2.249,
+      2.8978,
+      1.9959,
+      3.5255,
+      2.4626
+    ],
+    "cv_fold_rmse_std": 0.5383,
+    "test_rmse": 2.6255,
+    "test_mae": 2.0315,
+    "test_r2": 0.4403,
+    "test_persistence_rmse": 3.107,
+    "test_skill_vs_persistence": 0.155,
+    "test_directional_accuracy": 0.6116,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 5.5216,
+    "interval_relative_half_width_90": 0.9068,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9467,
+    "test_interval_coverage_90": 1.0,
+    "n_test": 121,
+    "test_start": "2026-07-11",
+    "test_end": "2026-11-09",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-12",
+        "end": "2025-11-25"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-26",
+        "end": "2026-01-12"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-13",
+        "end": "2026-02-26"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-27",
+        "end": "2026-04-14"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-15",
+        "end": "2026-05-31"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "PM2.5_out",
+        "importance": 0.035131
+      },
+      {
+        "feature": "PM2.5_out_lag_1d",
+        "importance": 0.030846
+      },
+      {
+        "feature": "ICA_out",
+        "importance": 0.029806
+      },
+      {
+        "feature": "PM10_out",
+        "importance": 0.024374
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d1",
+        "importance": 0.023686
+      },
+      {
+        "feature": "temp_range",
+        "importance": 0.022362
+      },
+      {
+        "feature": "PM2.5_zbe",
+        "importance": 0.021183
+      },
+      {
+        "feature": "exp_traffic_occupancy_d1",
+        "importance": 0.020676
+      },
+      {
+        "feature": "wind_speed_10m",
+        "importance": 0.019028
+      },
+      {
+        "feature": "PM2.5_zbe_lag_1d",
+        "importance": 0.018537
+      },
+      {
+        "feature": "cloud_cover",
+        "importance": 0.018326
+      },
+      {
+        "feature": "fc_wind_speed_10m_d1",
+        "importance": 0.01653
+      },
+      {
+        "feature": "NO2_out",
+        "importance": 0.016242
+      },
+      {
+        "feature": "fc_relative_humidity_2m_d1",
+        "importance": 0.016198
+      },
+      {
+        "feature": "traffic_volume_lag_14d",
+        "importance": 0.015467
+      },
+      {
+        "feature": "wind_v",
+        "importance": 0.014066
+      },
+      {
+        "feature": "wind_u",
+        "importance": 0.014033
+      },
+      {
+        "feature": "ventilation_index",
+        "importance": 0.013848
+      },
+      {
+        "feature": "fc_wind_u_d1",
+        "importance": 0.013685
+      },
+      {
+        "feature": "ICA_zbe",
+        "importance": 0.01353
+      }
+    ]
+  },
+  "target_NO2_zbe_d2": {
+    "model_version": "forecast_v10",
+    "production_method": "persistence",
+    "quality_gate": "fallback_persistence",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 2,
+    "feature_variant": "with_target_calendar",
+    "n_features": 114,
+    "weights": {
+      "lightgbm": 0.15000000000000002,
+      "extra_trees": 0.05,
+      "ridge": 0.8
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 1.7768,
+    "cv_mae": 1.4089,
+    "cv_r2": 0.4012,
+    "cv_mape": 19.1,
+    "cv_persistence_rmse": 2.4053,
+    "cv_skill_vs_persistence": 0.2613,
+    "cv_directional_accuracy": 0.6222,
+    "cv_fold_rmse": [
+      2.1647,
+      2.9014,
+      2.0277,
+      1.6698,
+      1.5799
+    ],
+    "cv_fold_rmse_std": 0.4696,
+    "test_rmse": 2.1912,
+    "test_mae": 1.6737,
+    "test_r2": 0.2483,
+    "test_persistence_rmse": 2.0778,
+    "test_skill_vs_persistence": -0.0546,
+    "test_directional_accuracy": 0.5333,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 3.4344,
+    "interval_relative_half_width_90": 0.6269,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.8889,
+    "test_interval_coverage_90": 0.8917,
+    "n_test": 120,
+    "test_start": "2026-07-11",
+    "test_end": "2026-11-08",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-16",
+        "end": "2025-11-29"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-30",
+        "end": "2026-01-13"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-14",
+        "end": "2026-02-27"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-28",
+        "end": "2026-04-15"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-16",
+        "end": "2026-06-01"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "NO2_zbe",
+        "importance": 0.11093
+      },
+      {
+        "feature": "NO2_out",
+        "importance": 0.042197
+      },
+      {
+        "feature": "fc_HDD_d2",
+        "importance": 0.036548
+      },
+      {
+        "feature": "exp_traffic_volume_d2",
+        "importance": 0.032512
+      },
+      {
+        "feature": "traffic_volume",
+        "importance": 0.024229
+      },
+      {
+        "feature": "exp_traffic_recent_volume_d2",
+        "importance": 0.022016
+      },
+      {
+        "feature": "fc_dew_point_d2",
+        "importance": 0.021519
+      },
+      {
+        "feature": "fc_relative_humidity_2m_d2",
+        "importance": 0.01878
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d2",
+        "importance": 0.017507
+      },
+      {
+        "feature": "NO2_out_lag_1d",
+        "importance": 0.016469
+      },
+      {
+        "feature": "fc_wind_v_d2",
+        "importance": 0.016188
+      },
+      {
+        "feature": "air_stations_valid_zbe",
+        "importance": 0.01602
+      },
+      {
+        "feature": "d2_doy_cos",
+        "importance": 0.015009
+      },
+      {
+        "feature": "fc_cloud_cover_d2",
+        "importance": 0.014833
+      },
+      {
+        "feature": "traffic_load",
+        "importance": 0.014448
+      },
+      {
+        "feature": "NO2_zbe_lag_2d",
+        "importance": 0.014353
+      },
+      {
+        "feature": "snowfall",
+        "importance": 0.014229
+      },
+      {
+        "feature": "NO2_zbe_lag_7d",
+        "importance": 0.014053
+      },
+      {
+        "feature": "fc_temperature_2m_d2",
+        "importance": 0.013899
+      },
+      {
+        "feature": "ICA_out",
+        "importance": 0.013856
+      }
+    ]
+  },
+  "target_NO2_out_d2": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 2,
+    "feature_variant": "without_target_calendar",
+    "n_features": 106,
+    "weights": {
+      "lightgbm": 0.30000000000000004,
+      "extra_trees": 0.2,
+      "ridge": 0.5
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 2.1513,
+    "cv_mae": 1.644,
+    "cv_r2": 0.398,
+    "cv_mape": 19.16,
+    "cv_persistence_rmse": 2.8976,
+    "cv_skill_vs_persistence": 0.2576,
+    "cv_directional_accuracy": 0.6222,
+    "cv_fold_rmse": [
+      2.1719,
+      2.5913,
+      2.3013,
+      1.8356,
+      2.1759
+    ],
+    "cv_fold_rmse_std": 0.2435,
+    "test_rmse": 2.6748,
+    "test_mae": 2.0609,
+    "test_r2": 0.1587,
+    "test_persistence_rmse": 3.3329,
+    "test_skill_vs_persistence": 0.1974,
+    "test_directional_accuracy": 0.6387,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 4.377,
+    "interval_relative_half_width_90": 0.5799,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9511,
+    "test_interval_coverage_90": 0.9076,
+    "n_test": 119,
+    "test_start": "2026-07-12",
+    "test_end": "2026-11-08",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-23",
+        "end": "2025-12-06"
+      },
+      {
+        "fold": 2,
+        "start": "2025-12-07",
+        "end": "2026-01-20"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-21",
+        "end": "2026-03-06"
+      },
+      {
+        "fold": 4,
+        "start": "2026-03-07",
+        "end": "2026-04-23"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-24",
+        "end": "2026-06-09"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "NO2_out",
+        "importance": 0.102186
+      },
+      {
+        "feature": "fc_HDD_d2",
+        "importance": 0.038472
+      },
+      {
+        "feature": "fc_relative_humidity_2m_d2",
+        "importance": 0.038134
+      },
+      {
+        "feature": "exp_traffic_volume_d2",
+        "importance": 0.03733
+      },
+      {
+        "feature": "NO2_zbe",
+        "importance": 0.031174
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d2",
+        "importance": 0.028951
+      },
+      {
+        "feature": "fc_wind_speed_10m_d2",
+        "importance": 0.026052
+      },
+      {
+        "feature": "exp_traffic_recent_volume_d2",
+        "importance": 0.023351
+      },
+      {
+        "feature": "traffic_volume",
+        "importance": 0.023005
+      },
+      {
+        "feature": "traffic_volume_lag_14d",
+        "importance": 0.021849
+      },
+      {
+        "feature": "fc_cloud_cover_d2",
+        "importance": 0.021648
+      },
+      {
+        "feature": "traffic_load",
+        "importance": 0.017312
+      },
+      {
+        "feature": "fc_temperature_2m_d2",
+        "importance": 0.016786
+      },
+      {
+        "feature": "fc_dew_point_d2",
+        "importance": 0.016649
+      },
+      {
+        "feature": "ICA_out",
+        "importance": 0.014902
+      },
+      {
+        "feature": "wind_gusts_10m",
+        "importance": 0.013278
+      },
+      {
+        "feature": "boundary_layer_height",
+        "importance": 0.013202
+      },
+      {
+        "feature": "wind_speed_10m",
+        "importance": 0.013081
+      },
+      {
+        "feature": "exp_traffic_recent_occupancy_d2",
+        "importance": 0.012716
+      },
+      {
+        "feature": "fc_wind_v_d2",
+        "importance": 0.011536
+      }
+    ]
+  },
+  "target_PM10_zbe_d2": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 2,
+    "feature_variant": "with_target_calendar",
+    "n_features": 114,
+    "weights": {
+      "lightgbm": 0.45,
+      "extra_trees": 0.0,
+      "ridge": 0.55
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 6.1526,
+    "cv_mae": 4.3509,
+    "cv_r2": 0.1873,
+    "cv_mape": 32.17,
+    "cv_persistence_rmse": 7.1114,
+    "cv_skill_vs_persistence": 0.1348,
+    "cv_directional_accuracy": 0.7185,
+    "cv_fold_rmse": [
+      4.9925,
+      4.7068,
+      4.2523,
+      7.8805,
+      4.7854
+    ],
+    "cv_fold_rmse_std": 1.3012,
+    "test_rmse": 3.4299,
+    "test_mae": 2.7287,
+    "test_r2": 0.2756,
+    "test_persistence_rmse": 4.5543,
+    "test_skill_vs_persistence": 0.2469,
+    "test_directional_accuracy": 0.675,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 12.5289,
+    "interval_relative_half_width_90": 1.0553,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9733,
+    "test_interval_coverage_90": 1.0,
+    "n_test": 120,
+    "test_start": "2026-07-11",
+    "test_end": "2026-11-08",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-13",
+        "end": "2025-11-26"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-28",
+        "end": "2026-01-13"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-14",
+        "end": "2026-02-27"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-28",
+        "end": "2026-04-15"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-16",
+        "end": "2026-06-01"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "PM10_zbe",
+        "importance": 0.062887
+      },
+      {
+        "feature": "PM10_out",
+        "importance": 0.040641
+      },
+      {
+        "feature": "exp_traffic_occupancy_d2",
+        "importance": 0.029802
+      },
+      {
+        "feature": "d2_dow_cos",
+        "importance": 0.021232
+      },
+      {
+        "feature": "relative_humidity_2m",
+        "importance": 0.020218
+      },
+      {
+        "feature": "fc_wind_u_d2",
+        "importance": 0.018994
+      },
+      {
+        "feature": "fc_dew_point_d2",
+        "importance": 0.018993
+      },
+      {
+        "feature": "fc_cloud_cover_d2",
+        "importance": 0.018686
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d2",
+        "importance": 0.016384
+      },
+      {
+        "feature": "wind_speed_10m",
+        "importance": 0.015985
+      },
+      {
+        "feature": "fc_wind_direction_10m_d2",
+        "importance": 0.013593
+      },
+      {
+        "feature": "exp_traffic_volume_d2",
+        "importance": 0.013533
+      },
+      {
+        "feature": "PM10_zbe_roll_max_14d",
+        "importance": 0.013398
+      },
+      {
+        "feature": "HDD_lag_7d",
+        "importance": 0.013372
+      },
+      {
+        "feature": "sunshine_duration",
+        "importance": 0.013298
+      },
+      {
+        "feature": "ICA_out",
+        "importance": 0.01318
+      },
+      {
+        "feature": "PM10_out_roll_std_7d",
+        "importance": 0.013148
+      },
+      {
+        "feature": "NO2_out",
+        "importance": 0.012915
+      },
+      {
+        "feature": "gv_3marzo_pm10_lag_1d",
+        "importance": 0.012876
+      },
+      {
+        "feature": "d2_doy_sin",
+        "importance": 0.012542
+      }
+    ]
+  },
+  "target_PM10_out_d2": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 2,
+    "feature_variant": "with_target_calendar",
+    "n_features": 114,
+    "weights": {
+      "lightgbm": 0.65,
+      "extra_trees": 0.0,
+      "ridge": 0.35000000000000003
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 5.1269,
+    "cv_mae": 3.6093,
+    "cv_r2": 0.2188,
+    "cv_mape": 30.38,
+    "cv_persistence_rmse": 6.289,
+    "cv_skill_vs_persistence": 0.1848,
+    "cv_directional_accuracy": 0.6963,
+    "cv_fold_rmse": [
+      4.7317,
+      4.2975,
+      3.785,
+      6.8447,
+      3.518
+    ],
+    "cv_fold_rmse_std": 1.1812,
+    "test_rmse": 3.7641,
+    "test_mae": 2.9982,
+    "test_r2": 0.2288,
+    "test_persistence_rmse": 4.9399,
+    "test_skill_vs_persistence": 0.238,
+    "test_directional_accuracy": 0.7,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 9.4015,
+    "interval_relative_half_width_90": 1.9527,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9644,
+    "test_interval_coverage_90": 1.0,
+    "n_test": 120,
+    "test_start": "2026-07-11",
+    "test_end": "2026-11-08",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-13",
+        "end": "2025-11-26"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-28",
+        "end": "2026-01-13"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-14",
+        "end": "2026-02-27"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-28",
+        "end": "2026-04-15"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-16",
+        "end": "2026-06-01"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "PM10_out",
+        "importance": 0.052909
+      },
+      {
+        "feature": "exp_traffic_occupancy_d2",
+        "importance": 0.024141
+      },
+      {
+        "feature": "fc_dew_point_d2",
+        "importance": 0.023896
+      },
+      {
+        "feature": "PM10_zbe",
+        "importance": 0.021914
+      },
+      {
+        "feature": "relative_humidity_2m",
+        "importance": 0.019952
+      },
+      {
+        "feature": "ICA_out",
+        "importance": 0.018935
+      },
+      {
+        "feature": "PM2.5_out",
+        "importance": 0.018051
+      },
+      {
+        "feature": "fc_wind_u_d2",
+        "importance": 0.016804
+      },
+      {
+        "feature": "fc_cloud_cover_d2",
+        "importance": 0.016426
+      },
+      {
+        "feature": "NO2_out",
+        "importance": 0.016248
+      },
+      {
+        "feature": "wind_speed_10m",
+        "importance": 0.016139
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d2",
+        "importance": 0.015527
+      },
+      {
+        "feature": "d2_doy_sin",
+        "importance": 0.015392
+      },
+      {
+        "feature": "traffic_volume_lag_7d",
+        "importance": 0.014854
+      },
+      {
+        "feature": "NO2_zbe",
+        "importance": 0.014123
+      },
+      {
+        "feature": "gv_avgasteiz_pm10_lag_1d",
+        "importance": 0.013817
+      },
+      {
+        "feature": "fc_precipitation_d2",
+        "importance": 0.012745
+      },
+      {
+        "feature": "PM10_out_roll_std_7d",
+        "importance": 0.012561
+      },
+      {
+        "feature": "PM10_out_lag_7d",
+        "importance": 0.012542
+      },
+      {
+        "feature": "gv_3marzo_no2_lag_1d",
+        "importance": 0.012466
+      }
+    ]
+  },
+  "target_PM2.5_zbe_d2": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 2,
+    "feature_variant": "with_target_calendar",
+    "n_features": 114,
+    "weights": {
+      "lightgbm": 0.30000000000000004,
+      "extra_trees": 0.0,
+      "ridge": 0.7000000000000001
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 3.4583,
+    "cv_mae": 2.5564,
+    "cv_r2": 0.2795,
+    "cv_mape": 30.22,
+    "cv_persistence_rmse": 4.2917,
+    "cv_skill_vs_persistence": 0.1942,
+    "cv_directional_accuracy": 0.6,
+    "cv_fold_rmse": [
+      2.6651,
+      4.0528,
+      2.588,
+      4.4812,
+      2.9997
+    ],
+    "cv_fold_rmse_std": 0.7676,
+    "test_rmse": 2.7689,
+    "test_mae": 2.2128,
+    "test_r2": 0.1934,
+    "test_persistence_rmse": 3.6338,
+    "test_skill_vs_persistence": 0.238,
+    "test_directional_accuracy": 0.7,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 6.4763,
+    "interval_relative_half_width_90": 1.564,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9422,
+    "test_interval_coverage_90": 1.0,
+    "n_test": 120,
+    "test_start": "2026-07-11",
+    "test_end": "2026-11-08",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-13",
+        "end": "2025-11-26"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-28",
+        "end": "2026-01-13"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-14",
+        "end": "2026-02-27"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-28",
+        "end": "2026-04-15"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-16",
+        "end": "2026-06-01"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "PM2.5_zbe",
+        "importance": 0.038548
+      },
+      {
+        "feature": "PM2.5_out",
+        "importance": 0.025934
+      },
+      {
+        "feature": "PM10_out",
+        "importance": 0.025663
+      },
+      {
+        "feature": "fc_dew_point_d2",
+        "importance": 0.025268
+      },
+      {
+        "feature": "ICA_out",
+        "importance": 0.024972
+      },
+      {
+        "feature": "fc_relative_humidity_2m_d2",
+        "importance": 0.024156
+      },
+      {
+        "feature": "exp_traffic_occupancy_d2",
+        "importance": 0.023085
+      },
+      {
+        "feature": "relative_humidity_2m",
+        "importance": 0.022474
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d2",
+        "importance": 0.020908
+      },
+      {
+        "feature": "cloud_cover",
+        "importance": 0.017434
+      },
+      {
+        "feature": "ICA_zbe",
+        "importance": 0.01727
+      },
+      {
+        "feature": "wind_speed_10m",
+        "importance": 0.017213
+      },
+      {
+        "feature": "traffic_sensors",
+        "importance": 0.017135
+      },
+      {
+        "feature": "NO2_out",
+        "importance": 0.01709
+      },
+      {
+        "feature": "d2_dow_cos",
+        "importance": 0.01705
+      },
+      {
+        "feature": "fc_wind_u_d2",
+        "importance": 0.016811
+      },
+      {
+        "feature": "PM2.5_zbe_roll_max_30d",
+        "importance": 0.016702
+      },
+      {
+        "feature": "PM10_zbe",
+        "importance": 0.016449
+      },
+      {
+        "feature": "fc_wind_speed_10m_d2",
+        "importance": 0.01587
+      },
+      {
+        "feature": "HDD_lag_7d",
+        "importance": 0.015282
+      }
+    ]
+  },
+  "target_PM2.5_out_d2": {
+    "model_version": "forecast_v10",
+    "production_method": "ensemble",
+    "quality_gate": "passed",
+    "prediction_mode": "residual_ensemble",
+    "forecast_horizon_days": 2,
+    "feature_variant": "with_target_calendar",
+    "n_features": 114,
+    "weights": {
+      "lightgbm": 0.55,
+      "extra_trees": 0.0,
+      "ridge": 0.45
+    },
+    "persistence_weight": 1.0,
+    "cv_rmse": 3.6265,
+    "cv_mae": 2.6016,
+    "cv_r2": 0.2675,
+    "cv_mape": 30.86,
+    "cv_persistence_rmse": 4.6262,
+    "cv_skill_vs_persistence": 0.2161,
+    "cv_directional_accuracy": 0.6222,
+    "cv_fold_rmse": [
+      3.199,
+      3.5668,
+      2.6735,
+      4.614,
+      3.1814
+    ],
+    "cv_fold_rmse_std": 0.6491,
+    "test_rmse": 3.153,
+    "test_mae": 2.4844,
+    "test_r2": 0.2033,
+    "test_persistence_rmse": 4.1556,
+    "test_skill_vs_persistence": 0.2413,
+    "test_directional_accuracy": 0.725,
+    "interval_method": "conservative_rolling_conformal_90",
+    "interval_half_width_90": 7.5036,
+    "interval_relative_half_width_90": 1.3384,
+    "interval_min_abs_90": 1.0,
+    "interval_calibration_quantile": 0.95,
+    "cv_interval_coverage_90": 0.9689,
+    "test_interval_coverage_90": 1.0,
+    "n_test": 120,
+    "test_start": "2026-07-11",
+    "test_end": "2026-11-08",
+    "backtest_windows": [
+      {
+        "fold": 1,
+        "start": "2025-10-13",
+        "end": "2025-11-26"
+      },
+      {
+        "fold": 2,
+        "start": "2025-11-28",
+        "end": "2026-01-13"
+      },
+      {
+        "fold": 3,
+        "start": "2026-01-14",
+        "end": "2026-02-27"
+      },
+      {
+        "fold": 4,
+        "start": "2026-02-28",
+        "end": "2026-04-15"
+      },
+      {
+        "fold": 5,
+        "start": "2026-04-16",
+        "end": "2026-06-01"
+      }
+    ],
+    "top_features": [
+      {
+        "feature": "PM2.5_out",
+        "importance": 0.032274
+      },
+      {
+        "feature": "ICA_out",
+        "importance": 0.030322
+      },
+      {
+        "feature": "PM10_out",
+        "importance": 0.02859
+      },
+      {
+        "feature": "fc_dew_point_d2",
+        "importance": 0.027889
+      },
+      {
+        "feature": "exp_traffic_occupancy_d2",
+        "importance": 0.026844
+      },
+      {
+        "feature": "fc_relative_humidity_2m_d2",
+        "importance": 0.023984
+      },
+      {
+        "feature": "PM2.5_zbe",
+        "importance": 0.022691
+      },
+      {
+        "feature": "relative_humidity_2m",
+        "importance": 0.020485
+      },
+      {
+        "feature": "NO2_out",
+        "importance": 0.018268
+      },
+      {
+        "feature": "fc_wind_u_d2",
+        "importance": 0.017775
+      },
+      {
+        "feature": "fc_wind_gusts_10m_d2",
+        "importance": 0.017296
+      },
+      {
+        "feature": "wind_speed_10m",
+        "importance": 0.017002
+      },
+      {
+        "feature": "traffic_volume_lag_7d",
+        "importance": 0.015753
+      },
+      {
+        "feature": "sunshine_duration",
+        "importance": 0.014544
+      },
+      {
+        "feature": "wind_v",
+        "importance": 0.01448
+      },
+      {
+        "feature": "PM2.5_zbe_roll_max_30d",
+        "importance": 0.014313
+      },
+      {
+        "feature": "cloud_cover",
+        "importance": 0.013255
+      },
+      {
+        "feature": "fc_wind_direction_10m_d2",
+        "importance": 0.012926
+      },
+      {
+        "feature": "fc_wind_speed_10m_d2",
+        "importance": 0.012807
+      },
+      {
+        "feature": "traffic_occupancy_lag_2d",
+        "importance": 0.012742
+      }
+    ]
+  }
+}

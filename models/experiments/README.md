@@ -21,6 +21,19 @@ D+1 (+2.1 pp) y elimina el fallback de NO₂ ZBE D+2 (de −0.9 % a +2.3 %).
 Las features derivadas (ratios, estancamiento, lluvia, viento), la poda y el
 encogimiento no aportan y no se despliegan.
 
+## Fase 1 — estaciones del Gobierno Vasco
+
+Mismo parquet (816 días, 2024-07-27 → 2026-11-09) y mismo test final.
+
+| Variante | Features GV | Skill medio | D+1 | D+2 | Targets OK |
+|---|---|---:|---:|---:|---:|
+| gv_baseline | ninguna | **0.1742** | 0.1573 | **0.1911** | 11/12 |
+| gv_lag1 | lag 1d de las 3 estaciones | 0.1723 | **0.1600** | 0.1845 | 11/12 |
+| gv_pm | PM10/PM2.5 lag1 + media 3d | 0.1704 | 0.1575 | 0.1834 | 11/12 |
+| gv | todas (63 features) | 0.1600 | 0.1472 | 0.1728 | 11/12 |
+
+**Decisión:** no se despliegan las features del GV. `gv_lag1` mejora D+1 (+0,27 pp) pero empeora D+2 (−0,66 pp); el resto empeora claramente. Se mantiene la ingesta (`download_gv_air.py` + `gv_daily.csv`) y el modo experimental (`--gv-features` / `--gv-mode`) desactivado por defecto.
+
 ## Detalle por target (skill de test)
 
 | Target | baseline | traffic_fix | both_traffic | all | prune80 | prune60 |

@@ -85,3 +85,20 @@ Entre las tres GV: NO2 0,83-0,88; PM10 0,75-0,88; PM2.5 0,74-0,77. Hay colineali
 3. Agregar a diario local con filtro de horas futuras.
 4. Añadir features `gv_*` al parquet.
 5. A/B con `--output-dir models/experiments/gv` y comparar por target.
+
+## Resultado Fase 1 (A/B, 2026-11-11)
+
+Implementado `download_gv_air.py` y features `gv_*` (lags 1/2/3/7, medias 3/7, diff 1d).
+Comparación sobre 816 días y el mismo test final:
+
+| Variante | Skill medio | D+1 | D+2 |
+|---|---:|---:|---:|
+| baseline sin GV | **0.1742** | 0.1573 | **0.1911** |
+| GV lag 1d | 0.1723 | **0.1600** | 0.1845 |
+| GV PM (lag1 + media 3d) | 0.1704 | 0.1575 | 0.1834 |
+| GV completo (63 features) | 0.1600 | 0.1472 | 0.1728 |
+
+**Decisión:** no se activan las features GV en producción. La ingesta y el modo
+experimental quedan disponibles, pero desactivados por defecto. El modelo
+actual ya captura la señal vía estaciones propias y meteorología; añadir las GV
+como features introduce más ruido que señal.

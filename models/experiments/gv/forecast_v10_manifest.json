@@ -1,0 +1,85 @@
+{
+  "model_version": "forecast_v10",
+  "generated_at": "2026-11-11T10:10:09.102192+00:00",
+  "experiment_tag": "gv",
+  "feature_limit": 0,
+  "persistence_shrinkage": false,
+  "data_start": "2024-07-27",
+  "data_end": "2026-11-09",
+  "cutoff_hour_local": 22,
+  "timezone": "Europe/Madrid",
+  "feature_window": "local_day_before_cutoff",
+  "target_window": "full_local_day",
+  "targets_passed": 11,
+  "targets_fallback": 1,
+  "fallback_targets": [
+    "NO2_zbe_d2"
+  ],
+  "targets_total": 12,
+  "forecast_horizons_days": [
+    1,
+    2
+  ],
+  "ready_for_production": true,
+  "readiness_scope": "technical_model_gate",
+  "recommended_deployment": "controlled_institutional_pilot",
+  "external_validation_completed": false,
+  "monitoring_required": true,
+  "dataset_sha256": "8735b0bd68dfd49c3bfeba0c4f119d03528ce0f00c314f5c580596f6c17e1ad3",
+  "artifacts": {
+    "NO2_zbe_d1": {
+      "file": "forecast_v10_NO2_zbe_d1.joblib",
+      "sha256": "3971785bca4e8e521e67b6d622309941bc75a636433747d68efdb00b0b9ae93e"
+    },
+    "NO2_out_d1": {
+      "file": "forecast_v10_NO2_out_d1.joblib",
+      "sha256": "8f456256aa2da57e0e5b12c49215136c1f9a41ae2b6d9ccd2496ec06d06f386a"
+    },
+    "PM10_zbe_d1": {
+      "file": "forecast_v10_PM10_zbe_d1.joblib",
+      "sha256": "e652ad9385ee251cd351eccf8158babcd7bb73051b20bf335ffd04ef6b30399e"
+    },
+    "PM10_out_d1": {
+      "file": "forecast_v10_PM10_out_d1.joblib",
+      "sha256": "7fac1df87d952e3993c7f26e63868387c2c6b695976538a97e67b1eedc9415f2"
+    },
+    "PM2.5_zbe_d1": {
+      "file": "forecast_v10_PM2.5_zbe_d1.joblib",
+      "sha256": "48f7654aff8e7bcc75bb6f240540cb8223395134db719394b0ebd35e3d17f4d0"
+    },
+    "PM2.5_out_d1": {
+      "file": "forecast_v10_PM2.5_out_d1.joblib",
+      "sha256": "d04658df845dd2457305553239440d810052389f25720ecf8ce9ae6a4177d0c5"
+    },
+    "NO2_zbe_d2": {
+      "file": "forecast_v10_NO2_zbe_d2.joblib",
+      "sha256": "39d061572ca220681d21877277536efd9a832a8cd9affb77bcf87584c2613db1"
+    },
+    "NO2_out_d2": {
+      "file": "forecast_v10_NO2_out_d2.joblib",
+      "sha256": "0694272db1c0ccff52cfddeac2d51c85564bb52f2fc00385582d9a4029e9cf0b"
+    },
+    "PM10_zbe_d2": {
+      "file": "forecast_v10_PM10_zbe_d2.joblib",
+      "sha256": "452ab9617efc15ede825dd3b7c1fe2256ee1cfc4cfd33800336682692276e661"
+    },
+    "PM10_out_d2": {
+      "file": "forecast_v10_PM10_out_d2.joblib",
+      "sha256": "acb91e4ae5ffed24363a7c862790dd2eafd358fda74184c39a7c50d799ef7b19"
+    },
+    "PM2.5_zbe_d2": {
+      "file": "forecast_v10_PM2.5_zbe_d2.joblib",
+      "sha256": "183da683ce8a582f33600124b2476fff5fb03f4ace50101d6e48eb962bd828a9"
+    },
+    "PM2.5_out_d2": {
+      "file": "forecast_v10_PM2.5_out_d2.joblib",
+      "sha256": "e88d0818b9c832dafd675cb73b45043c891c69de3a9a2dbcfcec40aa2d852478"
+    }
+  },
+  "acceptance_rules": {
+    "minimum_cv_skill_vs_persistence": 0.03,
+    "minimum_test_skill_vs_persistence": 0.0,
+    "minimum_test_interval_coverage_90": 0.85,
+    "interval_calibration_quantile": 0.95
+  }
+}
