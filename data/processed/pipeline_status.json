@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-11-12T21:07:32",
+  "generated_at": "2026-11-13T01:39:53",
   "prediction_date": "2026-11-13",
   "source_date": "2026-11-12",
   "station_daily_max": "2026-11-12",
-  "traffic_yoy_max": "2026-11-11",
+  "traffic_yoy_max": "2026-11-12",
   "counterfactual_max": "2026-11-11",
   "model_trained_until": "2026-11-09",
   "drift_status": "alert",
@@ -19,7 +19,7 @@
     "PAUL_PM10",
     "PAUL_PM25"
   ],
-  "weather_source": "fallback",
+  "weather_source": "open-meteo",
   "spillover_risk": [
     "LANDAZURI_NO2",
     "LANDAZURI_PM10",
