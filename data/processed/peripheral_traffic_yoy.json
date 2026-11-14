@@ -2973,5 +2973,12 @@
     "previous": 6766.7,
     "n_sensors": 19,
     "previous_phase": "year1_zbe"
+  },
+  {
+    "date": "2026-11-13",
+    "current": 6034.6,
+    "previous": 6946.1,
+    "n_sensors": 19,
+    "previous_phase": "year1_zbe"
   }
 ]
