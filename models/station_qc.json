@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-14T01:12:42",
+  "generated_at": "2026-11-15T21:05:06",
   "date_range": {
     "start": "2024-07-30",
-    "end": "2026-11-13"
+    "end": "2026-11-15"
   },
   "shift_threshold": 0.3,
   "flags": {
