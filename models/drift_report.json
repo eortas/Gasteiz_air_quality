@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T00:40:35",
+  "generated_at": "2026-11-16T21:10:18",
   "window_days": 30,
   "status": "alert",
   "alert": true,
@@ -7,11 +7,11 @@
     "ICA_out_d1": {
       "status": "alert",
       "n": 30,
-      "window_start": "2026-10-15",
-      "window_end": "2026-11-14",
-      "mae_model": 6.965,
-      "mae_persistence": 3.829,
-      "skill_vs_persistence": -0.8193,
+      "window_start": "2026-10-16",
+      "window_end": "2026-11-16",
+      "mae_model": 7.002,
+      "mae_persistence": 3.753,
+      "skill_vs_persistence": -0.8658,
       "training_skill": null
     },
     "ICA_out_d2": {
@@ -27,11 +27,11 @@
     "ICA_zbe_d1": {
       "status": "alert",
       "n": 30,
-      "window_start": "2026-10-15",
-      "window_end": "2026-11-14",
-      "mae_model": 3.887,
-      "mae_persistence": 3.0,
-      "skill_vs_persistence": -0.2955,
+      "window_start": "2026-10-16",
+      "window_end": "2026-11-16",
+      "mae_model": 3.937,
+      "mae_persistence": 2.991,
+      "skill_vs_persistence": -0.3163,
       "training_skill": null
     },
     "ICA_zbe_d2": {
@@ -45,14 +45,14 @@
       "training_skill": null
     },
     "NO2_out_d1": {
-      "status": "ok",
+      "status": "warn",
       "n": 30,
-      "window_start": "2026-10-15",
-      "window_end": "2026-11-14",
-      "mae_model": 1.646,
-      "mae_persistence": 1.903,
-      "skill_vs_persistence": 0.1353,
-      "training_skill": 0.2408
+      "window_start": "2026-10-16",
+      "window_end": "2026-11-16",
+      "mae_model": 1.661,
+      "mae_persistence": 1.882,
+      "skill_vs_persistence": 0.1177,
+      "training_skill": 0.244
     },
     "NO2_out_d2": {
       "status": "ok",
@@ -62,17 +62,17 @@
       "mae_model": 1.58,
       "mae_persistence": 2.262,
       "skill_vs_persistence": 0.3017,
-      "training_skill": 0.2556
+      "training_skill": 0.2672
     },
     "NO2_zbe_d1": {
       "status": "ok",
       "n": 30,
-      "window_start": "2026-10-15",
-      "window_end": "2026-11-14",
-      "mae_model": 1.515,
-      "mae_persistence": 1.903,
-      "skill_vs_persistence": 0.2041,
-      "training_skill": 0.1569
+      "window_start": "2026-10-16",
+      "window_end": "2026-11-16",
+      "mae_model": 1.485,
+      "mae_persistence": 1.835,
+      "skill_vs_persistence": 0.191,
+      "training_skill": 0.176
     },
     "NO2_zbe_d2": {
       "status": "ok",
@@ -82,17 +82,17 @@
       "mae_model": 1.696,
       "mae_persistence": 2.274,
       "skill_vs_persistence": 0.2542,
-      "training_skill": 0.1442
+      "training_skill": 0.1462
     },
     "PM10_out_d1": {
       "status": "ok",
       "n": 30,
-      "window_start": "2026-10-15",
-      "window_end": "2026-11-14",
-      "mae_model": 2.025,
-      "mae_persistence": 2.544,
-      "skill_vs_persistence": 0.204,
-      "training_skill": 0.1408
+      "window_start": "2026-10-16",
+      "window_end": "2026-11-16",
+      "mae_model": 2.031,
+      "mae_persistence": 2.527,
+      "skill_vs_persistence": 0.1963,
+      "training_skill": 0.1456
     },
     "PM10_out_d2": {
       "status": "ok",
@@ -102,17 +102,17 @@
       "mae_model": 2.831,
       "mae_persistence": 3.688,
       "skill_vs_persistence": 0.2325,
-      "training_skill": 0.2235
+      "training_skill": 0.2191
     },
     "PM10_zbe_d1": {
       "status": "alert",
       "n": 30,
-      "window_start": "2026-10-15",
-      "window_end": "2026-11-14",
-      "mae_model": 3.133,
-      "mae_persistence": 2.325,
-      "skill_vs_persistence": -0.3478,
-      "training_skill": 0.1417
+      "window_start": "2026-10-16",
+      "window_end": "2026-11-16",
+      "mae_model": 3.108,
+      "mae_persistence": 2.32,
+      "skill_vs_persistence": -0.3395,
+      "training_skill": 0.1401
     },
     "PM10_zbe_d2": {
       "status": "alert",
@@ -122,7 +122,7 @@
       "mae_model": 3.19,
       "mae_persistence": 3.066,
       "skill_vs_persistence": -0.0402,
-      "training_skill": 0.2175
+      "training_skill": 0.2191
     },
     "PM2.5_out_d1": {
       "status": "insufficient",
