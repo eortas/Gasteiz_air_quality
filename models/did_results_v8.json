@@ -14,10 +14,10 @@
     "publishable": true
   },
   "PM10": {
-    "beta3": 2.5245,
+    "beta3": 2.5185,
     "pvalue": 0.0,
-    "ci_low": 2.1926,
-    "ci_high": 2.8565,
+    "ci_low": 2.1869,
+    "ci_high": 2.8501,
     "r2": 0.3262,
     "n_obs": 1634,
     "significant": true,
@@ -28,11 +28,11 @@
     "publishable": false
   },
   "PM2.5": {
-    "beta3": 0.8392,
+    "beta3": 0.838,
     "pvalue": 0.0,
-    "ci_low": 0.6567,
-    "ci_high": 1.0217,
-    "r2": 0.3616,
+    "ci_low": 0.6553,
+    "ci_high": 1.0206,
+    "r2": 0.3617,
     "n_obs": 1634,
     "significant": true,
     "fe_dummies": 28,

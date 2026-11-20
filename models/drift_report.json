@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-19T21:08:27",
+  "generated_at": "2026-11-20T02:03:48",
   "window_days": 30,
   "status": "alert",
   "alert": true,
@@ -9,9 +9,9 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 7.165,
-      "mae_persistence": 3.448,
-      "skill_vs_persistence": -1.0782,
+      "mae_model": 7.168,
+      "mae_persistence": 3.444,
+      "skill_vs_persistence": -1.0812,
       "training_skill": null
     },
     "ICA_out_d2": {
@@ -19,9 +19,9 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 7.124,
-      "mae_persistence": 5.178,
-      "skill_vs_persistence": -0.3758,
+      "mae_model": 7.128,
+      "mae_persistence": 5.182,
+      "skill_vs_persistence": -0.3756,
       "training_skill": null
     },
     "ICA_zbe_d1": {
@@ -29,9 +29,9 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 3.686,
-      "mae_persistence": 2.62,
-      "skill_vs_persistence": -0.4068,
+      "mae_model": 3.689,
+      "mae_persistence": 2.617,
+      "skill_vs_persistence": -0.4095,
       "training_skill": null
     },
     "ICA_zbe_d2": {
@@ -39,8 +39,8 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 3.424,
-      "mae_persistence": 3.396,
+      "mae_model": 3.427,
+      "mae_persistence": 3.399,
       "skill_vs_persistence": -0.008,
       "training_skill": null
     },
@@ -49,9 +49,9 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 1.741,
-      "mae_persistence": 1.992,
-      "skill_vs_persistence": 0.1259,
+      "mae_model": 1.744,
+      "mae_persistence": 1.989,
+      "skill_vs_persistence": 0.1233,
       "training_skill": 0.244
     },
     "NO2_out_d2": {
@@ -59,9 +59,9 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 1.648,
-      "mae_persistence": 2.334,
-      "skill_vs_persistence": 0.2942,
+      "mae_model": 1.65,
+      "mae_persistence": 2.337,
+      "skill_vs_persistence": 0.2938,
       "training_skill": 0.2672
     },
     "NO2_zbe_d1": {
@@ -69,8 +69,8 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 1.542,
-      "mae_persistence": 1.928,
+      "mae_model": 1.541,
+      "mae_persistence": 1.927,
       "skill_vs_persistence": 0.2003,
       "training_skill": 0.176
     },
@@ -79,9 +79,9 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 1.739,
-      "mae_persistence": 2.213,
-      "skill_vs_persistence": 0.2143,
+      "mae_model": 1.74,
+      "mae_persistence": 2.214,
+      "skill_vs_persistence": 0.2141,
       "training_skill": 0.1462
     },
     "PM10_out_d1": {
@@ -90,7 +90,7 @@
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
       "mae_model": 2.024,
-      "mae_persistence": 2.473,
+      "mae_persistence": 2.474,
       "skill_vs_persistence": 0.1817,
       "training_skill": 0.1456
     },
@@ -100,7 +100,7 @@
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
       "mae_model": 2.825,
-      "mae_persistence": 3.589,
+      "mae_persistence": 3.588,
       "skill_vs_persistence": 0.2127,
       "training_skill": 0.2191
     },
@@ -109,9 +109,9 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 3.106,
-      "mae_persistence": 2.317,
-      "skill_vs_persistence": -0.3409,
+      "mae_model": 3.118,
+      "mae_persistence": 2.31,
+      "skill_vs_persistence": -0.3495,
       "training_skill": 0.1401
     },
     "PM10_zbe_d2": {
@@ -119,9 +119,9 @@
       "n": 30,
       "window_start": "2026-10-19",
       "window_end": "2026-11-19",
-      "mae_model": 3.179,
-      "mae_persistence": 3.023,
-      "skill_vs_persistence": -0.0517,
+      "mae_model": 3.184,
+      "mae_persistence": 3.014,
+      "skill_vs_persistence": -0.0564,
       "training_skill": 0.2191
     },
     "PM2.5_out_d1": {
