@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-11-21T01:58:48",
-  "prediction_date": "2026-11-21",
-  "source_date": "2026-11-20",
-  "station_daily_max": "2026-11-20",
+  "generated_at": "2026-11-21T21:05:50",
+  "prediction_date": "2026-11-22",
+  "source_date": "2026-11-21",
+  "station_daily_max": "2026-11-21",
   "traffic_yoy_max": "2026-11-20",
-  "counterfactual_max": "2026-11-19",
+  "counterfactual_max": "2026-11-20",
   "model_trained_until": "2026-11-15",
   "drift_status": "alert",
   "drift_alerts": [
@@ -12,15 +12,14 @@
     "ICA_out_d2",
     "ICA_zbe_d1",
     "ICA_zbe_d2",
-    "PM10_zbe_d1",
-    "PM10_zbe_d2"
+    "PM10_zbe_d1"
   ],
   "qc_excluded": [
     "PAUL_ICA",
     "PAUL_PM10",
     "PAUL_PM25"
   ],
-  "weather_source": "fallback",
+  "weather_source": "open-meteo",
   "spillover_risk": [
     "LANDAZURI_NO2",
     "LANDAZURI_PM10",

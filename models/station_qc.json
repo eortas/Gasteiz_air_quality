@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-21T01:57:39",
+  "generated_at": "2026-11-21T21:05:12",
   "date_range": {
     "start": "2024-07-30",
-    "end": "2026-11-20"
+    "end": "2026-11-21"
   },
   "shift_threshold": 0.3,
   "flags": {
@@ -12,8 +12,8 @@
       "status": "flagged",
       "action": "excluded_from_causal",
       "baseline_ratio": 1.033,
-      "current_ratio": 1.429,
-      "shift_factor": 1.383,
+      "current_ratio": 1.402,
+      "shift_factor": 1.357,
       "since": "2025-12-01",
       "method": "rolling_28d_median_vs_pre_zbe"
     },
@@ -23,8 +23,8 @@
       "status": "flagged",
       "action": "excluded_from_causal",
       "baseline_ratio": 0.892,
-      "current_ratio": 1.279,
-      "shift_factor": 1.434,
+      "current_ratio": 1.274,
+      "shift_factor": 1.427,
       "since": "2025-12-01",
       "method": "rolling_28d_median_vs_pre_zbe"
     },
