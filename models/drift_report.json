@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T21:06:10",
+  "generated_at": "2026-11-23T01:25:01",
   "window_days": 30,
   "status": "alert",
   "alert": true,
@@ -9,9 +9,9 @@
       "n": 30,
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
-      "mae_model": 7.195,
-      "mae_persistence": 3.314,
-      "skill_vs_persistence": -1.1713,
+      "mae_model": 7.202,
+      "mae_persistence": 3.307,
+      "skill_vs_persistence": -1.1781,
       "training_skill": null
     },
     "ICA_out_d2": {
@@ -19,9 +19,9 @@
       "n": 30,
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
-      "mae_model": 7.366,
-      "mae_persistence": 5.164,
-      "skill_vs_persistence": -0.4266,
+      "mae_model": 7.373,
+      "mae_persistence": 5.157,
+      "skill_vs_persistence": -0.4299,
       "training_skill": null
     },
     "ICA_zbe_d1": {
@@ -29,9 +29,9 @@
       "n": 30,
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
-      "mae_model": 3.743,
-      "mae_persistence": 2.667,
-      "skill_vs_persistence": -0.4035,
+      "mae_model": 3.747,
+      "mae_persistence": 2.663,
+      "skill_vs_persistence": -0.4072,
       "training_skill": null
     },
     "ICA_zbe_d2": {
@@ -39,9 +39,9 @@
       "n": 30,
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
-      "mae_model": 3.79,
-      "mae_persistence": 3.253,
-      "skill_vs_persistence": -0.165,
+      "mae_model": 3.794,
+      "mae_persistence": 3.249,
+      "skill_vs_persistence": -0.1677,
       "training_skill": null
     },
     "NO2_out_d1": {
@@ -49,40 +49,40 @@
       "n": 30,
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
-      "mae_model": 1.629,
-      "mae_persistence": 1.845,
-      "skill_vs_persistence": 0.1173,
-      "training_skill": 0.244
+      "mae_model": 1.622,
+      "mae_persistence": 1.839,
+      "skill_vs_persistence": 0.1177,
+      "training_skill": 0.2493
     },
     "NO2_out_d2": {
       "status": "ok",
       "n": 30,
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
-      "mae_model": 1.623,
-      "mae_persistence": 2.275,
-      "skill_vs_persistence": 0.2866,
-      "training_skill": 0.2672
+      "mae_model": 1.616,
+      "mae_persistence": 2.268,
+      "skill_vs_persistence": 0.2874,
+      "training_skill": 0.2908
     },
     "NO2_zbe_d1": {
       "status": "ok",
       "n": 30,
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
-      "mae_model": 1.48,
-      "mae_persistence": 1.846,
-      "skill_vs_persistence": 0.1981,
-      "training_skill": 0.176
+      "mae_model": 1.479,
+      "mae_persistence": 1.844,
+      "skill_vs_persistence": 0.1983,
+      "training_skill": 0.1797
     },
     "NO2_zbe_d2": {
       "status": "ok",
       "n": 30,
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
-      "mae_model": 1.687,
-      "mae_persistence": 2.112,
-      "skill_vs_persistence": 0.2014,
-      "training_skill": 0.1462
+      "mae_model": 1.688,
+      "mae_persistence": 2.111,
+      "skill_vs_persistence": 0.2,
+      "training_skill": 0.1629
     },
     "PM10_out_d1": {
       "status": "ok",
@@ -90,19 +90,19 @@
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
       "mae_model": 1.944,
-      "mae_persistence": 2.355,
-      "skill_vs_persistence": 0.1743,
-      "training_skill": 0.1456
+      "mae_persistence": 2.354,
+      "skill_vs_persistence": 0.1744,
+      "training_skill": 0.1494
     },
     "PM10_out_d2": {
       "status": "ok",
       "n": 30,
       "window_start": "2026-10-23",
       "window_end": "2026-11-22",
-      "mae_model": 2.571,
+      "mae_model": 2.57,
       "mae_persistence": 3.475,
       "skill_vs_persistence": 0.2602,
-      "training_skill": 0.2191
+      "training_skill": 0.2382
     },
     "PM10_zbe_d1": {
       "status": "alert",
@@ -112,7 +112,7 @@
       "mae_model": 2.82,
       "mae_persistence": 2.174,
       "skill_vs_persistence": -0.297,
-      "training_skill": 0.1401
+      "training_skill": 0.1516
     },
     "PM10_zbe_d2": {
       "status": "warn",
@@ -122,7 +122,7 @@
       "mae_model": 2.71,
       "mae_persistence": 2.97,
       "skill_vs_persistence": 0.0876,
-      "training_skill": 0.2191
+      "training_skill": 0.2177
     },
     "PM2.5_out_d1": {
       "status": "insufficient",

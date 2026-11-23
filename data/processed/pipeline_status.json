@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-22T21:06:10",
+  "generated_at": "2026-11-23T01:25:02",
   "prediction_date": "2026-11-23",
   "source_date": "2026-11-22",
   "station_daily_max": "2026-11-22",
-  "traffic_yoy_max": "2026-11-21",
+  "traffic_yoy_max": "2026-11-22",
   "counterfactual_max": "2026-11-21",
-  "model_trained_until": "2026-11-15",
+  "model_trained_until": "2026-11-21",
   "drift_status": "alert",
   "drift_alerts": [
     "ICA_out_d1",
