@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-23T01:20:26",
+  "generated_at": "2026-11-23T21:05:12",
   "date_range": {
     "start": "2024-07-30",
-    "end": "2026-11-22"
+    "end": "2026-11-23"
   },
   "shift_threshold": 0.3,
   "flags": {
@@ -12,8 +12,8 @@
       "status": "flagged",
       "action": "excluded_from_causal",
       "baseline_ratio": 1.033,
-      "current_ratio": 1.402,
-      "shift_factor": 1.357,
+      "current_ratio": 1.401,
+      "shift_factor": 1.356,
       "since": "2025-12-01",
       "method": "rolling_28d_median_vs_pre_zbe"
     },
