@@ -1,19 +1,5 @@
 [
   {
-    "prediction_date": "2026-06-16",
-    "generated_at": "2026-07-08T10:38:57.110783+00:00",
-    "predictions": {
-      "NO2_zbe_d1": 7.87,
-      "NO2_out_d1": 6.59,
-      "PM10_zbe_d1": 22.65,
-      "PM10_out_d1": 13.23,
-      "PM2.5_zbe_d1": 10.52,
-      "PM2.5_out_d1": 10.78,
-      "ICA_zbe_d1": 32.86,
-      "ICA_out_d1": 26.98
-    }
-  },
-  {
     "prediction_date": "2026-06-17",
     "generated_at": "2026-07-08T10:38:59.809450+00:00",
     "predictions": {
@@ -4165,6 +4151,34 @@
       "ICA_out_d1": 11.2,
       "ICA_zbe_d2": 10.6,
       "ICA_out_d2": 11.42
+    }
+  },
+  {
+    "prediction_date": "2026-11-28",
+    "prediction_dates": {
+      "d1": "2026-11-28",
+      "d2": "2026-11-29"
+    },
+    "generated_at": "2026-11-28T03:04:18.773317+00:00",
+    "source_date": "2026-11-27",
+    "run_type": "production",
+    "predictions": {
+      "NO2_zbe_d1": 8.59,
+      "NO2_out_d1": 10.21,
+      "PM10_zbe_d1": 9.94,
+      "PM10_out_d1": 9.51,
+      "PM2.5_zbe_d1": 6.61,
+      "PM2.5_out_d1": 7.29,
+      "NO2_zbe_d2": 8.19,
+      "NO2_out_d2": 9.15,
+      "PM10_zbe_d2": 8.72,
+      "PM10_out_d2": 9.21,
+      "PM2.5_zbe_d2": 7.19,
+      "PM2.5_out_d2": 7.35,
+      "ICA_zbe_d1": 11.02,
+      "ICA_out_d1": 12.15,
+      "ICA_zbe_d2": 11.98,
+      "ICA_out_d2": 12.25
     }
   }
 ]

@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-11-27T21:05:48",
+  "generated_at": "2026-11-28T03:04:20",
   "prediction_date": "2026-11-28",
   "source_date": "2026-11-27",
   "station_daily_max": "2026-11-27",
-  "traffic_yoy_max": "2026-11-24",
+  "traffic_yoy_max": "2026-11-27",
   "counterfactual_max": "2026-11-26",
   "model_trained_until": "2026-11-22",
   "drift_status": "alert",
